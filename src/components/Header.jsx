@@ -7,8 +7,8 @@ export default function Header({ title, onRefresh, isLoading }) {
   }
 
   return (
-    <header className="h-14 bg-gray-900 dark:bg-gray-950 border-b border-gray-800 flex items-center justify-between px-6">
-      <h1 className="text-gray-100 font-semibold text-base">{title}</h1>
+    <header className="min-h-14 bg-gray-900 dark:bg-gray-950 border-b border-gray-800 flex items-start justify-between px-6 py-2">
+      <h1 className="text-gray-100 font-semibold text-base mt-1.5">{title}</h1>
       <div className="flex items-center gap-3">
         <PeriodSelector />
         <button
