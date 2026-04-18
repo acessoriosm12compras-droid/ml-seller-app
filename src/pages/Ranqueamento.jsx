@@ -84,7 +84,14 @@ export default function Ranqueamento() {
                 )}
                 {data.ranqueamento.map((r) => (
                   <tr key={r.ml_item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                    <td className="px-4 py-3 text-gray-200 max-w-xs truncate">{r.titulo}</td>
+                    <td className="px-4 py-3 max-w-xs">
+                      <div className="flex items-center gap-2">
+                        <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded font-medium ${r.catalogo ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-700 text-gray-400'}`}>
+                          {r.catalogo ? 'Catálogo' : 'Normal'}
+                        </span>
+                        <span className="text-gray-200 truncate">{r.titulo}</span>
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-gray-500 text-xs hidden md:table-cell">{r.keyword}</td>
                     <td className="px-4 py-3 text-center"><PositionBadge pos={r.posicao} pagina={r.pagina} /></td>
                     <td className="px-4 py-3 text-right text-gray-600 text-xs hidden md:table-cell">
