@@ -6,7 +6,7 @@ const NAV = [
   { to: '/pedidos', label: 'Pedidos', icon: '📦' },
   { to: '/financeiro', label: 'Financeiro', icon: '💰' },
   { to: '/margem', label: 'Margem', icon: '📈' },
-  { to: '/ranqueamento', label: 'Ranqueamento', icon: '🔍' },
+  { to: '/ranqueamento', label: 'Performance', icon: '📡' },
   { to: '/configuracoes/custos', label: 'Custos', icon: '⚙️' },
 ]
 
