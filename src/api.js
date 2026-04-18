@@ -51,7 +51,7 @@ export const api = {
     }).then(async res => {
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.erro || `HTTP ${res.status}`)
+        throw Object.assign(new Error(err.erro || `HTTP ${res.status}`), { status: res.status })
       }
       return res.json()
     })

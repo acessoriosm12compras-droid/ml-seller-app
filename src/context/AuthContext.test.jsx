@@ -31,3 +31,12 @@ test('login sets isLoggedIn true', async () => {
   await act(async () => { screen.getByText('login').click() })
   expect(screen.getByTestId('status').textContent).toBe('logged-in')
 })
+
+test('logout sets isLoggedIn false', async () => {
+  localStorage.setItem('ml_auth', '1')
+  render(<AuthProvider><TestComponent /></AuthProvider>)
+  expect(screen.getByTestId('status').textContent).toBe('logged-in')
+  await act(async () => { screen.getByText('logout').click() })
+  expect(screen.getByTestId('status').textContent).toBe('logged-out')
+  expect(localStorage.getItem('ml_auth')).toBeNull()
+})
