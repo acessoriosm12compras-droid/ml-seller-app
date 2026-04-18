@@ -3,15 +3,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 
-function PositionBadge({ pos }) {
+function PositionBadge({ pos, pagina }) {
   if (pos == null) return <span className="text-gray-600 text-xs">não verificado</span>
   if (!pos) return <span className="text-gray-500 text-xs">não encontrado</span>
   const color = pos <= 5 ? 'text-emerald-400 bg-emerald-500/10' :
                 pos <= 20 ? 'text-amber-400 bg-amber-500/10' :
                 'text-red-400 bg-red-500/10'
   return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${color}`}>
-      #{pos}
+    <span className="flex flex-col items-center gap-0.5">
+      <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${color}`}>
+        #{pos}
+      </span>
+      {pagina && <span className="text-gray-500 text-xs">pág. {pagina}</span>}
     </span>
   )
 }
@@ -83,7 +86,7 @@ export default function Ranqueamento() {
                   <tr key={r.ml_item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
                     <td className="px-4 py-3 text-gray-200 max-w-xs truncate">{r.titulo}</td>
                     <td className="px-4 py-3 text-gray-500 text-xs hidden md:table-cell">{r.keyword}</td>
-                    <td className="px-4 py-3 text-center"><PositionBadge pos={r.posicao} /></td>
+                    <td className="px-4 py-3 text-center"><PositionBadge pos={r.posicao} pagina={r.pagina} /></td>
                     <td className="px-4 py-3 text-right text-gray-600 text-xs hidden md:table-cell">
                       {r.verificado_em ? new Date(r.verificado_em).toLocaleString('pt-BR') : '—'}
                     </td>
