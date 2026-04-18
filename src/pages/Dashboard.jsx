@@ -100,7 +100,7 @@ export default function Dashboard() {
                         p.variacao > 0 ? 'text-emerald-400' :
                         p.variacao < 0 ? 'text-red-400' : 'text-gray-500'
                       }`}>
-                        {p.variacao != null ? `${p.variacao > 0 ? '+' : ''}${p.variacao}%` : '—'}
+                        {p.variacao != null ? `${p.variacao >= 0 ? '+' : ''}${p.variacao.toFixed(1)}%` : '—'}
                       </td>
                     </tr>
                   ))}
