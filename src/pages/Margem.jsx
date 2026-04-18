@@ -1,1 +1,72 @@
-export default function Margem() { return <div className="text-white p-6">Margem</div> }
+import { useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '../api'
+import Header from '../components/Header'
+
+function formatBRL(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
+}
+
+function MargemBadge({ value }) {
+  if (value === null || value === undefined) return <span className="text-gray-500">—</span>
+  const color = value >= 20 ? 'text-emerald-400' : value >= 0 ? 'text-amber-400' : 'text-red-400'
+  const bg = value >= 20 ? 'bg-emerald-500/10' : value >= 0 ? 'bg-amber-500/10' : 'bg-red-500/10'
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${color} ${bg}`}>
+      {value.toFixed(1)}%
+    </span>
+  )
+}
+
+export default function Margem() {
+  const [params] = useSearchParams()
+  const periodo = params.get('periodo') || '30d'
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['margem', periodo],
+    queryFn: () => api.margem({ periodo }),
+  })
+
+  return (
+    <div className="flex flex-col flex-1">
+      <Header title="Margem" onRefresh={refetch} isLoading={isLoading} />
+      <main className="flex-1 p-6">
+        {isLoading && <div className="text-gray-500 text-sm">Carregando...</div>}
+        {error && <div className="text-red-400 text-sm">{error.message}</div>}
+        {data && (
+          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-800/50 text-gray-500 border-b border-gray-800">
+                  <th className="text-left px-4 py-3 font-medium">Produto</th>
+                  <th className="text-right px-4 py-3 font-medium">Faturamento</th>
+                  <th className="text-right px-4 py-3 font-medium">Custo</th>
+                  <th className="text-right px-4 py-3 font-medium">Taxas ML</th>
+                  <th className="text-right px-4 py-3 font-medium">ADS</th>
+                  <th className="text-center px-4 py-3 font-medium">Margem s/ ADS</th>
+                  <th className="text-center px-4 py-3 font-medium">Margem c/ ADS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.produtos.map((p) => (
+                  <tr key={p.ml_item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                    <td className="px-4 py-3">
+                      <p className="text-gray-200 truncate max-w-xs">{p.titulo}</p>
+                      <p className="text-gray-600 text-xs">{p.ml_item_id} · {p.qtd_vendida} un</p>
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-300">{formatBRL(p.faturamento)}</td>
+                    <td className="px-4 py-3 text-right text-gray-400">{formatBRL(p.custo_total)}</td>
+                    <td className="px-4 py-3 text-right text-red-400">{formatBRL(p.taxas_ml)}</td>
+                    <td className="px-4 py-3 text-right text-orange-400">{formatBRL(p.gasto_ads)}</td>
+                    <td className="px-4 py-3 text-center"><MargemBadge value={p.margem_sem_ads} /></td>
+                    <td className="px-4 py-3 text-center"><MargemBadge value={p.margem_pos_ads} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
