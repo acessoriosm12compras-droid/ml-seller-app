@@ -15,7 +15,7 @@ export default function PeriodSelector() {
       {OPTIONS.map(({ value, label }) => (
         <button
           key={value}
-          onClick={() => setParams({ periodo: value })}
+          onClick={() => setParams(p => { const np = new URLSearchParams(p); np.set('periodo', value); return np })}
           className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
             current === value
               ? 'bg-amber-500 text-gray-950'

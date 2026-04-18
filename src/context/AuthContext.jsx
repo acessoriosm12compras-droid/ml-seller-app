@@ -15,9 +15,14 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
-    await api.logout().catch(() => {})
-    localStorage.removeItem('ml_auth')
-    setIsLoggedIn(false)
+    try {
+      await api.logout()
+    } catch {
+      // logout failure is non-fatal — clear local state regardless
+    } finally {
+      localStorage.removeItem('ml_auth')
+      setIsLoggedIn(false)
+    }
   }
 
   return (
