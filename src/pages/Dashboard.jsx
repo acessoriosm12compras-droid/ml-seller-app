@@ -12,10 +12,15 @@ function formatBRL(value) {
 export default function Dashboard() {
   const [params] = useSearchParams()
   const periodo = params.get('periodo') || '7d'
+  const de = params.get('de') || ''
+  const ate = params.get('ate') || ''
+
+  const queryParams = { periodo, ...(periodo === 'custom' && de && ate ? { de, ate } : {}) }
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['dashboard', periodo],
-    queryFn: () => api.dashboard({ periodo }),
+    queryKey: ['dashboard', periodo, de, ate],
+    queryFn: () => api.dashboard(queryParams),
+    enabled: periodo !== 'custom' || (!!de && !!ate),
   })
 
   return (
