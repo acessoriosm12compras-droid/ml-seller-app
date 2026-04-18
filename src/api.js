@@ -38,8 +38,8 @@ export const api = {
   ranqueamento: () =>
     request('/api/ranqueamento'),
 
-  adicionarKeyword: (ml_item_id, keyword) =>
-    request('/api/ranqueamento', { method: 'POST', body: JSON.stringify({ ml_item_id, keyword }) }),
+  atualizarRanqueamento: () =>
+    request('/api/ranqueamento/atualizar', { method: 'POST' }),
 
   importarCustos: (file) => {
     const form = new FormData()
