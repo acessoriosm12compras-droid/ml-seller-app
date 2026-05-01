@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,7 +15,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(username, password)
+      await login(email, password)
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err.message || 'Credenciais inválidas')
@@ -36,11 +36,11 @@ export default function Login() {
           className="bg-gray-900 rounded-xl border border-gray-800 p-8 space-y-4"
         >
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Usuário</label>
+            <label className="block text-sm text-gray-400 mb-1.5">E-mail</label>
             <input
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               required
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             />
