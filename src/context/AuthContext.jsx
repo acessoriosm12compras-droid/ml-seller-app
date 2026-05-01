@@ -1,32 +1,64 @@
-import { createContext, useContext, useState } from 'react'
-import { api } from '../api'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { setTokenProvider } from '../api'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    () => localStorage.getItem('ml_auth') === '1'
-  )
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [activeAccount, setActiveAccount] = useState(null)
 
-  async function login(username, password) {
-    await api.login(username, password)
-    localStorage.setItem('ml_auth', '1')
-    setIsLoggedIn(true)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      if (session) {
+        const meta = session.user?.user_metadata || {}
+        setActiveAccount(meta.conta_ml || null)
+      }
+      setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      if (session) {
+        const meta = session.user?.user_metadata || {}
+        setActiveAccount(meta.conta_ml || null)
+      } else {
+        setActiveAccount(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    setTokenProvider(() => session?.access_token || null)
+  }, [session])
+
+  async function login(email, password) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new Error(error.message)
   }
 
   async function logout() {
-    try {
-      await api.logout()
-    } catch {
-      // logout failure is non-fatal — clear local state regardless
-    } finally {
-      localStorage.removeItem('ml_auth')
-      setIsLoggedIn(false)
-    }
+    await supabase.auth.signOut()
+    setSession(null)
+    setActiveAccount(null)
   }
 
+  const user = session?.user || null
+  const role = user?.user_metadata?.role || 'user'
+  const contaMl = user?.user_metadata?.conta_ml || null
+  const isLoggedIn = !!session
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{
+      isLoggedIn, loading, user, role, contaMl,
+      activeAccount, setActiveAccount,
+      login, logout,
+      getToken: () => session?.access_token || null,
+    }}>
       {children}
     </AuthContext.Provider>
   )
