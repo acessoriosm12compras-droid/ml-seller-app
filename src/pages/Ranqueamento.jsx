@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
+import { useAuth } from '../context/AuthContext'
 
 const ML_SEARCH = 'https://api.mercadolibre.com/sites/MLB/search'
 
@@ -47,10 +48,12 @@ function PositionBadge({ pos, pagina }) {
 export default function Ranqueamento() {
   const [posicoes, setPosicoes] = useState({})
   const [verificando, setVerificando] = useState(false)
+  const { activeAccount } = useAuth()
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['ranqueamento'],
-    queryFn: () => api.ranqueamento(),
+    queryKey: ['ranqueamento', activeAccount],
+    queryFn: () => api.ranqueamento({ conta_ml: activeAccount }),
+    enabled: !!activeAccount,
   })
 
   const verificarPosicoes = useCallback(async () => {

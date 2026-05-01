@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
+import { useAuth } from '../context/AuthContext'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
@@ -21,10 +22,12 @@ function MargemBadge({ value }) {
 export default function Margem() {
   const [params] = useSearchParams()
   const periodo = params.get('periodo') || '30d'
+  const { activeAccount } = useAuth()
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['margem', periodo],
-    queryFn: () => api.margem({ periodo }),
+    queryKey: ['margem', periodo, activeAccount],
+    queryFn: () => api.margem({ periodo, conta_ml: activeAccount }),
+    enabled: !!activeAccount,
   })
 
   return (

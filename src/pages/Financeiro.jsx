@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { api } from '../api'
 import Header from '../components/Header'
 import KPICard from '../components/KPICard'
+import { useAuth } from '../context/AuthContext'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
@@ -12,10 +13,12 @@ function formatBRL(v) {
 export default function Financeiro() {
   const [params] = useSearchParams()
   const periodo = params.get('periodo') || '30d'
+  const { activeAccount } = useAuth()
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['financeiro', periodo],
-    queryFn: () => api.financeiro({ periodo }),
+    queryKey: ['financeiro', periodo, activeAccount],
+    queryFn: () => api.financeiro({ periodo, conta_ml: activeAccount }),
+    enabled: !!activeAccount,
   })
 
   return (

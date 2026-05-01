@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { api } from '../api'
 import Header from '../components/Header'
 import KPICard from '../components/KPICard'
+import { useAuth } from '../context/AuthContext'
 
 function formatBRL(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -14,13 +15,14 @@ export default function Dashboard() {
   const periodo = params.get('periodo') || '7d'
   const de = params.get('de') || ''
   const ate = params.get('ate') || ''
+  const { activeAccount } = useAuth()
 
-  const queryParams = { periodo, ...(periodo === 'custom' && de && ate ? { de, ate } : {}) }
+  const queryParams = { periodo, conta_ml: activeAccount, ...(periodo === 'custom' && de && ate ? { de, ate } : {}) }
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['dashboard', periodo, de, ate],
+    queryKey: ['dashboard', periodo, de, ate, activeAccount],
     queryFn: () => api.dashboard(queryParams),
-    enabled: periodo !== 'custom' || (!!de && !!ate),
+    enabled: !!activeAccount && (periodo !== 'custom' || (!!de && !!ate)),
   })
 
   return (

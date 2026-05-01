@@ -2,6 +2,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
+import { useAuth } from '../context/AuthContext'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
@@ -20,10 +21,12 @@ export default function Pedidos() {
   const periodo = params.get('periodo') || '7d'
   const offset = parseInt(params.get('offset') || '0', 10)
   const limit = 20
+  const { activeAccount } = useAuth()
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['pedidos', periodo, offset],
-    queryFn: () => api.pedidos({ periodo, limit, offset }),
+    queryKey: ['pedidos', periodo, offset, activeAccount],
+    queryFn: () => api.pedidos({ periodo, limit, offset, conta_ml: activeAccount }),
+    enabled: !!activeAccount,
   })
 
   function nextPage() { setParams(p => { const np = new URLSearchParams(p); np.set('offset', offset + limit); return np }) }
