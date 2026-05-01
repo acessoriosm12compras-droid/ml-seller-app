@@ -1,10 +1,18 @@
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
+let _getToken = () => null
+
+export function setTokenProvider(fn) {
+  _getToken = fn
+}
+
 async function request(path, options = {}) {
+  const token = _getToken()
+  const headers = { 'Content-Type': 'application/json', ...options.headers }
+  if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(`${BASE}${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
+    headers,
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
@@ -14,11 +22,7 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  login: (username, password) =>
-    request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
-
-  logout: () =>
-    request('/auth/logout', { method: 'POST' }),
+  me: () => request('/auth/me'),
 
   dashboard: (params) =>
     request(`/api/dashboard?${new URLSearchParams(params)}`),
@@ -42,11 +46,14 @@ export const api = {
     request('/api/ranqueamento/atualizar', { method: 'POST' }),
 
   importarCustos: (file) => {
+    const token = _getToken()
     const form = new FormData()
     form.append('arquivo', file)
+    const headers = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
     return fetch(`${BASE}/api/importar-custos`, {
       method: 'POST',
-      credentials: 'include',
+      headers,
       body: form,
     }).then(async res => {
       if (!res.ok) {
@@ -55,5 +62,12 @@ export const api = {
       }
       return res.json()
     })
+  },
+
+  admin: {
+    listarUsuarios: () => request('/admin/usuarios'),
+    criarUsuario: (data) => request('/admin/usuarios', { method: 'POST', body: JSON.stringify(data) }),
+    editarUsuario: (id, data) => request(`/admin/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    toggleAtivo: (id, ativo) => request(`/admin/usuarios/${id}`, { method: 'PATCH', body: JSON.stringify({ ativo }) }),
   },
 }
