@@ -1,11 +1,21 @@
 import { render, screen, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from './AuthContext'
 
+// Mock Supabase
+vi.mock('../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      signInWithPassword: vi.fn().mockResolvedValue({ error: null }),
+      signOut: vi.fn().mockResolvedValue({}),
+    },
+  },
+}))
+
+// Mock setTokenProvider from api
 vi.mock('../api', () => ({
-  api: {
-    login: vi.fn().mockResolvedValue({ ok: true }),
-    logout: vi.fn().mockResolvedValue({ ok: true }),
-  }
+  setTokenProvider: vi.fn(),
 }))
 
 function TestComponent() {
@@ -13,30 +23,30 @@ function TestComponent() {
   return (
     <div>
       <span data-testid="status">{isLoggedIn ? 'logged-in' : 'logged-out'}</span>
-      <button onClick={() => login('admin', 'admin')}>login</button>
+      <button onClick={() => login('admin@test.com', 'admin')}>login</button>
       <button onClick={logout}>logout</button>
     </div>
   )
 }
 
-test('starts logged out', () => {
-  localStorage.clear()
+test('starts logged out', async () => {
   render(<AuthProvider><TestComponent /></AuthProvider>)
+  await act(async () => {})
   expect(screen.getByTestId('status').textContent).toBe('logged-out')
 })
 
-test('login sets isLoggedIn true', async () => {
-  localStorage.clear()
+test('login calls supabase signInWithPassword', async () => {
+  const { supabase } = await import('../lib/supabase')
   render(<AuthProvider><TestComponent /></AuthProvider>)
+  await act(async () => {})
   await act(async () => { screen.getByText('login').click() })
-  expect(screen.getByTestId('status').textContent).toBe('logged-in')
+  expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({ email: 'admin@test.com', password: 'admin' })
 })
 
-test('logout sets isLoggedIn false', async () => {
-  localStorage.setItem('ml_auth', '1')
+test('logout calls supabase signOut', async () => {
+  const { supabase } = await import('../lib/supabase')
   render(<AuthProvider><TestComponent /></AuthProvider>)
-  expect(screen.getByTestId('status').textContent).toBe('logged-in')
+  await act(async () => {})
   await act(async () => { screen.getByText('logout').click() })
-  expect(screen.getByTestId('status').textContent).toBe('logged-out')
-  expect(localStorage.getItem('ml_auth')).toBeNull()
+  expect(supabase.auth.signOut).toHaveBeenCalled()
 })
