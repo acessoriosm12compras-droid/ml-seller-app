@@ -12,7 +12,9 @@ import Financeiro from './pages/Financeiro'
 import Margem from './pages/Margem'
 import Ranqueamento from './pages/Ranqueamento'
 import ImportarCustos from './pages/ImportarCustos'
+import CustosProdutos from './pages/CustosProdutos'
 import AdminUsuarios from './pages/AdminUsuarios'
+import Resultado from './pages/Resultado'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 60_000 } },
@@ -41,6 +43,8 @@ export default function App() {
               <Route path="financeiro" element={<Financeiro />} />
               <Route path="margem" element={<Margem />} />
               <Route path="ranqueamento" element={<Ranqueamento />} />
+              <Route path="resultado" element={<Resultado />} />
+              <Route path="custos-produtos" element={<CustosProdutos />} />
               <Route path="configuracoes/custos" element={<ImportarCustos />} />
               <Route
                 path="admin/usuarios"
