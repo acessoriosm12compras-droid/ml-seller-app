@@ -67,7 +67,7 @@ export default function ProdutosTable({ produtos }) {
                 <th
                   key={col.key}
                   onClick={() => handleSort(col.key)}
-                  className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-gray-300 transition-colors text-${col.align}`}
+                  className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-gray-300 transition-colors ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
                 >
                   <span className="inline-flex items-center gap-1">
                     {col.label}
