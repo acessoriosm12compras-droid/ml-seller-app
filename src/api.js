@@ -80,4 +80,14 @@ export const api = {
     editarUsuario: (id, data) => request(`/admin/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     toggleAtivo: (id, ativo) => request(`/admin/usuarios/${id}`, { method: 'PATCH', body: JSON.stringify({ ativo }) }),
   },
+
+  pluggy: {
+    connectToken: (data) => request('/api/financeiro/pluggy/connect-token', { method: 'POST', body: JSON.stringify(data) }),
+    saveItem: (data) => request('/api/financeiro/pluggy/save-item', { method: 'POST', body: JSON.stringify(data) }),
+    sync: () => request('/api/financeiro/pluggy/sync', { method: 'POST' }),
+  },
+
+  conciliacao: (params) => request(`/api/financeiro/conciliacao?${new URLSearchParams(params)}`),
+
+  projecao: (params) => request(`/api/financeiro/projecao?${new URLSearchParams(params)}`),
 }

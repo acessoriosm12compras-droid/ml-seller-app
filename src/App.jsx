@@ -15,6 +15,8 @@ import ImportarCustos from './pages/ImportarCustos'
 import CustosProdutos from './pages/CustosProdutos'
 import AdminUsuarios from './pages/AdminUsuarios'
 import Resultado from './pages/Resultado'
+import Conciliacao from './pages/Conciliacao'
+import ProjecaoVendas from './pages/ProjecaoVendas'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 60_000 } },
@@ -45,6 +47,8 @@ export default function App() {
               <Route path="ranqueamento" element={<Ranqueamento />} />
               <Route path="resultado" element={<Resultado />} />
               <Route path="custos-produtos" element={<CustosProdutos />} />
+              <Route path="conciliacao" element={<Conciliacao />} />
+              <Route path="projecao" element={<ProjecaoVendas />} />
               <Route path="configuracoes/custos" element={<ImportarCustos />} />
               <Route
                 path="admin/usuarios"
