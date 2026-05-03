@@ -64,6 +64,16 @@ export const api = {
     })
   },
 
+  resultado: (params) =>
+    request(`/api/resultado?${new URLSearchParams(params)}`),
+
+  custos: {
+    list: (params) =>
+      request(`/api/custos?${new URLSearchParams(params)}`),
+    save: (data) =>
+      request('/api/custos', { method: 'POST', body: JSON.stringify(data) }),
+  },
+
   admin: {
     listarUsuarios: () => request('/admin/usuarios'),
     criarUsuario: (data) => request('/admin/usuarios', { method: 'POST', body: JSON.stringify(data) }),

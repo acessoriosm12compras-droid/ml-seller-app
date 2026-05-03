@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -11,7 +12,9 @@ import Financeiro from './pages/Financeiro'
 import Margem from './pages/Margem'
 import Ranqueamento from './pages/Ranqueamento'
 import ImportarCustos from './pages/ImportarCustos'
+import CustosProdutos from './pages/CustosProdutos'
 import AdminUsuarios from './pages/AdminUsuarios'
+import Resultado from './pages/Resultado'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 60_000 } },
@@ -19,6 +22,7 @@ const queryClient = new QueryClient({
 
 export default function App() {
   return (
+    <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
@@ -39,6 +43,8 @@ export default function App() {
               <Route path="financeiro" element={<Financeiro />} />
               <Route path="margem" element={<Margem />} />
               <Route path="ranqueamento" element={<Ranqueamento />} />
+              <Route path="resultado" element={<Resultado />} />
+              <Route path="custos-produtos" element={<CustosProdutos />} />
               <Route path="configuracoes/custos" element={<ImportarCustos />} />
               <Route
                 path="admin/usuarios"
@@ -53,5 +59,6 @@ export default function App() {
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
+    </ThemeProvider>
   )
 }
