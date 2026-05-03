@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import ThemeToggle from './ThemeToggle'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -36,13 +37,16 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="px-6 py-4 border-t border-gray-800">
-        <button
-          onClick={logout}
-          className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
-        >
-          Sair
-        </button>
+      <div className="px-0 py-4 border-t border-gray-800">
+        <ThemeToggle />
+        <div className="px-6">
+          <button
+            onClick={logout}
+            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            Sair
+          </button>
+        </div>
       </div>
     </aside>
   )
