@@ -26,6 +26,7 @@ export function ThemeProvider({ children }) {
   }
 
   async function toggleTheme() {
+    if (!theme) return
     const next = theme === 'dark' ? 'light' : 'dark'
     setTheme(next)
     applyTheme(next)
