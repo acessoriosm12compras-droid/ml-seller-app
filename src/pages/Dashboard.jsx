@@ -21,7 +21,7 @@ function formatPct(v) {
 }
 
 // KPI card styled like Gestor Seller: dark bg, colored left border, label + value + optional delta
-function GsKpiCard({ label, value, variacao, borderColor = 'border-gray-700', valueColor = 'text-gray-100', info }) {
+function GsKpiCard({ label, value, variacao, borderColor = 'border-l-gray-700', valueColor = 'text-gray-100', info }) {
   const varNum = typeof variacao === 'number' ? variacao : null
   const isPositive = varNum !== null && varNum >= 0
   const isNegative = varNum !== null && varNum < 0
@@ -145,27 +145,27 @@ export default function Dashboard() {
             label="Faturamento"
             value={k ? formatBRL(k.faturamento) : '…'}
             variacao={k?.faturamento_variacao}
-            borderColor="border-amber-500"
+            borderColor="border-l-amber-500"
             info="Soma de unit_price × quantidade de todos os pedidos pagos"
           />
           <GsKpiCard
             label="Líq. do Marketplace"
             value={k ? formatBRL(k.liquido_marketplace) : '…'}
-            borderColor="border-blue-500"
+            borderColor="border-l-blue-500"
             info="Faturamento descontando as taxas cobradas pelo Mercado Livre"
           />
           <GsKpiCard
             label="Lucro Bruto"
             value={k ? formatBRL(k.lucro_bruto) : '…'}
             variacao={k?.lucro_variacao}
-            borderColor="border-violet-500"
+            borderColor="border-l-violet-500"
             valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-gray-100'}
             info="Líquido do Marketplace menos o custo dos produtos (CMV)"
           />
           <GsKpiCard
             label="Margem"
             value={k ? formatPct(k.margem) : '…'}
-            borderColor="border-emerald-500"
+            borderColor="border-l-emerald-500"
             valueColor={k ? (k.margem >= 15 ? 'text-emerald-400' : k.margem >= 0 ? 'text-amber-400' : 'text-red-400') : 'text-gray-100'}
             info="Lucro Bruto ÷ Faturamento"
           />
