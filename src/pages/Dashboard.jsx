@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -72,12 +72,18 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function Dashboard() {
-  const [params] = useSearchParams()
-  const periodo = params.get('periodo') || '7d'
+  const [params, setParams] = useSearchParams()
+  const periodo = params.get('periodo') || 'hoje'
   const de = params.get('de') || ''
   const ate = params.get('ate') || ''
   const { activeAccount } = useAuth()
   const [expandedKpis, setExpandedKpis] = useState(false)
+
+  useEffect(() => {
+    if (!params.get('periodo')) {
+      setParams(p => { const np = new URLSearchParams(p); np.set('periodo', 'hoje'); return np }, { replace: true })
+    }
+  }, [])
 
   const queryParams = {
     periodo,
