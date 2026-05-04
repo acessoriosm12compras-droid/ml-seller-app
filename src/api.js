@@ -90,4 +90,34 @@ export const api = {
   conciliacao: (params) => request(`/api/financeiro/conciliacao?${new URLSearchParams(params)}`),
 
   projecao: (params) => request(`/api/financeiro/projecao?${new URLSearchParams(params)}`),
+
+  vendas: (params) => request(`/api/vendas?${new URLSearchParams(params)}`),
+
+  graficos: (params) => request(`/api/graficos?${new URLSearchParams(params)}`),
+
+  analitico: {
+    produtos: (params) => request(`/api/analitico/produtos?${new URLSearchParams(params)}`),
+    vendasPorAnuncio: (params) => request(`/api/analitico/vendas-por-anuncio?${new URLSearchParams(params)}`),
+  },
+
+  curvaAbc: (params) => request(`/api/curva-abc?${new URLSearchParams(params)}`),
+
+  movimentacoes: {
+    list: (params) => request(`/api/movimentacoes?${new URLSearchParams(params)}`),
+    create: (data) => request('/api/movimentacoes', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => request(`/api/movimentacoes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => request(`/api/movimentacoes/${id}`, { method: 'DELETE' }),
+  },
+
+  financeiroResumo: {
+    mensal: (params) => request(`/api/financeiro/resumo?${new URLSearchParams(params)}`),
+    anual: (params) => request(`/api/financeiro/resumo/anual?${new URLSearchParams(params)}`),
+  },
+
+  gerenciamento: {
+    anuncios: (params) => request(`/api/gerenciamento/anuncios?${new URLSearchParams(params)}`),
+    atualizarAnuncio: (itemId, data) => request(`/api/gerenciamento/anuncios/${itemId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  inventario: (params) => request(`/api/inventario/full?${new URLSearchParams(params)}`),
 }

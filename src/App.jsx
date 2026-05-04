@@ -17,6 +17,14 @@ import AdminUsuarios from './pages/AdminUsuarios'
 import Resultado from './pages/Resultado'
 import Conciliacao from './pages/Conciliacao'
 import ProjecaoVendas from './pages/ProjecaoVendas'
+import Vendas from './pages/Vendas'
+import Graficos from './pages/Graficos'
+import Analitico from './pages/Analitico'
+import CurvaAbc from './pages/CurvaAbc'
+import Movimentacoes from './pages/Movimentacoes'
+import FinanceiroResumo from './pages/FinanceiroResumo'
+import Gerenciamento from './pages/Gerenciamento'
+import Inventario from './pages/Inventario'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 60_000 } },
@@ -49,6 +57,14 @@ export default function App() {
               <Route path="custos-produtos" element={<CustosProdutos />} />
               <Route path="conciliacao" element={<Conciliacao />} />
               <Route path="projecao" element={<ProjecaoVendas />} />
+              <Route path="vendas" element={<Vendas />} />
+              <Route path="graficos" element={<Graficos />} />
+              <Route path="analitico" element={<Analitico />} />
+              <Route path="curva-abc" element={<CurvaAbc />} />
+              <Route path="movimentacoes" element={<Movimentacoes />} />
+              <Route path="financeiro-resumo" element={<FinanceiroResumo />} />
+              <Route path="gerenciamento" element={<Gerenciamento />} />
+              <Route path="inventario" element={<Inventario />} />
               <Route path="configuracoes/custos" element={<ImportarCustos />} />
               <Route
                 path="admin/usuarios"
