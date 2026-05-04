@@ -72,35 +72,35 @@ export default function PeriodSelector() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 hover:text-gray-100 hover:border-gray-600 transition-colors whitespace-nowrap"
+        className="flex items-center gap-1.5 bg-stone-800 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-300 hover:text-stone-100 hover:border-stone-600 transition-colors whitespace-nowrap"
       >
-        <span className="text-amber-400">📅</span>
+        <span className="text-sky-400">📅</span>
         <span>{currentLabel(params)}</span>
-        <span className="text-gray-500 text-xs">{open ? '▲' : '▼'}</span>
+        <span className="text-stone-500 text-xs">{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-gray-900 border border-gray-700 rounded-xl shadow-xl py-1 min-w-[180px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-stone-900 border border-stone-700 rounded-xl shadow-xl py-1 min-w-[180px]">
           {OPTIONS.filter(o => o.value !== 'custom').map(({ value, label }) => (
             <button
               key={value}
               onClick={() => select(value)}
               className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                 current === value
-                  ? 'text-amber-400 bg-amber-500/10'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-gray-100'
+                  ? 'text-sky-400 bg-sky-500/10'
+                  : 'text-stone-300 hover:bg-stone-800 hover:text-stone-100'
               }`}
             >
               {label}
             </button>
           ))}
-          <div className="border-t border-gray-800 mt-1 pt-1">
+          <div className="border-t border-stone-800 mt-1 pt-1">
             <button
               onClick={() => select('custom')}
               className={`w-full text-left px-4 py-2 text-sm transition-colors ${
                 current === 'custom'
-                  ? 'text-amber-400 bg-amber-500/10'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-gray-100'
+                  ? 'text-sky-400 bg-sky-500/10'
+                  : 'text-stone-300 hover:bg-stone-800 hover:text-stone-100'
               }`}
             >
               Personalizado…
@@ -111,13 +111,13 @@ export default function PeriodSelector() {
                   type="date"
                   defaultValue={params.get('de') || ''}
                   onChange={e => applyCustom(e.target.value, params.get('ate') || '')}
-                  className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-stone-800 border border-stone-700 rounded px-2 py-1 text-xs text-stone-200 focus:outline-none focus:border-sky-500"
                 />
                 <input
                   type="date"
                   defaultValue={params.get('ate') || ''}
                   onChange={e => applyCustom(params.get('de') || '', e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-stone-800 border border-stone-700 rounded px-2 py-1 text-xs text-stone-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
             )}

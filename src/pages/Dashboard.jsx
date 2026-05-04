@@ -21,22 +21,22 @@ function formatPct(v) {
 }
 
 // KPI card styled like Gestor Seller: dark bg, colored left border, label + value + optional delta
-function GsKpiCard({ label, value, variacao, borderColor = 'border-l-gray-700', valueColor = 'text-gray-100', info }) {
+function GsKpiCard({ label, value, variacao, borderColor = 'border-l-stone-700', valueColor = 'text-stone-100', info }) {
   const varNum = typeof variacao === 'number' ? variacao : null
   const isPositive = varNum !== null && varNum >= 0
   const isNegative = varNum !== null && varNum < 0
 
   return (
-    <div className={`bg-gray-900 border border-gray-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
+    <div className={`bg-stone-900 border border-stone-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
       <div className="flex items-center gap-1.5">
-        <p className="text-xs text-gray-400 font-medium">{label}</p>
+        <p className="text-xs text-stone-400 font-medium">{label}</p>
         {info && (
-          <span title={info} className="text-gray-600 cursor-default text-xs select-none">ⓘ</span>
+          <span title={info} className="text-stone-600 cursor-default text-xs select-none">ⓘ</span>
         )}
       </div>
       <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
       {varNum !== null && (
-        <p className={`text-xs flex items-center gap-1 ${isPositive ? 'text-emerald-400' : isNegative ? 'text-red-400' : 'text-gray-500'}`}>
+        <p className={`text-xs flex items-center gap-1 ${isPositive ? 'text-emerald-400' : isNegative ? 'text-red-400' : 'text-stone-500'}`}>
           <span>{isPositive ? '▲' : '▼'}</span>
           <span>{Math.abs(varNum).toFixed(1)}% vs período anterior</span>
         </p>
@@ -46,10 +46,10 @@ function GsKpiCard({ label, value, variacao, borderColor = 'border-l-gray-700', 
 }
 
 // Small secondary KPI card (for expanded row)
-function SmallKpiCard({ label, value, valueColor = 'text-gray-300' }) {
+function SmallKpiCard({ label, value, valueColor = 'text-stone-300' }) {
   return (
-    <div className="bg-gray-800/60 border border-gray-700/50 rounded-lg px-4 py-3 flex flex-col gap-0.5">
-      <p className="text-xs text-gray-500">{label}</p>
+    <div className="bg-stone-800/60 border border-stone-700/50 rounded-lg px-4 py-3 flex flex-col gap-0.5">
+      <p className="text-xs text-stone-500">{label}</p>
       <p className={`text-base font-semibold ${valueColor}`}>{value}</p>
     </div>
   )
@@ -59,8 +59,8 @@ function SmallKpiCard({ label, value, valueColor = 'text-gray-300' }) {
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 text-xs shadow-xl">
-      <p className="text-gray-400 mb-2 font-medium">{label}</p>
+    <div className="bg-stone-900 border border-stone-700 rounded-lg p-3 text-xs shadow-xl">
+      <p className="text-stone-400 mb-2 font-medium">{label}</p>
       {payload.map(entry => (
         <p key={entry.name} style={{ color: entry.color }} className="flex justify-between gap-4">
           <span>{entry.name}</span>
@@ -128,12 +128,12 @@ export default function Dashboard() {
 
         {/* ── Alert: products without cost ── */}
         {semCusto.length > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start justify-between gap-4">
-            <p className="text-amber-400 text-sm">
+          <div className="bg-sky-500/10 border border-sky-500/30 rounded-xl p-4 flex items-start justify-between gap-4">
+            <p className="text-sky-400 text-sm">
               <span className="font-semibold">{semCusto.length} {semCusto.length === 1 ? 'produto sem' : 'produtos sem'} custo cadastrado</span>
               {' — '}Lucro e Margem ficam em branco até você cadastrar.
             </p>
-            <Link to="/configuracoes/custos" className="text-amber-400 text-sm hover:text-amber-300 whitespace-nowrap shrink-0">
+            <Link to="/configuracoes/custos" className="text-sky-400 text-sm hover:text-sky-300 whitespace-nowrap shrink-0">
               ⚙️ Cadastrar →
             </Link>
           </div>
@@ -145,7 +145,7 @@ export default function Dashboard() {
             label="Faturamento"
             value={k ? formatBRL(k.faturamento) : '…'}
             variacao={k?.faturamento_variacao}
-            borderColor="border-l-amber-500"
+            borderColor="border-l-sky-500"
             info="Soma de unit_price × quantidade de todos os pedidos pagos"
           />
           <GsKpiCard
@@ -159,14 +159,14 @@ export default function Dashboard() {
             value={k ? formatBRL(k.lucro_bruto) : '…'}
             variacao={k?.lucro_variacao}
             borderColor="border-l-violet-500"
-            valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-gray-100'}
+            valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-stone-100'}
             info="Líquido do Marketplace menos o custo dos produtos (CMV)"
           />
           <GsKpiCard
             label="Margem"
             value={k ? formatPct(k.margem) : '…'}
             borderColor="border-l-emerald-500"
-            valueColor={k ? (k.margem >= 15 ? 'text-emerald-400' : k.margem >= 0 ? 'text-amber-400' : 'text-red-400') : 'text-gray-100'}
+            valueColor={k ? (k.margem >= 15 ? 'text-emerald-400' : k.margem >= 0 ? 'text-sky-400' : 'text-red-400') : 'text-stone-100'}
             info="Lucro Bruto ÷ Faturamento"
           />
         </div>
@@ -175,7 +175,7 @@ export default function Dashboard() {
         <div>
           <button
             onClick={() => setExpandedKpis(v => !v)}
-            className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-3"
+            className="flex items-center gap-2 text-xs text-stone-500 hover:text-stone-300 transition-colors mb-3"
           >
             <span>{expandedKpis ? '▲' : '▼'}</span>
             <span>{expandedKpis ? 'Ocultar métricas' : 'Mais métricas'}</span>
@@ -186,28 +186,28 @@ export default function Dashboard() {
               <SmallKpiCard label="Nº de Vendas" value={k ? k.n_vendas.toLocaleString('pt-BR') : '…'} />
               <SmallKpiCard label="Unidades" value={k ? k.unidades.toLocaleString('pt-BR') : '…'} />
               <SmallKpiCard label="Ticket Médio" value={k ? formatBRL(k.ticket_medio) : '…'} />
-              <SmallKpiCard label="Reclamações" value={k ? k.reclamacoes : '…'} valueColor={k && k.reclamacoes > 0 ? 'text-red-400' : 'text-gray-300'} />
+              <SmallKpiCard label="Reclamações" value={k ? k.reclamacoes : '…'} valueColor={k && k.reclamacoes > 0 ? 'text-red-400' : 'text-stone-300'} />
               <SmallKpiCard label="Valor em ADS" value={k ? formatBRL(k.valor_ads) : '…'} />
-              <SmallKpiCard label="TACoS" value={k ? formatPct(k.tacos) : '…'} valueColor={k && k.tacos > 0 ? 'text-amber-400' : 'text-gray-300'} />
-              <SmallKpiCard label="Lucro pós ADS" value={k ? formatBRL(k.lucro_pos_ads) : '…'} valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-gray-300'} />
-              <SmallKpiCard label="MPA" value={k ? formatPct(k.mpa) : '…'} valueColor={k ? (k.mpa >= 15 ? 'text-emerald-400' : k.mpa >= 0 ? 'text-amber-400' : 'text-red-400') : 'text-gray-300'} />
+              <SmallKpiCard label="TACoS" value={k ? formatPct(k.tacos) : '…'} valueColor={k && k.tacos > 0 ? 'text-sky-400' : 'text-stone-300'} />
+              <SmallKpiCard label="Lucro pós ADS" value={k ? formatBRL(k.lucro_pos_ads) : '…'} valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-stone-300'} />
+              <SmallKpiCard label="MPA" value={k ? formatPct(k.mpa) : '…'} valueColor={k ? (k.mpa >= 15 ? 'text-emerald-400' : k.mpa >= 0 ? 'text-sky-400' : 'text-red-400') : 'text-stone-300'} />
             </div>
           )}
         </div>
 
         {/* ── Resumo de Receitas chart ── */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm font-semibold text-gray-200">Resumo de Receitas</h2>
+            <h2 className="text-sm font-semibold text-stone-200">Resumo de Receitas</h2>
             {data?.periodo && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-stone-500">
                 {data.periodo.inicio} — {data.periodo.fim}
               </span>
             )}
           </div>
 
           {grafico.length === 0 && !isLoading ? (
-            <p className="text-gray-600 text-sm text-center py-8">Sem dados para o período selecionado.</p>
+            <p className="text-stone-600 text-sm text-center py-8">Sem dados para o período selecionado.</p>
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <AreaChart data={grafico} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
@@ -240,7 +240,7 @@ export default function Dashboard() {
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
                   wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-                  formatter={name => <span className="text-gray-400">{name}</span>}
+                  formatter={name => <span className="text-stone-400">{name}</span>}
                 />
                 <Area
                   type="monotone"
@@ -270,24 +270,24 @@ export default function Dashboard() {
         {/* ── Top 15 produtos vendidos ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-200">Top 15 produtos vendidos</h2>
+            <h2 className="text-sm font-semibold text-stone-200">Top 15 produtos vendidos</h2>
             <Link
               to="/configuracoes/custos"
-              className="text-xs text-gray-500 hover:text-amber-400 transition-colors"
+              className="text-xs text-stone-500 hover:text-sky-400 transition-colors"
             >
               ⚙️ Gerenciar custos →
             </Link>
           </div>
           {data?.top_produtos && <ProdutosTable produtos={data.top_produtos} />}
           {isLoading && (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center text-gray-600 text-sm">
+            <div className="bg-stone-900 border border-stone-800 rounded-xl p-8 text-center text-stone-600 text-sm">
               Carregando produtos…
             </div>
           )}
         </div>
 
         {data?.atualizado_em && (
-          <p className="text-xs text-gray-700 pb-2">Atualizado: {data.atualizado_em}</p>
+          <p className="text-xs text-stone-700 pb-2">Atualizado: {data.atualizado_em}</p>
         )}
       </main>
     </div>

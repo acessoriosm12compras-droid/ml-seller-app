@@ -44,17 +44,17 @@ export default function Resultado() {
 
         {/* Alert: products without cost */}
         {semCusto.length > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start justify-between gap-4">
+          <div className="bg-sky-500/10 border border-sky-500/30 rounded-xl p-4 flex items-start justify-between gap-4">
             <div>
-              <p className="text-amber-400 text-sm font-medium mb-1">
+              <p className="text-sky-400 text-sm font-medium mb-1">
                 {semCusto.length} {semCusto.length === 1 ? 'produto sem' : 'produtos sem'} custo cadastrado
               </p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-stone-400 text-xs">
                 {semCusto.slice(0, 3).map(p => p.titulo).join(', ')}
                 {semCusto.length > 3 && ` e mais ${semCusto.length - 3}...`}
               </p>
             </div>
-            <Link to="/custos-produtos" className="text-amber-400 text-sm hover:text-amber-300 whitespace-nowrap">
+            <Link to="/custos-produtos" className="text-sky-400 text-sm hover:text-sky-300 whitespace-nowrap">
               ⚙️ Cadastrar custos →
             </Link>
           </div>
@@ -63,11 +63,11 @@ export default function Resultado() {
         {/* Block 1: 8 KPI cards */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs text-gray-500 uppercase tracking-wider">Faturamento & Vendas</h2>
+            <h2 className="text-xs text-stone-500 uppercase tracking-wider">Faturamento & Vendas</h2>
             {kpis && (
               <button
                 onClick={handleExportKpis}
-                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emerald-400 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-emerald-400 transition-colors"
               >
                 <span>⬇</span>
                 <span>Exportar KPIs</span>
@@ -85,7 +85,7 @@ export default function Resultado() {
             <KpiCard
               label="Margem"
               value={kpis ? `${kpis.margem.toFixed(2)}%` : '...'}
-              color={kpis && kpis.margem >= 15 ? 'text-emerald-400' : 'text-amber-400'}
+              color={kpis && kpis.margem >= 15 ? 'text-emerald-400' : 'text-sky-400'}
             />
             <KpiCard label="Nº de Vendas" value={kpis ? kpis.n_vendas.toLocaleString('pt-BR') : '...'} />
             <KpiCard label="Unidades Vendidas" value={kpis ? kpis.unidades.toLocaleString('pt-BR') : '...'} />
@@ -100,7 +100,7 @@ export default function Resultado() {
 
         {/* Block 2: 4 ADS cards */}
         <div>
-          <h2 className="text-xs text-gray-500 uppercase tracking-wider mb-3">ADS & Resultado pós Publicidade</h2>
+          <h2 className="text-xs text-stone-500 uppercase tracking-wider mb-3">ADS & Resultado pós Publicidade</h2>
           <div className="grid grid-cols-4 gap-4">
             <KpiCard label="Valor em ADS" value={kpis ? formatBRL(kpis.valor_ads) : '...'} />
             <KpiCard label="TACOS" value={kpis ? `${kpis.tacos.toFixed(2)}%` : '...'} />
@@ -112,7 +112,7 @@ export default function Resultado() {
             <KpiCard
               label="MPA"
               value={kpis ? `${kpis.mpa.toFixed(2)}%` : '...'}
-              color={kpis && kpis.mpa >= 15 ? 'text-emerald-400' : 'text-amber-400'}
+              color={kpis && kpis.mpa >= 15 ? 'text-emerald-400' : 'text-sky-400'}
             />
           </div>
         </div>
@@ -120,8 +120,8 @@ export default function Resultado() {
         {/* Top 15 products table */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xs text-gray-500 uppercase tracking-wider">Top 15 Produtos</h2>
-            <Link to="/custos-produtos" className="text-xs text-gray-500 hover:text-amber-400 transition-colors">
+            <h2 className="text-xs text-stone-500 uppercase tracking-wider">Top 15 Produtos</h2>
+            <Link to="/custos-produtos" className="text-xs text-stone-500 hover:text-sky-400 transition-colors">
               ⚙️ Custos por produto
             </Link>
           </div>

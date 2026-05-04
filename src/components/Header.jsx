@@ -42,14 +42,14 @@ export default function Header({ title, onRefresh, isLoading }) {
   }
 
   return (
-    <header className="min-h-14 bg-gray-900 dark:bg-gray-950 border-b border-gray-800 flex items-start justify-between px-6 py-2 gap-4">
+    <header className="min-h-14 bg-stone-900 dark:bg-stone-950 border-b border-stone-800 flex items-start justify-between px-6 py-2 gap-4">
       <div className="flex items-center gap-3 mt-1.5 shrink-0">
-        <h1 className="text-gray-100 font-semibold text-base">{title}</h1>
+        <h1 className="text-stone-100 font-semibold text-base">{title}</h1>
         {role === 'admin' && (
           <select
             value={activeAccount || ''}
             onChange={e => setActiveAccount(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            className="bg-stone-800 border border-stone-700 rounded-lg px-2 py-1 text-xs text-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
           >
             {CONTAS.map(c => (
               <option key={c} value={c}>{c}</option>
@@ -62,21 +62,21 @@ export default function Header({ title, onRefresh, isLoading }) {
         <PeriodSelector />
 
         {/* Sync block */}
-        <div className="flex items-center gap-1.5 border-l border-gray-800 pl-2">
+        <div className="flex items-center gap-1.5 border-l border-stone-800 pl-2">
           {lastSync && (
-            <span className="text-xs text-gray-600 hidden sm:block whitespace-nowrap">
+            <span className="text-xs text-stone-600 hidden sm:block whitespace-nowrap">
               {isSynced ? `✓ ${lastSync}` : ''}
             </span>
           )}
           {!isSynced && !syncMut.isPending && (
-            <span className="text-xs text-amber-500 hidden sm:block">Sem sync</span>
+            <span className="text-xs text-sky-500 hidden sm:block">Sem sync</span>
           )}
 
           <select
             value={syncPeriodo}
             onChange={e => setSyncPeriodo(e.target.value)}
             disabled={syncMut.isPending}
-            className="bg-gray-800 border border-gray-700 rounded px-1.5 py-1 text-xs text-gray-400 focus:outline-none disabled:opacity-40"
+            className="bg-stone-800 border border-stone-700 rounded px-1.5 py-1 text-xs text-stone-400 focus:outline-none disabled:opacity-40"
           >
             <option value="30d">30d</option>
             <option value="90d">90d</option>
@@ -88,8 +88,8 @@ export default function Header({ title, onRefresh, isLoading }) {
             disabled={syncMut.isPending}
             className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 ${
               isSynced
-                ? 'bg-gray-800 border border-gray-700 text-gray-400 hover:text-amber-400 hover:border-amber-500/40'
-                : 'bg-amber-500/20 border border-amber-500/40 text-amber-400 hover:bg-amber-500/30'
+                ? 'bg-stone-800 border border-stone-700 text-stone-400 hover:text-sky-400 hover:border-sky-500/40'
+                : 'bg-sky-500/20 border border-sky-500/40 text-sky-400 hover:bg-sky-500/30'
             }`}
             title="Sincronizar dados do Mercado Livre com o banco"
           >
@@ -105,14 +105,14 @@ export default function Header({ title, onRefresh, isLoading }) {
         <button
           onClick={onRefresh}
           disabled={isLoading}
-          className="p-2 text-gray-400 hover:text-gray-200 disabled:opacity-40 transition-colors"
+          className="p-2 text-stone-400 hover:text-stone-200 disabled:opacity-40 transition-colors"
           title="Atualizar"
         >
           {isLoading ? '⏳' : '🔄'}
         </button>
         <button
           onClick={toggleDark}
-          className="p-2 text-gray-400 hover:text-gray-200 transition-colors"
+          className="p-2 text-stone-400 hover:text-stone-200 transition-colors"
           title="Alternar tema"
         >
           🌙

@@ -15,46 +15,46 @@ export default function PedidoDetalhe() {
 
   return (
     <div className="flex flex-col flex-1">
-      <div className="h-14 bg-gray-900 border-b border-gray-800 flex items-center px-6 gap-3">
-        <Link to="/pedidos" className="text-gray-500 hover:text-gray-300 text-sm">← Pedidos</Link>
-        <span className="text-gray-700">/</span>
-        <span className="text-gray-300 text-sm font-medium">Pedido #{id}</span>
+      <div className="h-14 bg-stone-900 border-b border-stone-800 flex items-center px-6 gap-3">
+        <Link to="/pedidos" className="text-stone-500 hover:text-stone-300 text-sm">← Pedidos</Link>
+        <span className="text-stone-700">/</span>
+        <span className="text-stone-300 text-sm font-medium">Pedido #{id}</span>
       </div>
       <main className="flex-1 p-6 max-w-2xl">
-        {isLoading && <div className="text-gray-500 text-sm">Carregando...</div>}
+        {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
         {data && (
           <div className="space-y-4">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 grid grid-cols-2 gap-4">
+            <div className="bg-stone-900 border border-stone-800 rounded-xl p-5 grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-gray-500 mb-1">Total</p>
-                <p className="text-xl font-bold text-gray-100">{formatBRL(data.total)}</p>
+                <p className="text-xs text-stone-500 mb-1">Total</p>
+                <p className="text-xl font-bold text-stone-100">{formatBRL(data.total)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">Taxas ML</p>
+                <p className="text-xs text-stone-500 mb-1">Taxas ML</p>
                 <p className="text-xl font-bold text-red-400">{formatBRL(data.taxas_ml)}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">Status</p>
-                <p className="text-gray-200 capitalize">{data.status}</p>
+                <p className="text-xs text-stone-500 mb-1">Status</p>
+                <p className="text-stone-200 capitalize">{data.status}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">Data</p>
-                <p className="text-gray-200">{new Date(data.data).toLocaleString('pt-BR')}</p>
+                <p className="text-xs text-stone-500 mb-1">Data</p>
+                <p className="text-stone-200">{new Date(data.data).toLocaleString('pt-BR')}</p>
               </div>
             </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-              <h2 className="text-sm font-medium text-gray-400 mb-3">Itens</h2>
+            <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
+              <h2 className="text-sm font-medium text-stone-400 mb-3">Itens</h2>
               <div className="space-y-2">
                 {data.itens.map((item, i) => (
-                  <div key={i} className="flex justify-between items-center py-2 border-b border-gray-800/50 last:border-0">
+                  <div key={i} className="flex justify-between items-center py-2 border-b border-stone-800/50 last:border-0">
                     <div>
-                      <p className="text-gray-200 text-sm">{item.titulo}</p>
-                      <p className="text-gray-500 text-xs">{item.ml_item_id}</p>
+                      <p className="text-stone-200 text-sm">{item.titulo}</p>
+                      <p className="text-stone-500 text-xs">{item.ml_item_id}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-gray-300 text-sm">{formatBRL(item.preco_unitario)}</p>
-                      <p className="text-gray-500 text-xs">× {item.quantidade}</p>
+                      <p className="text-stone-300 text-sm">{formatBRL(item.preco_unitario)}</p>
+                      <p className="text-stone-500 text-xs">× {item.quantidade}</p>
                     </div>
                   </div>
                 ))}

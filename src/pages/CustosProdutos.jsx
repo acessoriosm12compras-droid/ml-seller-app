@@ -59,7 +59,7 @@ export default function CustosProdutos() {
       <main className="flex-1 p-6">
         {/* Back link + search */}
         <div className="flex items-center justify-between mb-6">
-          <Link to="/resultado" className="text-sm text-gray-500 hover:text-amber-400 transition-colors">
+          <Link to="/resultado" className="text-sm text-stone-500 hover:text-sky-400 transition-colors">
             ← Voltar para Resultado
           </Link>
           <input
@@ -67,14 +67,14 @@ export default function CustosProdutos() {
             placeholder="Buscar produto..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-amber-500 w-64"
+            className="bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-1 focus:ring-sky-500 w-64"
           />
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-800/50 text-gray-500 border-b border-gray-800">
+              <tr className="bg-stone-800/50 text-stone-500 border-b border-stone-800">
                 <th className="text-left px-4 py-3 font-medium">Produto</th>
                 <th className="text-right px-4 py-3 font-medium">Custo Unitário (R$)</th>
                 <th className="text-center px-4 py-3 font-medium w-24">Status</th>
@@ -83,7 +83,7 @@ export default function CustosProdutos() {
             <tbody>
               {isLoading && (
                 <tr>
-                  <td colSpan={3} className="px-4 py-8 text-center text-gray-500">Carregando produtos...</td>
+                  <td colSpan={3} className="px-4 py-8 text-center text-stone-500">Carregando produtos...</td>
                 </tr>
               )}
               {filtered.map(p => {
@@ -96,10 +96,10 @@ export default function CustosProdutos() {
                 const status = savingStatus[p.item_id]
 
                 return (
-                  <tr key={p.item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                  <tr key={p.item_id} className="border-b border-stone-800/50 hover:bg-stone-800/30">
                     <td className="px-4 py-3">
-                      <p className="text-gray-200 truncate max-w-lg">{p.titulo}</p>
-                      <p className="text-gray-600 text-xs">{p.item_id}</p>
+                      <p className="text-stone-200 truncate max-w-lg">{p.titulo}</p>
+                      <p className="text-stone-600 text-xs">{p.item_id}</p>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <input
@@ -117,19 +117,19 @@ export default function CustosProdutos() {
                         }}
                         onBlur={() => handleBlur(p)}
                         onKeyDown={e => { if (e.key === 'Enter') e.target.blur() }}
-                        className={`bg-gray-800 border rounded px-2 py-1 text-right text-sm text-gray-200 focus:outline-none focus:ring-1 w-28 ${
+                        className={`bg-stone-800 border rounded px-2 py-1 text-right text-sm text-stone-200 focus:outline-none focus:ring-1 w-28 ${
                           status === 'error'
                             ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-700 focus:ring-amber-500'
+                            : 'border-stone-700 focus:ring-sky-500'
                         }`}
                       />
                     </td>
                     <td className="px-4 py-3 text-center text-xs">
-                      {status === 'saving' && <span className="text-gray-500">💾 Salvando...</span>}
+                      {status === 'saving' && <span className="text-stone-500">💾 Salvando...</span>}
                       {status === 'saved' && <span className="text-emerald-400">✓ Salvo</span>}
                       {status === 'error' && <span className="text-red-400">✗ Erro</span>}
                       {!status && p.custo_unitario === null && (
-                        <span className="text-amber-500/70">⚠ sem custo</span>
+                        <span className="text-sky-500/70">⚠ sem custo</span>
                       )}
                     </td>
                   </tr>
@@ -137,7 +137,7 @@ export default function CustosProdutos() {
               })}
               {!isLoading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={3} className="px-4 py-8 text-center text-stone-500">
                     {search ? 'Nenhum produto encontrado.' : 'Nenhum produto ativo encontrado.'}
                   </td>
                 </tr>

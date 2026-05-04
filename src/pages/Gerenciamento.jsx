@@ -26,35 +26,35 @@ function EditModal({ anuncio, onClose, onSave, isSaving }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+      <div className="bg-stone-900 border border-stone-700 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-semibold text-gray-100">Associar Anúncio</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl leading-none">×</button>
+          <h3 className="text-base font-semibold text-stone-100">Associar Anúncio</h3>
+          <button onClick={onClose} className="text-stone-500 hover:text-stone-300 text-xl leading-none">×</button>
         </div>
 
-        <p className="text-xs text-gray-500 mb-4 truncate" title={anuncio?.titulo}>{anuncio?.titulo}</p>
-        <p className="text-xs text-gray-600 font-mono mb-4">{anuncio?.ml_item_id}</p>
+        <p className="text-xs text-stone-500 mb-4 truncate" title={anuncio?.titulo}>{anuncio?.titulo}</p>
+        <p className="text-xs text-stone-600 font-mono mb-4">{anuncio?.ml_item_id}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">SKU Interno</label>
+            <label className="text-xs text-stone-500 mb-1 block">SKU Interno</label>
             <input
               type="text"
               value={form.sku_interno}
               onChange={e => setForm(f => ({ ...f, sku_interno: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
               placeholder="Ex: PROD-001"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Custo Unitário (R$)</label>
+            <label className="text-xs text-stone-500 mb-1 block">Custo Unitário (R$)</label>
             <input
               type="number"
               step="0.01"
               min="0"
               value={form.custo_unitario}
               onChange={e => setForm(f => ({ ...f, custo_unitario: e.target.value }))}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
               placeholder="0,00"
             />
           </div>
@@ -63,14 +63,14 @@ function EditModal({ anuncio, onClose, onSave, isSaving }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 rounded-lg text-sm text-gray-400 bg-gray-800 border border-gray-700 hover:border-gray-600 transition-colors"
+              className="flex-1 py-2 rounded-lg text-sm text-stone-400 bg-stone-800 border border-stone-700 hover:border-stone-600 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="flex-1 py-2 rounded-lg text-sm font-medium text-black bg-amber-400 hover:bg-amber-300 disabled:opacity-50 transition-colors"
+              className="flex-1 py-2 rounded-lg text-sm font-medium text-black bg-sky-400 hover:bg-sky-300 disabled:opacity-50 transition-colors"
             >
               {isSaving ? 'Salvando…' : 'Salvar'}
             </button>
@@ -126,16 +126,16 @@ export default function Gerenciamento() {
         {/* Summary */}
         {data && (
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gray-900 border border-gray-800 border-l-4 border-l-amber-500 rounded-xl p-4">
-              <p className="text-xs text-gray-500">Total Anúncios</p>
-              <p className="text-xl font-bold text-amber-400">{data.total}</p>
+            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-sky-500 rounded-xl p-4">
+              <p className="text-xs text-stone-500">Total Anúncios</p>
+              <p className="text-xl font-bold text-sky-400">{data.total}</p>
             </div>
-            <div className="bg-gray-900 border border-gray-800 border-l-4 border-l-emerald-500 rounded-xl p-4">
-              <p className="text-xs text-gray-500">Com Custo Cadastrado</p>
+            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-emerald-500 rounded-xl p-4">
+              <p className="text-xs text-stone-500">Com Custo Cadastrado</p>
               <p className="text-xl font-bold text-emerald-400">{data.associados}</p>
             </div>
-            <div className="bg-gray-900 border border-gray-800 border-l-4 border-l-red-500 rounded-xl p-4">
-              <p className="text-xs text-gray-500">Sem Custo</p>
+            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-red-500 rounded-xl p-4">
+              <p className="text-xs text-stone-500">Sem Custo</p>
               <p className="text-xl font-bold text-red-400">{data.sem_custo}</p>
             </div>
           </div>
@@ -148,47 +148,47 @@ export default function Gerenciamento() {
             value={busca}
             onChange={e => setBusca(e.target.value)}
             placeholder="Buscar por título ou ID…"
-            className="flex-1 max-w-xs bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            className="flex-1 max-w-xs bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
           />
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={semSku}
               onChange={e => setSemSku(e.target.checked)}
-              className="w-4 h-4 accent-amber-500"
+              className="w-4 h-4 accent-sky-500"
             />
-            <span className="text-xs text-gray-400">Apenas sem custo</span>
+            <span className="text-xs text-stone-400">Apenas sem custo</span>
           </label>
         </div>
 
         {/* Table */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="px-4 py-3 text-left text-gray-500">Anúncio</th>
-                  <th className="px-4 py-3 text-left text-gray-500">SKU Interno</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Custo Unit.</th>
-                  <th className="px-4 py-3 text-center text-gray-500">Status</th>
-                  <th className="px-4 py-3 text-center text-gray-500">Ação</th>
+                <tr className="border-b border-stone-800">
+                  <th className="px-4 py-3 text-left text-stone-500">Anúncio</th>
+                  <th className="px-4 py-3 text-left text-stone-500">SKU Interno</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Custo Unit.</th>
+                  <th className="px-4 py-3 text-center text-stone-500">Status</th>
+                  <th className="px-4 py-3 text-center text-stone-500">Ação</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading && (
-                  <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-600">Carregando anúncios…</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-10 text-center text-stone-600">Carregando anúncios…</td></tr>
                 )}
                 {!isLoading && anuncios.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-600">Nenhum anúncio encontrado.</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-10 text-center text-stone-600">Nenhum anúncio encontrado.</td></tr>
                 )}
                 {anuncios.map(a => (
-                  <tr key={a.ml_item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
-                    <td className="px-4 py-3 text-gray-300 max-w-[240px]">
+                  <tr key={a.ml_item_id} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
+                    <td className="px-4 py-3 text-stone-300 max-w-[240px]">
                       <div className="truncate" title={a.titulo}>{a.titulo}</div>
-                      <div className="text-gray-600 font-mono text-[10px]">{a.ml_item_id}</div>
+                      <div className="text-stone-600 font-mono text-[10px]">{a.ml_item_id}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-400 font-mono">{a.sku_interno || <span className="text-gray-600">—</span>}</td>
-                    <td className="px-4 py-3 text-right text-gray-300">{a.custo_unitario !== null ? formatBRL(a.custo_unitario) : <span className="text-gray-600">—</span>}</td>
+                    <td className="px-4 py-3 text-stone-400 font-mono">{a.sku_interno || <span className="text-stone-600">—</span>}</td>
+                    <td className="px-4 py-3 text-right text-stone-300">{a.custo_unitario !== null ? formatBRL(a.custo_unitario) : <span className="text-stone-600">—</span>}</td>
                     <td className="px-4 py-3 text-center">
                       {a.associado ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400">✓ Associado</span>
@@ -199,7 +199,7 @@ export default function Gerenciamento() {
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => setModal(a)}
-                        className="px-3 py-1 rounded-lg text-xs border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                        className="px-3 py-1 rounded-lg text-xs border border-sky-500/30 text-sky-400 hover:bg-sky-500/10 transition-colors"
                       >
                         {a.associado ? 'Editar' : 'Associar'}
                       </button>

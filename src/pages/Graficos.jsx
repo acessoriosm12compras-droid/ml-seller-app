@@ -22,8 +22,8 @@ function formatPct(v) {
 function CustomTooltip({ active, payload, label, isMoney = true }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 text-xs shadow-xl">
-      <p className="text-gray-400 mb-2 font-medium">{label}</p>
+    <div className="bg-stone-900 border border-stone-700 rounded-lg p-3 text-xs shadow-xl">
+      <p className="text-stone-400 mb-2 font-medium">{label}</p>
       {payload.map(entry => (
         <p key={entry.name} style={{ color: entry.color }} className="flex justify-between gap-4">
           <span>{entry.name}</span>
@@ -36,10 +36,10 @@ function CustomTooltip({ active, payload, label, isMoney = true }) {
   )
 }
 
-function GsKpiCard({ label, value, borderColor = 'border-gray-700', valueColor = 'text-gray-100' }) {
+function GsKpiCard({ label, value, borderColor = 'border-stone-700', valueColor = 'text-stone-100' }) {
   return (
-    <div className={`bg-gray-900 border border-gray-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
-      <p className="text-xs text-gray-400 font-medium">{label}</p>
+    <div className={`bg-stone-900 border border-stone-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
+      <p className="text-xs text-stone-400 font-medium">{label}</p>
       <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
     </div>
   )
@@ -95,19 +95,19 @@ export default function Graficos() {
 
         {/* KPI summary */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          <GsKpiCard label="Faturamento Total" value={t ? formatBRL(t.faturamento) : '…'} borderColor="border-amber-500" />
+          <GsKpiCard label="Faturamento Total" value={t ? formatBRL(t.faturamento) : '…'} borderColor="border-sky-500" />
           <GsKpiCard label="Líq. Marketplace" value={t ? formatBRL(t.liquido_marketplace) : '…'} borderColor="border-blue-500" />
           <GsKpiCard
             label="Lucro Bruto"
             value={t ? formatBRL(t.lucro_bruto) : '…'}
             borderColor="border-violet-500"
-            valueColor={t ? (t.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-gray-100'}
+            valueColor={t ? (t.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-stone-100'}
           />
           <GsKpiCard label="Unidades Vendidas" value={t ? t.unidades.toLocaleString('pt-BR') : '…'} borderColor="border-emerald-500" />
         </div>
 
         {/* Chart tabs */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-5">
             <div className="flex gap-1">
               {TABS.map(tab => (
@@ -116,8 +116,8 @@ export default function Graficos() {
                   onClick={() => setActiveTab(tab.key)}
                   className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                     activeTab === tab.key
-                      ? 'bg-amber-500/20 text-amber-400 font-medium'
-                      : 'text-gray-500 hover:text-gray-300'
+                      ? 'bg-sky-500/20 text-sky-400 font-medium'
+                      : 'text-stone-500 hover:text-stone-300'
                   }`}
                 >
                   {tab.label}
@@ -125,14 +125,14 @@ export default function Graficos() {
               ))}
             </div>
             {data?.periodo && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-stone-500">
                 {data.periodo.inicio} — {data.periodo.fim}
               </span>
             )}
           </div>
 
           {series.length === 0 && !isLoading ? (
-            <p className="text-gray-600 text-sm text-center py-10">Sem dados para o período selecionado.</p>
+            <p className="text-stone-600 text-sm text-center py-10">Sem dados para o período selecionado.</p>
           ) : (
             <>
               {activeTab === 'receitas' && (
@@ -152,7 +152,7 @@ export default function Graficos() {
                     <XAxis dataKey="label" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
                     <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} width={52} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-gray-400">{n}</span>} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
                     <Area type="monotone" dataKey="faturamento" name="Faturamento" stroke="#f59e0b" fill="url(#gFat)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                     <Area type="monotone" dataKey="liquido_marketplace" name="Líq. Marketplace" stroke="#3b82f6" fill="url(#gLiq)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                   </AreaChart>
@@ -176,7 +176,7 @@ export default function Graficos() {
                     <XAxis dataKey="label" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
                     <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} width={52} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-gray-400">{n}</span>} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
                     <Area type="monotone" dataKey="lucro_bruto" name="Lucro Bruto" stroke="#8b5cf6" fill="url(#gLucro)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                     <Area type="monotone" dataKey="lucro_pos_ads" name="Lucro pós ADS" stroke="#10b981" fill="url(#gMpa)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                   </AreaChart>
@@ -190,7 +190,7 @@ export default function Graficos() {
                     <XAxis dataKey="label" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
                     <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} width={40} />
                     <Tooltip content={<CustomTooltip isMoney={false} />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-gray-400">{n}</span>} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
                     <Bar dataKey="unidades" name="Unidades" fill="#f59e0b" radius={[3, 3, 0, 0]} />
                     <Bar dataKey="n_vendas" name="Nº de Vendas" fill="#3b82f6" radius={[3, 3, 0, 0]} />
                   </BarChart>
@@ -210,7 +210,7 @@ export default function Graficos() {
                     <XAxis dataKey="label" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
                     <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={v => `${v.toFixed(0)}%`} width={44} />
                     <Tooltip content={<CustomTooltip isMoney={false} />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-gray-400">{n}</span>} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
                     <Area type="monotone" dataKey="roi" name="ROI (%)" stroke="#f59e0b" fill="url(#gRoi)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -223,15 +223,15 @@ export default function Graficos() {
         {t && (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
             {[
-              { label: 'Custo Produtos', value: formatBRL(t.custo_produtos), color: 'text-gray-300' },
-              { label: 'Valor ADS', value: formatBRL(t.valor_ads), color: 'text-gray-300' },
+              { label: 'Custo Produtos', value: formatBRL(t.custo_produtos), color: 'text-stone-300' },
+              { label: 'Valor ADS', value: formatBRL(t.valor_ads), color: 'text-stone-300' },
               { label: 'Lucro pós ADS', value: formatBRL(t.lucro_pos_ads), color: t.lucro_pos_ads >= 0 ? 'text-emerald-400' : 'text-red-400' },
-              { label: 'Nº de Vendas', value: t.n_vendas.toLocaleString('pt-BR'), color: 'text-gray-300' },
-              { label: 'Unidades', value: t.unidades.toLocaleString('pt-BR'), color: 'text-gray-300' },
+              { label: 'Nº de Vendas', value: t.n_vendas.toLocaleString('pt-BR'), color: 'text-stone-300' },
+              { label: 'Unidades', value: t.unidades.toLocaleString('pt-BR'), color: 'text-stone-300' },
               { label: 'ROI Médio', value: formatPct(t.roi_medio), color: t.roi_medio >= 0 ? 'text-emerald-400' : 'text-red-400' },
             ].map(k => (
-              <div key={k.label} className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
-                <p className="text-xs text-gray-500">{k.label}</p>
+              <div key={k.label} className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
+                <p className="text-xs text-stone-500">{k.label}</p>
                 <p className={`text-base font-semibold ${k.color}`}>{k.value}</p>
               </div>
             ))}

@@ -17,38 +17,38 @@ function formatPct(v) {
 const CURVA_CFG = {
   A: { color: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: 'Curva A', desc: '0–70% faturamento' },
   B: { color: 'border-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'Curva B', desc: '70–90% faturamento' },
-  C: { color: 'border-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-400', label: 'Curva C', desc: '90–100% faturamento' },
-  Z: { color: 'border-gray-600', bg: 'bg-gray-700/30', text: 'text-gray-400', label: 'Curva Z', desc: 'Sem vendas' },
+  C: { color: 'border-sky-500', bg: 'bg-sky-500/10', text: 'text-sky-400', label: 'Curva C', desc: '90–100% faturamento' },
+  Z: { color: 'border-stone-600', bg: 'bg-stone-700/30', text: 'text-stone-400', label: 'Curva Z', desc: 'Sem vendas' },
 }
 
 function CurvaCard({ curva, resumo }) {
   const cfg = CURVA_CFG[curva]
   if (!resumo) return null
   return (
-    <div className={`bg-gray-900 border border-gray-800 rounded-xl p-5 border-l-4 ${cfg.color}`}>
+    <div className={`bg-stone-900 border border-stone-800 rounded-xl p-5 border-l-4 ${cfg.color}`}>
       <div className="flex items-center justify-between mb-3">
         <div>
           <span className={`text-lg font-bold ${cfg.text}`}>{cfg.label}</span>
-          <p className="text-xs text-gray-500 mt-0.5">{cfg.desc}</p>
+          <p className="text-xs text-stone-500 mt-0.5">{cfg.desc}</p>
         </div>
         <span className={`text-2xl font-bold ${cfg.text}`}>{resumo.n_produtos}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div>
-          <p className="text-gray-500">Faturamento</p>
-          <p className="text-gray-200 font-medium">{formatBRL(resumo.faturamento)}</p>
+          <p className="text-stone-500">Faturamento</p>
+          <p className="text-stone-200 font-medium">{formatBRL(resumo.faturamento)}</p>
         </div>
         <div>
-          <p className="text-gray-500">Unidades</p>
-          <p className="text-gray-200 font-medium">{resumo.unidades?.toLocaleString('pt-BR')}</p>
+          <p className="text-stone-500">Unidades</p>
+          <p className="text-stone-200 font-medium">{resumo.unidades?.toLocaleString('pt-BR')}</p>
         </div>
         <div>
-          <p className="text-gray-500">Lucro Bruto</p>
+          <p className="text-stone-500">Lucro Bruto</p>
           <p className={`font-medium ${resumo.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatBRL(resumo.lucro_bruto)}</p>
         </div>
         <div>
-          <p className="text-gray-500">Margem Média</p>
-          <p className={`font-medium ${resumo.margem_media >= 15 ? 'text-emerald-400' : resumo.margem_media >= 0 ? 'text-amber-400' : 'text-red-400'}`}>{formatPct(resumo.margem_media)}</p>
+          <p className="text-stone-500">Margem Média</p>
+          <p className={`font-medium ${resumo.margem_media >= 15 ? 'text-emerald-400' : resumo.margem_media >= 0 ? 'text-sky-400' : 'text-red-400'}`}>{formatPct(resumo.margem_media)}</p>
         </div>
       </div>
     </div>
@@ -96,63 +96,63 @@ export default function CurvaAbc() {
         </div>
 
         {/* Products table */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
-            <h2 className="text-sm font-semibold text-gray-200">
+        <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-800">
+            <h2 className="text-sm font-semibold text-stone-200">
               {data ? `${produtos.length} produtos classificados` : 'Produtos'}
             </h2>
             {data?.faturamento_total && (
-              <span className="text-xs text-gray-500">
-                Faturamento total: <span className="text-amber-400 font-medium">{formatBRL(data.faturamento_total)}</span>
+              <span className="text-xs text-stone-500">
+                Faturamento total: <span className="text-sky-400 font-medium">{formatBRL(data.faturamento_total)}</span>
               </span>
             )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="px-4 py-3 text-left text-gray-500">Curva</th>
-                  <th className="px-4 py-3 text-left text-gray-500">Produto</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Unidades</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Faturamento</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Represent.</th>
-                  <th className="px-4 py-3 text-right text-gray-500">% Acumulada</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Custo Prod.</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Lucro Bruto</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Lucro pós ADS</th>
-                  <th className="px-4 py-3 text-right text-gray-500">MPA</th>
+                <tr className="border-b border-stone-800">
+                  <th className="px-4 py-3 text-left text-stone-500">Curva</th>
+                  <th className="px-4 py-3 text-left text-stone-500">Produto</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Unidades</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Faturamento</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Represent.</th>
+                  <th className="px-4 py-3 text-right text-stone-500">% Acumulada</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Custo Prod.</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Lucro Bruto</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Lucro pós ADS</th>
+                  <th className="px-4 py-3 text-right text-stone-500">MPA</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading && (
-                  <tr><td colSpan={10} className="px-4 py-10 text-center text-gray-600">Carregando…</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-10 text-center text-stone-600">Carregando…</td></tr>
                 )}
                 {!isLoading && produtos.length === 0 && (
-                  <tr><td colSpan={10} className="px-4 py-10 text-center text-gray-600">Sem dados no período.</td></tr>
+                  <tr><td colSpan={10} className="px-4 py-10 text-center text-stone-600">Sem dados no período.</td></tr>
                 )}
                 {produtos.map((p, i) => {
                   const cfg = CURVA_CFG[p.curva] || CURVA_CFG.Z
-                  const lucroColor = p.lucro_bruto === null ? 'text-gray-600' : p.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400'
-                  const mpaColor = p.mpa === null ? 'text-gray-600' : p.mpa >= 15 ? 'text-emerald-400' : p.mpa >= 0 ? 'text-amber-400' : 'text-red-400'
+                  const lucroColor = p.lucro_bruto === null ? 'text-stone-600' : p.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  const mpaColor = p.mpa === null ? 'text-stone-600' : p.mpa >= 15 ? 'text-emerald-400' : p.mpa >= 0 ? 'text-sky-400' : 'text-red-400'
                   return (
-                    <tr key={p.ml_item_id || i} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
+                    <tr key={p.ml_item_id || i} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${cfg.bg} ${cfg.text}`}>
                           {p.curva}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-300 max-w-[220px]">
+                      <td className="px-4 py-3 text-stone-300 max-w-[220px]">
                         <div className="truncate" title={p.titulo}>{p.titulo}</div>
-                        <div className="text-gray-600 font-mono text-[10px]">{p.ml_item_id}</div>
+                        <div className="text-stone-600 font-mono text-[10px]">{p.ml_item_id}</div>
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-300">{p.unidades}</td>
-                      <td className="px-4 py-3 text-right text-amber-400 font-medium">{formatBRL(p.faturamento)}</td>
-                      <td className="px-4 py-3 text-right text-gray-400">{formatPct(p.representatividade)}</td>
-                      <td className="px-4 py-3 text-right text-gray-400">{formatPct(p.pct_acumulado)}</td>
-                      <td className="px-4 py-3 text-right text-gray-400">{p.custo_produtos !== null ? formatBRL(p.custo_produtos) : <span className="text-gray-600">—</span>}</td>
-                      <td className={`px-4 py-3 text-right font-medium ${lucroColor}`}>{p.lucro_bruto !== null ? formatBRL(p.lucro_bruto) : <span className="text-gray-600">—</span>}</td>
-                      <td className={`px-4 py-3 text-right ${p.lucro_pos_ads >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{p.lucro_pos_ads !== null ? formatBRL(p.lucro_pos_ads) : <span className="text-gray-600">—</span>}</td>
-                      <td className={`px-4 py-3 text-right font-medium ${mpaColor}`}>{p.mpa !== null ? formatPct(p.mpa) : <span className="text-gray-600">—</span>}</td>
+                      <td className="px-4 py-3 text-right text-stone-300">{p.unidades}</td>
+                      <td className="px-4 py-3 text-right text-sky-400 font-medium">{formatBRL(p.faturamento)}</td>
+                      <td className="px-4 py-3 text-right text-stone-400">{formatPct(p.representatividade)}</td>
+                      <td className="px-4 py-3 text-right text-stone-400">{formatPct(p.pct_acumulado)}</td>
+                      <td className="px-4 py-3 text-right text-stone-400">{p.custo_produtos !== null ? formatBRL(p.custo_produtos) : <span className="text-stone-600">—</span>}</td>
+                      <td className={`px-4 py-3 text-right font-medium ${lucroColor}`}>{p.lucro_bruto !== null ? formatBRL(p.lucro_bruto) : <span className="text-stone-600">—</span>}</td>
+                      <td className={`px-4 py-3 text-right ${p.lucro_pos_ads >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{p.lucro_pos_ads !== null ? formatBRL(p.lucro_pos_ads) : <span className="text-stone-600">—</span>}</td>
+                      <td className={`px-4 py-3 text-right font-medium ${mpaColor}`}>{p.mpa !== null ? formatPct(p.mpa) : <span className="text-stone-600">—</span>}</td>
                     </tr>
                   )
                 })}

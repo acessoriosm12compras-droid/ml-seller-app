@@ -44,20 +44,20 @@ export default function Inventario() {
         {/* Summary KPIs */}
         {data && (
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="bg-gray-900 border border-gray-800 border-l-4 border-l-amber-500 rounded-xl p-4">
-              <p className="text-xs text-gray-500">Produtos Ativos</p>
-              <p className="text-xl font-bold text-amber-400">{data.total_itens}</p>
+            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-sky-500 rounded-xl p-4">
+              <p className="text-xs text-stone-500">Produtos Ativos</p>
+              <p className="text-xl font-bold text-sky-400">{data.total_itens}</p>
             </div>
-            <div className="bg-gray-900 border border-gray-800 border-l-4 border-l-blue-500 rounded-xl p-4">
-              <p className="text-xs text-gray-500">Unidades em Estoque</p>
+            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-blue-500 rounded-xl p-4">
+              <p className="text-xs text-stone-500">Unidades em Estoque</p>
               <p className="text-xl font-bold text-blue-400">{data.total_unidades?.toLocaleString('pt-BR')}</p>
             </div>
-            <div className="bg-gray-900 border border-gray-800 border-l-4 border-l-violet-500 rounded-xl p-4">
-              <p className="text-xs text-gray-500">Custo Total Estoque</p>
+            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-violet-500 rounded-xl p-4">
+              <p className="text-xs text-stone-500">Custo Total Estoque</p>
               <p className="text-xl font-bold text-violet-400">{formatBRL(data.custo_total_estoque)}</p>
             </div>
-            <div className={`bg-gray-900 border border-gray-800 border-l-4 ${data.itens_estoque_baixo > 0 ? 'border-l-red-500' : 'border-l-emerald-500'} rounded-xl p-4`}>
-              <p className="text-xs text-gray-500">Estoque Baixo</p>
+            <div className={`bg-stone-900 border border-stone-800 border-l-4 ${data.itens_estoque_baixo > 0 ? 'border-l-red-500' : 'border-l-emerald-500'} rounded-xl p-4`}>
+              <p className="text-xs text-stone-500">Estoque Baixo</p>
               <p className={`text-xl font-bold ${data.itens_estoque_baixo > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{data.itens_estoque_baixo}</p>
             </div>
           </div>
@@ -66,12 +66,12 @@ export default function Inventario() {
         {/* Venda e Líquido previstos */}
         {data && (
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
-              <p className="text-xs text-gray-500">Venda Prevista (estoque × preço)</p>
-              <p className="text-lg font-semibold text-amber-400">{formatBRL(data.venda_prevista_total)}</p>
+            <div className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
+              <p className="text-xs text-stone-500">Venda Prevista (estoque × preço)</p>
+              <p className="text-lg font-semibold text-sky-400">{formatBRL(data.venda_prevista_total)}</p>
             </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
-              <p className="text-xs text-gray-500">Líquido Previsto (~70% da venda)</p>
+            <div className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
+              <p className="text-xs text-stone-500">Líquido Previsto (~70% da venda)</p>
               <p className="text-lg font-semibold text-blue-400">{formatBRL(data.liquido_previsto_total)}</p>
             </div>
           </div>
@@ -84,81 +84,81 @@ export default function Inventario() {
             value={busca}
             onChange={e => setBusca(e.target.value)}
             placeholder="Buscar por título ou ID…"
-            className="flex-1 min-w-[200px] max-w-xs bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            className="flex-1 min-w-[200px] max-w-xs bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
           />
           <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-500">Alerta mín.</label>
+            <label className="text-xs text-stone-500">Alerta mín.</label>
             <input
               type="number"
               min="0"
               max="100"
               value={alertaMinimo}
               onChange={e => setAlertaMinimo(parseInt(e.target.value) || 0)}
-              className="w-16 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="w-16 bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
-            <span className="text-xs text-gray-500">un.</span>
+            <span className="text-xs text-stone-500">un.</span>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={apenasBAixo}
               onChange={e => setApenasBaixo(e.target.checked)}
-              className="w-4 h-4 accent-amber-500"
+              className="w-4 h-4 accent-sky-500"
             />
-            <span className="text-xs text-gray-400">Apenas estoque baixo</span>
+            <span className="text-xs text-stone-400">Apenas estoque baixo</span>
           </label>
         </div>
 
         {/* Table */}
-        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="px-4 py-3 text-left text-gray-500">Produto</th>
-                  <th className="px-4 py-3 text-left text-gray-500">SKU</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Preço</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Custo Unit.</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Estoque</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Custo Total</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Venda Prevista</th>
-                  <th className="px-4 py-3 text-right text-gray-500">Líq. Previsto</th>
+                <tr className="border-b border-stone-800">
+                  <th className="px-4 py-3 text-left text-stone-500">Produto</th>
+                  <th className="px-4 py-3 text-left text-stone-500">SKU</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Preço</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Custo Unit.</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Estoque</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Custo Total</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Venda Prevista</th>
+                  <th className="px-4 py-3 text-right text-stone-500">Líq. Previsto</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-10 text-center text-gray-600">
+                    <td colSpan={8} className="px-4 py-10 text-center text-stone-600">
                       Buscando estoque no Mercado Livre… (pode demorar alguns segundos)
                     </td>
                   </tr>
                 )}
                 {!isLoading && itens.length === 0 && (
-                  <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-600">Nenhum item encontrado.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-10 text-center text-stone-600">Nenhum item encontrado.</td></tr>
                 )}
                 {itens.map(item => {
                   const estoqueColor = item.estoque_baixo
                     ? 'text-red-400 font-bold'
                     : item.estoque <= alertaMinimo * 2
-                    ? 'text-amber-400'
+                    ? 'text-sky-400'
                     : 'text-emerald-400'
                   return (
-                    <tr key={item.ml_item_id} className={`border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors ${item.estoque_baixo ? 'bg-red-500/5' : ''}`}>
-                      <td className="px-4 py-3 text-gray-300 max-w-[220px]">
+                    <tr key={item.ml_item_id} className={`border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors ${item.estoque_baixo ? 'bg-red-500/5' : ''}`}>
+                      <td className="px-4 py-3 text-stone-300 max-w-[220px]">
                         <div className="flex items-center gap-2">
                           {item.estoque_baixo && <span title="Estoque baixo" className="text-red-400 text-xs">⚠</span>}
                           <div>
                             <div className="truncate" title={item.titulo}>{item.titulo}</div>
-                            <div className="text-gray-600 font-mono text-[10px]">{item.ml_item_id}</div>
+                            <div className="text-stone-600 font-mono text-[10px]">{item.ml_item_id}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 font-mono">{item.sku_interno || <span className="text-gray-700">—</span>}</td>
-                      <td className="px-4 py-3 text-right text-amber-400">{formatBRL(item.preco)}</td>
-                      <td className="px-4 py-3 text-right text-gray-400">{item.custo_unitario !== null ? formatBRL(item.custo_unitario) : <span className="text-gray-600">—</span>}</td>
+                      <td className="px-4 py-3 text-stone-500 font-mono">{item.sku_interno || <span className="text-stone-700">—</span>}</td>
+                      <td className="px-4 py-3 text-right text-sky-400">{formatBRL(item.preco)}</td>
+                      <td className="px-4 py-3 text-right text-stone-400">{item.custo_unitario !== null ? formatBRL(item.custo_unitario) : <span className="text-stone-600">—</span>}</td>
                       <td className={`px-4 py-3 text-right text-base ${estoqueColor}`}>{item.estoque}</td>
-                      <td className="px-4 py-3 text-right text-gray-400">{item.custo_total_estoque !== null ? formatBRL(item.custo_total_estoque) : <span className="text-gray-600">—</span>}</td>
-                      <td className="px-4 py-3 text-right text-gray-300">{formatBRL(item.venda_prevista)}</td>
+                      <td className="px-4 py-3 text-right text-stone-400">{item.custo_total_estoque !== null ? formatBRL(item.custo_total_estoque) : <span className="text-stone-600">—</span>}</td>
+                      <td className="px-4 py-3 text-right text-stone-300">{formatBRL(item.venda_prevista)}</td>
                       <td className="px-4 py-3 text-right text-blue-400">{formatBRL(item.liquido_previsto)}</td>
                     </tr>
                   )

@@ -9,9 +9,9 @@ function formatBRL(v) {
 }
 
 function MargemBadge({ value }) {
-  if (value === null || value === undefined) return <span className="text-gray-500">—</span>
-  const color = value >= 20 ? 'text-emerald-400' : value >= 0 ? 'text-amber-400' : 'text-red-400'
-  const bg = value >= 20 ? 'bg-emerald-500/10' : value >= 0 ? 'bg-amber-500/10' : 'bg-red-500/10'
+  if (value === null || value === undefined) return <span className="text-stone-500">—</span>
+  const color = value >= 20 ? 'text-emerald-400' : value >= 0 ? 'text-sky-400' : 'text-red-400'
+  const bg = value >= 20 ? 'bg-emerald-500/10' : value >= 0 ? 'bg-sky-500/10' : 'bg-red-500/10'
   return (
     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${color} ${bg}`}>
       {value.toFixed(1)}%
@@ -34,13 +34,13 @@ export default function Margem() {
     <div className="flex flex-col flex-1">
       <Header title="Margem" onRefresh={refetch} isLoading={isLoading} />
       <main className="flex-1 p-6">
-        {isLoading && <div className="text-gray-500 text-sm">Carregando...</div>}
+        {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
         {data && (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-800/50 text-gray-500 border-b border-gray-800">
+                <tr className="bg-stone-800/50 text-stone-500 border-b border-stone-800">
                   <th className="text-left px-4 py-3 font-medium">Produto</th>
                   <th className="text-right px-4 py-3 font-medium">Faturamento</th>
                   <th className="text-right px-4 py-3 font-medium">Custo</th>
@@ -52,13 +52,13 @@ export default function Margem() {
               </thead>
               <tbody>
                 {data.produtos.map((p) => (
-                  <tr key={p.ml_item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                  <tr key={p.ml_item_id} className="border-b border-stone-800/50 hover:bg-stone-800/30">
                     <td className="px-4 py-3">
-                      <p className="text-gray-200 truncate max-w-xs">{p.titulo}</p>
-                      <p className="text-gray-600 text-xs">{p.ml_item_id} · {p.qtd_vendida} un</p>
+                      <p className="text-stone-200 truncate max-w-xs">{p.titulo}</p>
+                      <p className="text-stone-600 text-xs">{p.ml_item_id} · {p.qtd_vendida} un</p>
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-300">{formatBRL(p.faturamento)}</td>
-                    <td className="px-4 py-3 text-right text-gray-400">{formatBRL(p.custo_total)}</td>
+                    <td className="px-4 py-3 text-right text-stone-300">{formatBRL(p.faturamento)}</td>
+                    <td className="px-4 py-3 text-right text-stone-400">{formatBRL(p.custo_total)}</td>
                     <td className="px-4 py-3 text-right text-red-400">{formatBRL(p.taxas_ml)}</td>
                     <td className="px-4 py-3 text-right text-orange-400">{formatBRL(p.gasto_ads)}</td>
                     <td className="px-4 py-3 text-center"><MargemBadge value={p.margem_sem_ads} /></td>

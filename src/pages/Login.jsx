@@ -25,34 +25,34 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+    <div className="min-h-screen bg-stone-950 flex items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-amber-400 font-bold text-3xl mb-1">ML Seller</h1>
-          <p className="text-gray-500 text-sm">Gestão de Vendas — Mercado Livre</p>
+          <h1 className="text-sky-400 font-bold text-3xl mb-1">ML Seller</h1>
+          <p className="text-stone-500 text-sm">Gestão de Vendas — Mercado Livre</p>
         </div>
         <form
           onSubmit={handleSubmit}
-          className="bg-gray-900 rounded-xl border border-gray-800 p-8 space-y-4"
+          className="bg-stone-900 rounded-xl border border-stone-800 p-8 space-y-4"
         >
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">E-mail</label>
+            <label className="block text-sm text-stone-400 mb-1.5">E-mail</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2.5 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1.5">Senha</label>
+            <label className="block text-sm text-stone-400 mb-1.5">Senha</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2.5 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
             />
           </div>
           {error && (
@@ -63,7 +63,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-gray-950 font-semibold py-2.5 rounded-lg text-sm transition-colors"
+            className="w-full bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-stone-950 font-semibold py-2.5 rounded-lg text-sm transition-colors"
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>

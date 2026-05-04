@@ -39,22 +39,22 @@ export default function ImportarCustos() {
 
   return (
     <div className="flex flex-col flex-1">
-      <div className="h-14 bg-gray-900 border-b border-gray-800 flex items-center px-6">
-        <h1 className="text-gray-100 font-semibold text-base">Importar Custos</h1>
+      <div className="h-14 bg-stone-900 border-b border-stone-800 flex items-center px-6">
+        <h1 className="text-stone-100 font-semibold text-base">Importar Custos</h1>
       </div>
       <main className="flex-1 p-6 max-w-xl space-y-6">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+        <div className="bg-stone-900 border border-stone-800 rounded-xl p-6 space-y-4">
           <div>
-            <h2 className="text-sm font-medium text-gray-300 mb-1">Importar planilha de custos</h2>
-            <p className="text-xs text-gray-500">
-              O arquivo deve conter as colunas: <code className="text-amber-400">ml_item_id</code>,{' '}
-              <code className="text-amber-400">titulo</code> e{' '}
-              <code className="text-amber-400">custo</code>.
+            <h2 className="text-sm font-medium text-stone-300 mb-1">Importar planilha de custos</h2>
+            <p className="text-xs text-stone-500">
+              O arquivo deve conter as colunas: <code className="text-sky-400">ml_item_id</code>,{' '}
+              <code className="text-sky-400">titulo</code> e{' '}
+              <code className="text-sky-400">custo</code>.
             </p>
           </div>
 
           <div
-            className="border-2 border-dashed border-gray-700 rounded-xl p-8 text-center cursor-pointer hover:border-amber-500/50 transition-colors"
+            className="border-2 border-dashed border-stone-700 rounded-xl p-8 text-center cursor-pointer hover:border-sky-500/50 transition-colors"
             onClick={() => inputRef.current?.click()}
           >
             <input
@@ -64,9 +64,9 @@ export default function ImportarCustos() {
               onChange={handleFile}
               className="hidden"
             />
-            <p className="text-gray-400 text-sm">
+            <p className="text-stone-400 text-sm">
               {file ? (
-                <span className="text-amber-400 font-medium">📄 {file.name}</span>
+                <span className="text-sky-400 font-medium">📄 {file.name}</span>
               ) : (
                 'Clique para selecionar arquivo .xlsx'
               )}
@@ -82,7 +82,7 @@ export default function ImportarCustos() {
           <button
             onClick={handleUpload}
             disabled={!file || loading}
-            className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-gray-950 font-semibold py-2.5 rounded-lg text-sm transition-colors"
+            className="w-full bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-stone-950 font-semibold py-2.5 rounded-lg text-sm transition-colors"
           >
             {loading ? 'Importando...' : 'Importar'}
           </button>
@@ -95,9 +95,9 @@ export default function ImportarCustos() {
             </p>
             {result.erros?.length > 0 && (
               <div className="mt-2">
-                <p className="text-amber-400 text-xs font-medium mb-1">Linhas com erro:</p>
+                <p className="text-sky-400 text-xs font-medium mb-1">Linhas com erro:</p>
                 {result.erros.map((e, i) => (
-                  <p key={i} className="text-gray-400 text-xs">Linha {e.linha}: {e.erro}</p>
+                  <p key={i} className="text-stone-400 text-xs">Linha {e.linha}: {e.erro}</p>
                 ))}
               </div>
             )}

@@ -40,7 +40,7 @@ function eventLabelColor(tipo) {
   if (tipo === 'repasse_ml') return 'text-blue-400'
   if (tipo === 'deposito_banco') return 'text-green-400'
   if (tipo === 'taxa_indevida') return 'text-red-400'
-  return 'text-gray-400'
+  return 'text-stone-400'
 }
 
 function StatusBadge({ status }) {
@@ -53,7 +53,7 @@ function StatusBadge({ status }) {
   }
   if (status === 'pendente') {
     return (
-      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400">
+      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400">
         ⏳ Pendente
       </span>
     )
@@ -118,28 +118,28 @@ export default function Conciliacao() {
             type="month"
             value={mes}
             onChange={(e) => setMes(e.target.value)}
-            className="bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-amber-500"
+            className="bg-stone-800 border border-stone-700 text-stone-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-500"
           />
           <button
             onClick={handleSync}
             disabled={syncLoading}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-gray-900 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-stone-900 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
           >
             {syncLoading ? '⏳ Sincronizando...' : '🔄 Sincronizar banco'}
           </button>
         </div>
-        {isLoading && <div className="text-gray-500 text-sm">Carregando...</div>}
+        {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
 
         {!isLoading && !error && bankNotConnected && (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 flex flex-col items-center gap-4 text-center">
+          <div className="bg-stone-900 border border-stone-800 rounded-xl p-8 flex flex-col items-center gap-4 text-center">
             <span className="text-4xl">🏦</span>
-            <p className="text-gray-400 text-sm max-w-sm">
+            <p className="text-stone-400 text-sm max-w-sm">
               Conecte sua conta bancária para ver a conciliação
             </p>
             <button
               onClick={() => alert('Funcionalidade de conexão bancária disponível em breve')}
-              className="bg-amber-500 hover:bg-amber-400 text-gray-900 text-sm font-medium px-6 py-2 rounded-lg transition-colors"
+              className="bg-sky-500 hover:bg-sky-400 text-stone-900 text-sm font-medium px-6 py-2 rounded-lg transition-colors"
             >
               Conectar banco
             </button>
@@ -150,22 +150,22 @@ export default function Conciliacao() {
           <>
             {/* KPI Cards */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">ML Prometeu</p>
+              <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
+                <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">ML Prometeu</p>
                 <p className="text-2xl font-bold text-green-400">{formatBRL(cards.ml_prometeu)}</p>
               </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Depositado no Banco</p>
+              <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
+                <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">Depositado no Banco</p>
                 <p className="text-2xl font-bold text-blue-400">{formatBRL(cards.depositado_banco)}</p>
               </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Diferença Total</p>
-                <p className={`text-2xl font-bold ${cards.diferenca_total > 0 ? 'text-amber-400' : 'text-green-400'}`}>
+              <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
+                <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">Diferença Total</p>
+                <p className={`text-2xl font-bold ${cards.diferenca_total > 0 ? 'text-sky-400' : 'text-green-400'}`}>
                   {formatBRL(cards.diferenca_total)}
                 </p>
               </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Taxas Indevidas</p>
+              <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
+                <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">Taxas Indevidas</p>
                 <p className={`text-2xl font-bold ${cards.taxas_indevidas > 0 ? 'text-red-400' : 'text-green-400'}`}>
                   {formatBRL(cards.taxas_indevidas)}
                 </p>
@@ -180,8 +180,8 @@ export default function Conciliacao() {
                   onClick={() => setActiveTab(tab)}
                   className={`px-4 py-1.5 rounded-full text-sm transition-colors ${
                     activeTab === tab
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-                      : 'text-gray-400 hover:text-gray-200 border border-gray-700 hover:border-gray-600'
+                      ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40'
+                      : 'text-stone-400 hover:text-stone-200 border border-stone-700 hover:border-stone-600'
                   }`}
                 >
                   {tab}
@@ -190,21 +190,21 @@ export default function Conciliacao() {
             </div>
 
             {/* Timeline */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+            <div className="bg-stone-900 border border-stone-800 rounded-xl p-5 space-y-4">
               {filteredTimeline.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">
+                <p className="text-stone-500 text-sm text-center py-4">
                   Nenhum evento encontrado para este período.
                 </p>
               ) : (
                 filteredTimeline.map((group, gi) => (
                   <div key={gi} className="space-y-2">
                     {/* Date header */}
-                    <div className="flex items-center gap-2 pb-1 border-b border-gray-800">
-                      <span className="text-sm font-medium text-gray-300">
+                    <div className="flex items-center gap-2 pb-1 border-b border-stone-800">
+                      <span className="text-sm font-medium text-stone-300">
                         {formatDate(group.data)}
                       </span>
                       {group.tem_divergencia && (
-                        <span className="text-amber-400 text-sm" title="Divergência neste dia">⚠</span>
+                        <span className="text-sky-400 text-sm" title="Divergência neste dia">⚠</span>
                       )}
                     </div>
 
@@ -212,18 +212,18 @@ export default function Conciliacao() {
                     {group.eventos.map((evento, ei) => (
                       <div
                         key={ei}
-                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors"
+                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-stone-800/50 hover:bg-stone-800 transition-colors"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <span className={`text-sm font-medium ${eventLabelColor(evento.tipo)}`}>
                             {eventLabel(evento.tipo)}
                           </span>
-                          <span className="text-xs text-gray-500 truncate hidden sm:block">
+                          <span className="text-xs text-stone-500 truncate hidden sm:block">
                             {evento.descricao}
                           </span>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-sm font-semibold text-gray-200">
+                          <span className="text-sm font-semibold text-stone-200">
                             {formatBRL(evento.valor)}
                           </span>
                           <StatusBadge status={evento.status} />

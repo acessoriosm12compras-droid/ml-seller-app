@@ -25,7 +25,7 @@ export default function Financeiro() {
     <div className="flex flex-col flex-1">
       <Header title="Financeiro" onRefresh={refetch} isLoading={isLoading} />
       <main className="flex-1 p-6 space-y-6">
-        {isLoading && <div className="text-gray-500 text-sm">Carregando...</div>}
+        {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
         {data && (
           <>
@@ -36,10 +36,10 @@ export default function Financeiro() {
               <KPICard label="Lucro Líquido" value={formatBRL(data.lucro_liquido)} variacao={null} />
             </div>
 
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-medium text-gray-400">Faturamento por dia</h2>
-                <span className="text-xs text-gray-500">ADS: {formatBRL(data.gasto_ads)}</span>
+                <h2 className="text-sm font-medium text-stone-400">Faturamento por dia</h2>
+                <span className="text-xs text-stone-500">ADS: {formatBRL(data.gasto_ads)}</span>
               </div>
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={data.grafico}>

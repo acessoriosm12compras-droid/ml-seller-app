@@ -12,11 +12,11 @@ function fmtNum(v) {
 }
 
 function MargemBadge({ value }) {
-  if (value === null || value === undefined) return <span className="text-gray-600">—</span>
+  if (value === null || value === undefined) return <span className="text-stone-600">—</span>
   const [cls, bg] = value >= 30
     ? ['text-emerald-400', 'bg-emerald-500/10']
     : value >= 15
-    ? ['text-amber-400', 'bg-amber-500/10']
+    ? ['text-sky-400', 'bg-sky-500/10']
     : ['text-red-400', 'bg-red-500/10']
   return (
     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${cls} ${bg}`}>
@@ -87,11 +87,11 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
   })
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-      <div className="flex justify-end px-4 py-2 border-b border-gray-800">
+    <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+      <div className="flex justify-end px-4 py-2 border-b border-stone-800">
         <button
           onClick={handleExport}
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-emerald-400 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-emerald-400 transition-colors"
           title="Exportar tabela como CSV"
         >
           <span>⬇</span>
@@ -101,17 +101,17 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-800/50 text-gray-500 border-b border-gray-800">
+            <tr className="bg-stone-800/50 text-stone-500 border-b border-stone-800">
               {COLUMNS.map(col => (
                 <th
                   key={col.key}
                   onClick={() => handleSort(col.key)}
-                  className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-gray-300 transition-colors ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
+                  className={`px-4 py-3 font-medium cursor-pointer select-none hover:text-stone-300 transition-colors ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
                 >
                   <span className="inline-flex items-center gap-1">
                     {col.label}
                     {sortKey === col.key && (
-                      <span className="text-xs text-amber-400">
+                      <span className="text-xs text-sky-400">
                         {sortDir === 'asc' ? '▲' : '▼'}
                       </span>
                     )}
@@ -122,43 +122,43 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
           </thead>
           <tbody>
             {sorted.map((p) => (
-              <tr key={p.ml_item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+              <tr key={p.ml_item_id} className="border-b border-stone-800/50 hover:bg-stone-800/30">
                 {/* Produto */}
                 <td className="px-4 py-3">
-                  <p className="text-gray-200 truncate max-w-[200px]">{p.titulo}</p>
-                  <p className="text-gray-600 text-xs">{p.ml_item_id}</p>
+                  <p className="text-stone-200 truncate max-w-[200px]">{p.titulo}</p>
+                  <p className="text-stone-600 text-xs">{p.ml_item_id}</p>
                 </td>
                 {/* Preço Médio */}
-                <td className="px-4 py-3 text-right text-gray-300">
+                <td className="px-4 py-3 text-right text-stone-300">
                   {formatBRL(p.preco_medio)}
                 </td>
                 {/* Custo Unit. */}
                 <td className="px-4 py-3 text-right">
                   {p.custo_unitario === null || p.custo_unitario === undefined
                     ? <span className="text-red-400 text-xs">sem custo</span>
-                    : <span className="text-gray-300">{formatBRL(p.custo_unitario)}</span>
+                    : <span className="text-stone-300">{formatBRL(p.custo_unitario)}</span>
                   }
                 </td>
                 {/* Unidades */}
-                <td className="px-4 py-3 text-right text-gray-300">
+                <td className="px-4 py-3 text-right text-stone-300">
                   {p.unidades?.toLocaleString('pt-BR') ?? '—'}
                 </td>
                 {/* Total Faturado */}
-                <td className="px-4 py-3 text-right text-gray-300">
+                <td className="px-4 py-3 text-right text-stone-300">
                   {formatBRL(p.total_faturado)}
                 </td>
                 {/* Representatividade */}
                 <td className="px-4 py-3 text-right">
-                  <span className="text-gray-300">
+                  <span className="text-stone-300">
                     {p.representatividade !== null && p.representatividade !== undefined
                       ? `${p.representatividade.toFixed(1)}%`
                       : '—'
                     }
                   </span>
                   {p.representatividade !== null && p.representatividade !== undefined && (
-                    <div className="mt-1 h-0.5 bg-gray-800 rounded-full w-full">
+                    <div className="mt-1 h-0.5 bg-stone-800 rounded-full w-full">
                       <div
-                        className="h-0.5 bg-amber-500/60 rounded-full"
+                        className="h-0.5 bg-sky-500/60 rounded-full"
                         style={{ width: `${Math.min(p.representatividade, 100)}%` }}
                       />
                     </div>
@@ -167,7 +167,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                 {/* Lucro */}
                 <td className="px-4 py-3 text-right">
                   {p.lucro === null || p.lucro === undefined
-                    ? <span className="text-gray-600">—</span>
+                    ? <span className="text-stone-600">—</span>
                     : <span className={p.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                         {formatBRL(p.lucro)}
                       </span>
@@ -178,13 +178,13 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                   <MargemBadge value={p.margem} />
                 </td>
                 {/* Custo ADS */}
-                <td className="px-4 py-3 text-right text-gray-400">
+                <td className="px-4 py-3 text-right text-stone-400">
                   {formatBRL(p.custo_ads)}
                 </td>
                 {/* Lucro pós ADS */}
                 <td className="px-4 py-3 text-right">
                   {p.lucro_pos_ads === null || p.lucro_pos_ads === undefined
-                    ? <span className="text-gray-600">—</span>
+                    ? <span className="text-stone-600">—</span>
                     : <span className={p.lucro_pos_ads >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                         {formatBRL(p.lucro_pos_ads)}
                       </span>
@@ -193,7 +193,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                 {/* MPA */}
                 <td className="px-4 py-3 text-center">
                   {p.mpa === null || p.mpa === undefined
-                    ? <span className="text-gray-600">—</span>
+                    ? <span className="text-stone-600">—</span>
                     : <MargemBadge value={p.mpa} />
                   }
                 </td>

@@ -27,7 +27,7 @@ function formatDateTime(iso) {
 }
 
 const STATUS_LABEL = { paid: 'Pago', cancelled: 'Cancelado', pending: 'Pendente' }
-const STATUS_COLOR = { paid: 'text-emerald-400', cancelled: 'text-red-400', pending: 'text-amber-400' }
+const STATUS_COLOR = { paid: 'text-emerald-400', cancelled: 'text-red-400', pending: 'text-sky-400' }
 
 export default function Pedidos() {
   const [params, setParams] = useSearchParams()
@@ -118,7 +118,7 @@ export default function Pedidos() {
 
       <main className="flex-1 p-6 space-y-4 overflow-auto">
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-gray-800">
+        <div className="flex gap-1 border-b border-stone-800">
           {[
             { key: 'pedidos', label: 'Pedidos' },
             { key: 'pl', label: 'P&L por Venda' },
@@ -128,8 +128,8 @@ export default function Pedidos() {
               onClick={() => setTab(t.key)}
               className={`px-4 py-2 text-sm transition-colors border-b-2 -mb-px ${
                 tab === t.key
-                  ? 'border-amber-400 text-amber-400 font-medium'
-                  : 'border-transparent text-gray-500 hover:text-gray-300'
+                  ? 'border-sky-400 text-sky-400 font-medium'
+                  : 'border-transparent text-stone-500 hover:text-stone-300'
               }`}
             >
               {t.label}
@@ -144,21 +144,21 @@ export default function Pedidos() {
             {dataPedidos && (
               <>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">{dataPedidos.total} pedido(s) no período</span>
+                  <span className="text-sm text-stone-500">{dataPedidos.total} pedido(s) no período</span>
                   <button
                     onClick={handleExport}
                     disabled={exporting}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-emerald-400 rounded-lg transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-emerald-400 rounded-lg transition-colors disabled:opacity-50"
                   >
                     <span>{exporting ? '⏳' : '⬇'}</span>
                     <span>{exporting ? 'Exportando…' : 'Exportar CSV'}</span>
                   </button>
                 </div>
 
-                <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-gray-800/50 text-gray-500 border-b border-gray-800">
+                      <tr className="bg-stone-800/50 text-stone-500 border-b border-stone-800">
                         <th className="text-left px-4 py-3 font-medium">Data</th>
                         <th className="text-left px-4 py-3 font-medium">Produto</th>
                         <th className="text-right px-4 py-3 font-medium">Valor</th>
@@ -168,23 +168,23 @@ export default function Pedidos() {
                     </thead>
                     <tbody>
                       {loadPedidos && (
-                        <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-600">Carregando…</td></tr>
+                        <tr><td colSpan={5} className="px-4 py-10 text-center text-stone-600">Carregando…</td></tr>
                       )}
                       {dataPedidos.pedidos.map((p) => (
-                        <tr key={p.ml_order_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                          <td className="px-4 py-3 text-gray-400">{formatDate(p.data)}</td>
-                          <td className="px-4 py-3 text-gray-200 truncate max-w-xs">
+                        <tr key={p.ml_order_id} className="border-b border-stone-800/50 hover:bg-stone-800/30">
+                          <td className="px-4 py-3 text-stone-400">{formatDate(p.data)}</td>
+                          <td className="px-4 py-3 text-stone-200 truncate max-w-xs">
                             {p.itens[0]?.titulo || '—'}
-                            {p.itens.length > 1 && <span className="text-gray-500 text-xs"> +{p.itens.length - 1}</span>}
+                            {p.itens.length > 1 && <span className="text-stone-500 text-xs"> +{p.itens.length - 1}</span>}
                           </td>
-                          <td className="px-4 py-3 text-right text-gray-200">{formatBRL(p.total)}</td>
+                          <td className="px-4 py-3 text-right text-stone-200">{formatBRL(p.total)}</td>
                           <td className="px-4 py-3 text-center">
-                            <span className={`text-xs ${STATUS_COLOR[p.status] || 'text-gray-400'}`}>
+                            <span className={`text-xs ${STATUS_COLOR[p.status] || 'text-stone-400'}`}>
                               {STATUS_LABEL[p.status] || p.status}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <Link to={`/pedidos/${p.ml_order_id}`} className="text-xs text-amber-400 hover:text-amber-300">
+                            <Link to={`/pedidos/${p.ml_order_id}`} className="text-xs text-sky-400 hover:text-sky-300">
                               Ver →
                             </Link>
                           </td>
@@ -194,14 +194,14 @@ export default function Pedidos() {
                   </table>
                 </div>
 
-                <div className="flex items-center justify-end mt-2 text-sm text-gray-500">
+                <div className="flex items-center justify-end mt-2 text-sm text-stone-500">
                   <div className="flex gap-2">
                     <button onClick={prevPage} disabled={offsetPedidos === 0}
-                      className="px-3 py-1.5 bg-gray-800 rounded-lg disabled:opacity-40 hover:bg-gray-700 text-xs">
+                      className="px-3 py-1.5 bg-stone-800 rounded-lg disabled:opacity-40 hover:bg-stone-700 text-xs">
                       ← Anterior
                     </button>
                     <button onClick={nextPage} disabled={offsetPedidos + limitPedidos >= dataPedidos.total}
-                      className="px-3 py-1.5 bg-gray-800 rounded-lg disabled:opacity-40 hover:bg-gray-700 text-xs">
+                      className="px-3 py-1.5 bg-stone-800 rounded-lg disabled:opacity-40 hover:bg-stone-700 text-xs">
                       Próximo →
                     </button>
                   </div>
@@ -216,52 +216,52 @@ export default function Pedidos() {
           <>
             {errVendas && <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4">{errVendas.message}</div>}
 
-            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
-                <h2 className="text-sm font-semibold text-gray-200">
+            <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-stone-800">
+                <h2 className="text-sm font-semibold text-stone-200">
                   {totalVendas > 0 ? `${totalVendas.toLocaleString('pt-BR')} vendas` : 'Vendas'}
                 </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="px-4 py-3 text-left text-gray-500">Pedido</th>
-                      <th className="px-4 py-3 text-left text-gray-500">Data</th>
-                      <th className="px-4 py-3 text-left text-gray-500">Produto</th>
-                      <th className="px-4 py-3 text-right text-gray-500">Qtd</th>
-                      <th className="px-4 py-3 text-right text-gray-500">Faturamento</th>
-                      <th className="px-4 py-3 text-right text-gray-500">Taxas ML</th>
-                      <th className="px-4 py-3 text-right text-gray-500">Líq. Marketplace</th>
-                      <th className="px-4 py-3 text-right text-gray-500">Imposto</th>
-                      <th className="px-4 py-3 text-right text-gray-500">Custo</th>
-                      <th className="px-4 py-3 text-right text-gray-500">Lucro</th>
-                      <th className="px-4 py-3 text-right text-gray-500">Margem</th>
+                    <tr className="border-b border-stone-800">
+                      <th className="px-4 py-3 text-left text-stone-500">Pedido</th>
+                      <th className="px-4 py-3 text-left text-stone-500">Data</th>
+                      <th className="px-4 py-3 text-left text-stone-500">Produto</th>
+                      <th className="px-4 py-3 text-right text-stone-500">Qtd</th>
+                      <th className="px-4 py-3 text-right text-stone-500">Faturamento</th>
+                      <th className="px-4 py-3 text-right text-stone-500">Taxas ML</th>
+                      <th className="px-4 py-3 text-right text-stone-500">Líq. Marketplace</th>
+                      <th className="px-4 py-3 text-right text-stone-500">Imposto</th>
+                      <th className="px-4 py-3 text-right text-stone-500">Custo</th>
+                      <th className="px-4 py-3 text-right text-stone-500">Lucro</th>
+                      <th className="px-4 py-3 text-right text-stone-500">Margem</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loadVendas && (
-                      <tr><td colSpan={11} className="px-4 py-10 text-center text-gray-600">Carregando…</td></tr>
+                      <tr><td colSpan={11} className="px-4 py-10 text-center text-stone-600">Carregando…</td></tr>
                     )}
                     {!loadVendas && vendas.length === 0 && (
-                      <tr><td colSpan={11} className="px-4 py-10 text-center text-gray-600">Sem vendas no período.</td></tr>
+                      <tr><td colSpan={11} className="px-4 py-10 text-center text-stone-600">Sem vendas no período.</td></tr>
                     )}
                     {vendas.map((v, i) => {
-                      const margemColor = v.margem === null ? 'text-gray-500' : v.margem >= 15 ? 'text-emerald-400' : v.margem >= 0 ? 'text-amber-400' : 'text-red-400'
-                      const lucroColor = v.lucro === null ? 'text-gray-500' : v.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'
+                      const margemColor = v.margem === null ? 'text-stone-500' : v.margem >= 15 ? 'text-emerald-400' : v.margem >= 0 ? 'text-sky-400' : 'text-red-400'
+                      const lucroColor = v.lucro === null ? 'text-stone-500' : v.lucro >= 0 ? 'text-emerald-400' : 'text-red-400'
                       return (
-                        <tr key={v.order_id || i} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
-                          <td className="px-4 py-3 text-gray-400 font-mono">{v.order_id}</td>
-                          <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDateTime(v.data_aprovacao)}</td>
-                          <td className="px-4 py-3 text-gray-300 max-w-[180px] truncate" title={v.titulo}>{v.titulo || '—'}</td>
-                          <td className="px-4 py-3 text-right text-gray-300">{v.unidades}</td>
-                          <td className="px-4 py-3 text-right text-amber-400 font-medium">{formatBRL(v.faturamento)}</td>
+                        <tr key={v.order_id || i} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
+                          <td className="px-4 py-3 text-stone-400 font-mono">{v.order_id}</td>
+                          <td className="px-4 py-3 text-stone-400 whitespace-nowrap">{formatDateTime(v.data_aprovacao)}</td>
+                          <td className="px-4 py-3 text-stone-300 max-w-[180px] truncate" title={v.titulo}>{v.titulo || '—'}</td>
+                          <td className="px-4 py-3 text-right text-stone-300">{v.unidades}</td>
+                          <td className="px-4 py-3 text-right text-sky-400 font-medium">{formatBRL(v.faturamento)}</td>
                           <td className="px-4 py-3 text-right text-red-400">{formatBRL(v.taxas_ml)}</td>
                           <td className="px-4 py-3 text-right text-blue-400">{formatBRL(v.liquido_marketplace)}</td>
-                          <td className="px-4 py-3 text-right text-gray-400">{formatBRL(v.imposto)}</td>
-                          <td className="px-4 py-3 text-right text-gray-400">{v.custo_produtos !== null ? formatBRL(v.custo_produtos) : <span className="text-gray-600">—</span>}</td>
-                          <td className={`px-4 py-3 text-right font-semibold ${lucroColor}`}>{v.lucro !== null ? formatBRL(v.lucro) : <span className="text-gray-600">—</span>}</td>
-                          <td className={`px-4 py-3 text-right font-medium ${margemColor}`}>{v.margem !== null ? formatPct(v.margem) : <span className="text-gray-600">—</span>}</td>
+                          <td className="px-4 py-3 text-right text-stone-400">{formatBRL(v.imposto)}</td>
+                          <td className="px-4 py-3 text-right text-stone-400">{v.custo_produtos !== null ? formatBRL(v.custo_produtos) : <span className="text-stone-600">—</span>}</td>
+                          <td className={`px-4 py-3 text-right font-semibold ${lucroColor}`}>{v.lucro !== null ? formatBRL(v.lucro) : <span className="text-stone-600">—</span>}</td>
+                          <td className={`px-4 py-3 text-right font-medium ${margemColor}`}>{v.margem !== null ? formatPct(v.margem) : <span className="text-stone-600">—</span>}</td>
                         </tr>
                       )
                     })}
@@ -270,20 +270,20 @@ export default function Pedidos() {
               </div>
 
               {totalPagesVendas > 1 && (
-                <div className="flex items-center justify-between px-5 py-4 border-t border-gray-800">
-                  <span className="text-xs text-gray-500">Página {pagePl + 1} de {totalPagesVendas}</span>
+                <div className="flex items-center justify-between px-5 py-4 border-t border-stone-800">
+                  <span className="text-xs text-stone-500">Página {pagePl + 1} de {totalPagesVendas}</span>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setPagePl(p => Math.max(0, p - 1))}
                       disabled={pagePl === 0}
-                      className="px-3 py-1.5 text-xs bg-gray-800 border border-gray-700 rounded text-gray-300 disabled:opacity-40 hover:bg-gray-700 transition-colors"
+                      className="px-3 py-1.5 text-xs bg-stone-800 border border-stone-700 rounded text-stone-300 disabled:opacity-40 hover:bg-stone-700 transition-colors"
                     >
                       ← Anterior
                     </button>
                     <button
                       onClick={() => setPagePl(p => Math.min(totalPagesVendas - 1, p + 1))}
                       disabled={pagePl >= totalPagesVendas - 1}
-                      className="px-3 py-1.5 text-xs bg-gray-800 border border-gray-700 rounded text-gray-300 disabled:opacity-40 hover:bg-gray-700 transition-colors"
+                      className="px-3 py-1.5 text-xs bg-stone-800 border border-stone-700 rounded text-stone-300 disabled:opacity-40 hover:bg-stone-700 transition-colors"
                     >
                       Próxima →
                     </button>
