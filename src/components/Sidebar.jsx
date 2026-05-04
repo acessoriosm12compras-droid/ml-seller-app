@@ -4,7 +4,6 @@ import ThemeToggle from './ThemeToggle'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/vendas', label: 'Vendas', icon: '🛒' },
   { to: '/graficos', label: 'Gráficos', icon: '📉' },
   { to: '/analitico', label: 'Analítico', icon: '🔬' },
   { to: '/curva-abc', label: 'Curva ABC', icon: '🅰️' },

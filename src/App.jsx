@@ -57,7 +57,6 @@ export default function App() {
               <Route path="custos-produtos" element={<CustosProdutos />} />
               <Route path="conciliacao" element={<Conciliacao />} />
               <Route path="projecao" element={<ProjecaoVendas />} />
-              <Route path="vendas" element={<Vendas />} />
               <Route path="graficos" element={<Graficos />} />
               <Route path="analitico" element={<Analitico />} />
               <Route path="curva-abc" element={<CurvaAbc />} />
