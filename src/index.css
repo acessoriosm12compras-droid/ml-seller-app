@@ -19,15 +19,15 @@ html:not(.dark) {
   color-scheme: light;
 }
 html:not(.dark) body {
-  background-color: #ffffff;
+  background-color: #f2f1ef;
   color: #1c1917;
 }
 
 /* Backgrounds */
 html:not(.dark) .bg-stone-950,
-html:not(.dark) .bg-stone-900 { background-color: #ffffff; }
-html:not(.dark) .bg-stone-800  { background-color: #f5f4f2; }
-html:not(.dark) .dark\:bg-stone-950 { background-color: #ffffff; }
+html:not(.dark) .bg-stone-900 { background-color: #f2f1ef; }
+html:not(.dark) .bg-stone-800  { background-color: #eae9e6; }
+html:not(.dark) .dark\:bg-stone-950 { background-color: #f2f1ef; }
 
 /* Borders */
 html:not(.dark) .border-stone-800 { border-color: #e2ddd8; }
