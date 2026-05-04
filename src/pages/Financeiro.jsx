@@ -12,7 +12,7 @@ function formatBRL(v) {
 
 export default function Financeiro() {
   const [params] = useSearchParams()
-  const periodo = params.get('periodo') || '30d'
+  const periodo = params.get('periodo') || 'hoje'
   const { activeAccount } = useAuth()
 
   const { data, isLoading, error, refetch } = useQuery({

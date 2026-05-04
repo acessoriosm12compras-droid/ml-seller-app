@@ -22,7 +22,7 @@ function formatDate(d) {
 
 export default function Vendas() {
   const [params] = useSearchParams()
-  const periodo = params.get('periodo') || '7d'
+  const periodo = params.get('periodo') || 'hoje'
   const de = params.get('de') || ''
   const ate = params.get('ate') || ''
   const { activeAccount } = useAuth()

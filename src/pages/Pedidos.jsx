@@ -31,7 +31,7 @@ const STATUS_COLOR = { paid: 'text-emerald-400', cancelled: 'text-red-400', pend
 
 export default function Pedidos() {
   const [params, setParams] = useSearchParams()
-  const periodo = params.get('periodo') || '7d'
+  const periodo = params.get('periodo') || 'hoje'
   const de = params.get('de') || ''
   const ate = params.get('ate') || ''
   const { activeAccount } = useAuth()

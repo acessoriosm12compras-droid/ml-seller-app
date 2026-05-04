@@ -12,7 +12,7 @@ const OPTIONS = [
 ]
 
 function currentLabel(params) {
-  const p = params.get('periodo') || '7d'
+  const p = params.get('periodo') || 'hoje'
   if (p === 'custom') {
     const de = params.get('de')
     const ate = params.get('ate')
@@ -28,7 +28,7 @@ export default function PeriodSelector() {
   const [showCustom, setShowCustom] = useState(false)
   const ref = useRef(null)
 
-  const current = params.get('periodo') || '7d'
+  const current = params.get('periodo') || 'hoje'
 
   useEffect(() => {
     function onClickOutside(e) {

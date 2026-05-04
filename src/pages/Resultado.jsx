@@ -13,7 +13,7 @@ function formatBRL(v) {
 
 export default function Resultado() {
   const [searchParams] = useSearchParams()
-  const periodo = searchParams.get('periodo') || '30d'
+  const periodo = searchParams.get('periodo') || 'hoje'
   const de = searchParams.get('de')
   const ate = searchParams.get('ate')
   const { activeAccount } = useAuth()

@@ -57,7 +57,7 @@ function CurvaCard({ curva, resumo }) {
 
 export default function CurvaAbc() {
   const [params] = useSearchParams()
-  const periodo = params.get('periodo') || '30d'
+  const periodo = params.get('periodo') || 'hoje'
   const de = params.get('de') || ''
   const ate = params.get('ate') || ''
   const { activeAccount } = useAuth()
