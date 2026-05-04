@@ -1,8 +1,14 @@
 import { useState } from 'react'
+import { downloadCSV, todayStr } from '../../lib/exportCSV'
 
 function formatBRL(v) {
   if (v === null || v === undefined) return '—'
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+}
+
+function fmtNum(v) {
+  if (v === null || v === undefined) return ''
+  return String(v).replace('.', ',')
 }
 
 function MargemBadge({ value }) {
@@ -33,9 +39,32 @@ const COLUMNS = [
   { key: 'mpa', label: 'MPA', align: 'center' },
 ]
 
-export default function ProdutosTable({ produtos }) {
+export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
   const [sortKey, setSortKey] = useState('total_faturado')
   const [sortDir, setSortDir] = useState('desc')
+
+  function handleExport() {
+    const headers = [
+      'ID ML', 'Produto', 'Preço Médio', 'Custo Unitário', 'Unidades',
+      'Total Faturado', 'Representatividade %', 'Lucro', 'Margem %',
+      'Custo ADS', 'Lucro pós ADS', 'MPA %',
+    ]
+    const rows = sorted.map((p) => [
+      p.ml_item_id,
+      p.titulo,
+      fmtNum(p.preco_medio),
+      fmtNum(p.custo_unitario),
+      p.unidades,
+      fmtNum(p.total_faturado),
+      fmtNum(p.representatividade),
+      fmtNum(p.lucro),
+      fmtNum(p.margem),
+      fmtNum(p.custo_ads),
+      fmtNum(p.lucro_pos_ads),
+      fmtNum(p.mpa),
+    ])
+    downloadCSV(`${titulo}-${todayStr()}.csv`, headers, rows)
+  }
 
   function handleSort(key) {
     if (sortKey === key) {
@@ -59,6 +88,16 @@ export default function ProdutosTable({ produtos }) {
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+      <div className="flex justify-end px-4 py-2 border-b border-gray-800">
+        <button
+          onClick={handleExport}
+          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-emerald-400 transition-colors"
+          title="Exportar tabela como CSV"
+        >
+          <span>⬇</span>
+          <span>Exportar CSV</span>
+        </button>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>

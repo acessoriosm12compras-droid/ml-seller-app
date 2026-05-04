@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
 import KpiCard from '../components/resultado/KpiCard'
 import ProdutosTable from '../components/resultado/ProdutosTable'
+import { downloadCSV, todayStr } from '../lib/exportCSV'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0)
@@ -25,6 +26,15 @@ export default function Resultado() {
 
   const kpis = data?.kpis
   const semCusto = data?.top_produtos?.filter(p => p.custo_unitario === null) ?? []
+
+  function handleExportKpis() {
+    if (!kpis) return
+    const fn = v => v !== null && v !== undefined ? String(v).replace('.', ',') : ''
+    downloadCSV(`resultado-kpis-${periodo}-${todayStr()}.csv`,
+      ['Período', 'Faturamento', 'Líq. Marketplace', 'Lucro Bruto', 'Margem %', 'Nº Vendas', 'Unidades', 'Ticket Médio', 'ROI %', 'Valor ADS', 'TACoS %', 'Lucro pós ADS', 'MPA %'],
+      [[periodo, fn(kpis.faturamento), fn(kpis.liquido_marketplace), fn(kpis.lucro_bruto), fn(kpis.margem), kpis.n_vendas, kpis.unidades, fn(kpis.ticket_medio), fn(kpis.roi), fn(kpis.valor_ads), fn(kpis.tacos), fn(kpis.lucro_pos_ads), fn(kpis.mpa)]]
+    )
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -52,7 +62,18 @@ export default function Resultado() {
 
         {/* Block 1: 8 KPI cards */}
         <div>
-          <h2 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Faturamento & Vendas</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs text-gray-500 uppercase tracking-wider">Faturamento & Vendas</h2>
+            {kpis && (
+              <button
+                onClick={handleExportKpis}
+                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emerald-400 transition-colors"
+              >
+                <span>⬇</span>
+                <span>Exportar KPIs</span>
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-4 gap-4">
             <KpiCard label="Faturamento" value={kpis ? formatBRL(kpis.faturamento) : '...'} />
             <KpiCard label="Líq. do Marketplace" value={kpis ? formatBRL(kpis.liquido_marketplace) : '...'} />
