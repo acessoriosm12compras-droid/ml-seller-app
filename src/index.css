@@ -7,23 +7,44 @@
     scrollbar-width: thin;
     scrollbar-color: #44403c #1c1917;
   }
-  *::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  *::-webkit-scrollbar-track {
-    background: #1c1917;
-  }
-  *::-webkit-scrollbar-thumb {
-    background: #44403c;
-    border-radius: 3px;
-  }
-  *::-webkit-scrollbar-thumb:hover {
-    background: #57534e;
-  }
-
-  ::selection {
-    background: rgb(14 165 233 / 0.3);
-    color: #f5f5f4;
-  }
+  *::-webkit-scrollbar { width: 6px; height: 6px; }
+  *::-webkit-scrollbar-track { background: #1c1917; }
+  *::-webkit-scrollbar-thumb { background: #44403c; border-radius: 3px; }
+  *::-webkit-scrollbar-thumb:hover { background: #57534e; }
+  ::selection { background: rgb(14 165 233 / 0.3); color: #f5f5f4; }
 }
+
+/* ── Light mode overrides ── */
+html:not(.dark) {
+  color-scheme: light;
+}
+html:not(.dark) body {
+  background-color: #ffffff;
+  color: #1c1917;
+}
+
+/* Backgrounds */
+html:not(.dark) .bg-stone-950,
+html:not(.dark) .bg-stone-900 { background-color: #ffffff; }
+html:not(.dark) .bg-stone-800  { background-color: #f5f4f2; }
+html:not(.dark) .dark\:bg-stone-950 { background-color: #ffffff; }
+
+/* Borders */
+html:not(.dark) .border-stone-800 { border-color: #e2ddd8; }
+html:not(.dark) .border-stone-700 { border-color: #d4cfc9; }
+
+/* Text */
+html:not(.dark) .text-stone-100,
+html:not(.dark) .text-stone-200,
+html:not(.dark) .text-stone-300 { color: #1c1917; }
+html:not(.dark) .text-stone-400 { color: #57534e; }
+html:not(.dark) .text-stone-500,
+html:not(.dark) .text-stone-600 { color: #78716c; }
+
+/* Scrollbar light */
+html:not(.dark) * {
+  scrollbar-color: #d4cfc9 #ffffff;
+}
+html:not(.dark) *::-webkit-scrollbar-track { background: #ffffff; }
+html:not(.dark) *::-webkit-scrollbar-thumb { background: #d4cfc9; }
+html:not(.dark) *::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
