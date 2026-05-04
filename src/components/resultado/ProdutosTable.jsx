@@ -83,11 +83,11 @@ export default function ProdutosTable({ produtos }) {
           </thead>
           <tbody>
             {sorted.map((p) => (
-              <tr key={p.item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+              <tr key={p.ml_item_id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
                 {/* Produto */}
                 <td className="px-4 py-3">
                   <p className="text-gray-200 truncate max-w-[200px]">{p.titulo}</p>
-                  <p className="text-gray-600 text-xs">{p.item_id}</p>
+                  <p className="text-gray-600 text-xs">{p.ml_item_id}</p>
                 </td>
                 {/* Preço Médio */}
                 <td className="px-4 py-3 text-right text-gray-300">
