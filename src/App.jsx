@@ -27,7 +27,7 @@ import Gerenciamento from './pages/Gerenciamento'
 import Inventario from './pages/Inventario'
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 60_000 } },
+  defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
 })
 
 export default function App() {
