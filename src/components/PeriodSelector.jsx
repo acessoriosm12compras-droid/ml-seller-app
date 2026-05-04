@@ -1,25 +1,60 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 const OPTIONS = [
-  { value: 'hoje', label: 'Hoje' },
-  { value: '7d', label: '7 dias' },
-  { value: '30d', label: '30 dias' },
+  { value: 'hoje',   label: 'Hoje' },
+  { value: 'ontem',  label: 'Ontem' },
+  { value: '7d',     label: 'Últimos 7 dias' },
+  { value: '15d',    label: 'Últimos 15 dias' },
+  { value: '20d',    label: 'Últimos 20 dias' },
+  { value: '30d',    label: 'Últimos 30 dias' },
   { value: 'custom', label: 'Personalizado' },
 ]
 
+function currentLabel(params) {
+  const p = params.get('periodo') || '7d'
+  if (p === 'custom') {
+    const de = params.get('de')
+    const ate = params.get('ate')
+    if (de && ate) return `${de} → ${ate}`
+    return 'Personalizado'
+  }
+  return OPTIONS.find(o => o.value === p)?.label ?? p
+}
+
 export default function PeriodSelector() {
   const [params, setParams] = useSearchParams()
-  const current = params.get('periodo') || '7d'
-  const [showCustom, setShowCustom] = useState(current === 'custom')
+  const [open, setOpen] = useState(false)
+  const [showCustom, setShowCustom] = useState(false)
+  const ref = useRef(null)
 
-  function selectPeriod(value) {
+  const current = params.get('periodo') || '7d'
+
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false)
+        if (current !== 'custom') setShowCustom(false)
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [current])
+
+  function select(value) {
     if (value === 'custom') {
       setShowCustom(true)
       return
     }
     setShowCustom(false)
-    setParams(p => { const np = new URLSearchParams(p); np.set('periodo', value); np.delete('de'); np.delete('ate'); return np })
+    setOpen(false)
+    setParams(p => {
+      const np = new URLSearchParams(p)
+      np.set('periodo', value)
+      np.delete('de')
+      np.delete('ate')
+      return np
+    })
   }
 
   function applyCustom(de, ate) {
@@ -34,37 +69,59 @@ export default function PeriodSelector() {
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      <div className="flex gap-1 bg-gray-800 rounded-lg p-1">
-        {OPTIONS.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => selectPeriod(value)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              (current === value || (value === 'custom' && showCustom))
-                ? 'bg-amber-500 text-gray-950'
-                : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {showCustom && (
-        <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
-          <input
-            type="date"
-            defaultValue={params.get('de') || ''}
-            onChange={e => applyCustom(e.target.value, params.get('ate') || '')}
-            className="bg-transparent text-gray-200 text-sm focus:outline-none"
-          />
-          <span className="text-gray-500 text-sm">até</span>
-          <input
-            type="date"
-            defaultValue={params.get('ate') || ''}
-            onChange={e => applyCustom(params.get('de') || '', e.target.value)}
-            className="bg-transparent text-gray-200 text-sm focus:outline-none"
-          />
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-300 hover:text-gray-100 hover:border-gray-600 transition-colors whitespace-nowrap"
+      >
+        <span className="text-amber-400">📅</span>
+        <span>{currentLabel(params)}</span>
+        <span className="text-gray-500 text-xs">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 bg-gray-900 border border-gray-700 rounded-xl shadow-xl py-1 min-w-[180px]">
+          {OPTIONS.filter(o => o.value !== 'custom').map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => select(value)}
+              className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                current === value
+                  ? 'text-amber-400 bg-amber-500/10'
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-gray-100'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+          <div className="border-t border-gray-800 mt-1 pt-1">
+            <button
+              onClick={() => select('custom')}
+              className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                current === 'custom'
+                  ? 'text-amber-400 bg-amber-500/10'
+                  : 'text-gray-300 hover:bg-gray-800 hover:text-gray-100'
+              }`}
+            >
+              Personalizado…
+            </button>
+            {showCustom && (
+              <div className="px-3 pb-2 pt-1 flex flex-col gap-1.5">
+                <input
+                  type="date"
+                  defaultValue={params.get('de') || ''}
+                  onChange={e => applyCustom(e.target.value, params.get('ate') || '')}
+                  className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-amber-500"
+                />
+                <input
+                  type="date"
+                  defaultValue={params.get('ate') || ''}
+                  onChange={e => applyCustom(params.get('de') || '', e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
