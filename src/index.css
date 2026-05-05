@@ -44,12 +44,13 @@ html:not(.dark) .border-l-violet-500 { border-left-color: #8b5cf6; }
 html:not(.dark) .border-l-emerald-500 { border-left-color: #10b981; }
 
 /* Text */
+html:not(.dark) body { color: #111; }
 html:not(.dark) .text-stone-100,
 html:not(.dark) .text-stone-200,
-html:not(.dark) .text-stone-300 { color: #1c1917; }
-html:not(.dark) .text-stone-400 { color: #57534e; }
+html:not(.dark) .text-stone-300 { color: #111; }
+html:not(.dark) .text-stone-400 { color: #3d3730; }
 html:not(.dark) .text-stone-500,
-html:not(.dark) .text-stone-600 { color: #78716c; }
+html:not(.dark) .text-stone-600 { color: #57534e; }
 
 /* Scrollbar light */
 html:not(.dark) * {
