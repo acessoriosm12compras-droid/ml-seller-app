@@ -71,14 +71,14 @@ export default function Sidebar() {
           <NavLink
             key={to}
             to={to}
+            title={label}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] transition-colors ${
+              `flex-1 flex flex-col items-center justify-center transition-colors ${
                 isActive ? 'text-sky-400' : 'text-zinc-600 hover:text-zinc-300'
               }`
             }
           >
-            <Icon size={18} strokeWidth={1.75} />
-            <span className="leading-none">{label.split(' ')[0]}</span>
+            <Icon size={20} strokeWidth={1.75} />
           </NavLink>
         ))}
       </nav>

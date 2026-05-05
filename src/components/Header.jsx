@@ -12,7 +12,7 @@ export default function Header({ title, onRefresh, isLoading }) {
   }
 
   return (
-    <header className="bg-stone-900 dark:bg-stone-950 border-b border-stone-800 flex flex-wrap items-center justify-between gap-2 px-4 sm:px-6 py-2 min-h-14">
+    <header className="bg-stone-900 dark:bg-stone-950 border-b border-stone-800 flex items-center justify-between gap-2 px-4 sm:px-6 py-2 min-h-14">
       <div className="flex items-center gap-3 shrink-0">
         <h1 className="text-stone-100 font-semibold text-base">{title}</h1>
         {role === 'admin' && (
@@ -40,7 +40,7 @@ export default function Header({ title, onRefresh, isLoading }) {
         </button>
         <button
           onClick={toggleDark}
-          className="p-2 text-stone-400 hover:text-stone-200 transition-colors"
+          className="hidden sm:block p-2 text-stone-400 hover:text-stone-200 transition-colors"
           title="Alternar tema"
         >
           🌙

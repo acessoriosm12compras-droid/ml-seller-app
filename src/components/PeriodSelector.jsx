@@ -72,10 +72,10 @@ export default function PeriodSelector() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1.5 bg-stone-800 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-300 hover:text-stone-100 hover:border-stone-600 transition-colors whitespace-nowrap"
+        className="flex items-center gap-1.5 bg-stone-800 border border-stone-700 rounded-lg px-2.5 py-1.5 text-sm text-stone-300 hover:text-stone-100 hover:border-stone-600 transition-colors whitespace-nowrap"
       >
         <span className="text-sky-400">📅</span>
-        <span>{currentLabel(params)}</span>
+        <span className="hidden sm:inline">{currentLabel(params)}</span>
         <span className="text-stone-500 text-xs">{open ? '▲' : '▼'}</span>
       </button>
 

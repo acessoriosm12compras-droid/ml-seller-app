@@ -28,7 +28,7 @@ function GsKpiCard({ label, value, variacao, valueColor, info }) {
   return (
     <div className="bg-white dark:bg-[#161618] rounded-2xl p-5 border border-stone-100 dark:border-white/[0.04] flex flex-col gap-2 shadow-sm dark:shadow-none">
       <div className="flex items-center gap-1.5">
-        <p className="text-[11px] font-semibold text-stone-400 dark:text-zinc-500 uppercase tracking-widest">{label}</p>
+        <p className="text-[11px] font-semibold text-stone-400 dark:text-zinc-500 uppercase tracking-wider truncate">{label}</p>
         {info && (
           <span title={info} className="text-stone-300 dark:text-zinc-700 cursor-default text-[10px] select-none">ⓘ</span>
         )}
