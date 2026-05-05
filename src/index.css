@@ -33,6 +33,12 @@ html:not(.dark) .dark\:bg-stone-950 { background-color: #f2f1ef; }
 html:not(.dark) .border-stone-800 { border-color: #e2ddd8; }
 html:not(.dark) .border-stone-700 { border-color: #d4cfc9; }
 
+/* Preserve colored left borders in light mode (higher specificity than border-stone-* overrides) */
+html:not(.dark) .border-l-sky-500    { border-left-color: #0ea5e9; }
+html:not(.dark) .border-l-blue-500   { border-left-color: #3b82f6; }
+html:not(.dark) .border-l-violet-500 { border-left-color: #8b5cf6; }
+html:not(.dark) .border-l-emerald-500 { border-left-color: #10b981; }
+
 /* Text */
 html:not(.dark) .text-stone-100,
 html:not(.dark) .text-stone-200,

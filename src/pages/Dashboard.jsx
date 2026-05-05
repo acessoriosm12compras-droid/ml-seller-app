@@ -20,23 +20,23 @@ function formatPct(v) {
   return `${v.toFixed(2)}%`
 }
 
-// KPI card styled like Gestor Seller: dark bg, colored left border, label + value + optional delta
-function GsKpiCard({ label, value, variacao, borderColor = 'border-l-stone-700', valueColor = 'text-stone-100', info }) {
+// KPI card: white in light mode, dark in dark mode, colored left border
+function GsKpiCard({ label, value, variacao, borderColor = 'border-l-stone-400', valueColor = 'text-stone-800 dark:text-stone-100', info }) {
   const varNum = typeof variacao === 'number' ? variacao : null
   const isPositive = varNum !== null && varNum >= 0
   const isNegative = varNum !== null && varNum < 0
 
   return (
-    <div className={`bg-stone-900 border border-stone-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
+    <div className={`bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
       <div className="flex items-center gap-1.5">
-        <p className="text-xs text-stone-400 font-medium">{label}</p>
+        <p className="text-xs text-stone-500 font-medium">{label}</p>
         {info && (
-          <span title={info} className="text-stone-600 cursor-default text-xs select-none">ⓘ</span>
+          <span title={info} className="text-stone-400 dark:text-stone-600 cursor-default text-xs select-none">ⓘ</span>
         )}
       </div>
       <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
       {varNum !== null && (
-        <p className={`text-xs flex items-center gap-1 ${isPositive ? 'text-emerald-400' : isNegative ? 'text-red-400' : 'text-stone-500'}`}>
+        <p className={`text-xs flex items-center gap-1 ${isPositive ? 'text-emerald-500' : isNegative ? 'text-red-500' : 'text-stone-500'}`}>
           <span>{isPositive ? '▲' : '▼'}</span>
           <span>{Math.abs(varNum).toFixed(1)}% vs período anterior</span>
         </p>
@@ -46,11 +46,11 @@ function GsKpiCard({ label, value, variacao, borderColor = 'border-l-stone-700',
 }
 
 // Small secondary KPI card (for expanded row)
-function SmallKpiCard({ label, value, valueColor = 'text-stone-300' }) {
+function SmallKpiCard({ label, value, valueColor }) {
   return (
-    <div className="bg-stone-800/60 border border-stone-700/50 rounded-lg px-4 py-3 flex flex-col gap-0.5">
+    <div className="bg-white dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/50 rounded-lg px-4 py-3 flex flex-col gap-0.5">
       <p className="text-xs text-stone-500">{label}</p>
-      <p className={`text-base font-semibold ${valueColor}`}>{value}</p>
+      <p className={`text-base font-semibold ${valueColor ?? 'text-stone-800 dark:text-stone-200'}`}>{value}</p>
     </div>
   )
 }
@@ -159,14 +159,14 @@ export default function Dashboard() {
             value={k ? formatBRL(k.lucro_bruto) : '…'}
             variacao={k?.lucro_variacao}
             borderColor="border-l-violet-500"
-            valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-stone-100'}
+            valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500') : 'text-stone-800 dark:text-stone-100'}
             info="Líquido do Marketplace menos o custo dos produtos (CMV)"
           />
           <GsKpiCard
             label="Margem"
             value={k ? formatPct(k.margem) : '…'}
             borderColor="border-l-emerald-500"
-            valueColor={k ? (k.margem >= 15 ? 'text-emerald-400' : k.margem >= 0 ? 'text-sky-400' : 'text-red-400') : 'text-stone-100'}
+            valueColor={k ? (k.margem >= 15 ? 'text-emerald-500' : k.margem >= 0 ? 'text-sky-500' : 'text-red-500') : 'text-stone-800 dark:text-stone-100'}
             info="Lucro Bruto ÷ Faturamento"
           />
         </div>
@@ -186,11 +186,11 @@ export default function Dashboard() {
               <SmallKpiCard label="Nº de Vendas" value={k ? k.n_vendas.toLocaleString('pt-BR') : '…'} />
               <SmallKpiCard label="Unidades" value={k ? k.unidades.toLocaleString('pt-BR') : '…'} />
               <SmallKpiCard label="Ticket Médio" value={k ? formatBRL(k.ticket_medio) : '…'} />
-              <SmallKpiCard label="Reclamações" value={k ? k.reclamacoes : '…'} valueColor={k && k.reclamacoes > 0 ? 'text-red-400' : 'text-stone-300'} />
+              <SmallKpiCard label="Reclamações" value={k ? k.reclamacoes : '…'} valueColor={k && k.reclamacoes > 0 ? 'text-red-500' : 'text-stone-800 dark:text-stone-200'} />
               <SmallKpiCard label="Valor em ADS" value={k ? formatBRL(k.valor_ads) : '…'} />
-              <SmallKpiCard label="TACoS" value={k ? formatPct(k.tacos) : '…'} valueColor={k && k.tacos > 0 ? 'text-sky-400' : 'text-stone-300'} />
-              <SmallKpiCard label="Lucro pós ADS" value={k ? formatBRL(k.lucro_pos_ads) : '…'} valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-stone-300'} />
-              <SmallKpiCard label="MPA" value={k ? formatPct(k.mpa) : '…'} valueColor={k ? (k.mpa >= 15 ? 'text-emerald-400' : k.mpa >= 0 ? 'text-sky-400' : 'text-red-400') : 'text-stone-300'} />
+              <SmallKpiCard label="TACoS" value={k ? formatPct(k.tacos) : '…'} valueColor={k && k.tacos > 0 ? 'text-sky-500' : 'text-stone-800 dark:text-stone-200'} />
+              <SmallKpiCard label="Lucro pós ADS" value={k ? formatBRL(k.lucro_pos_ads) : '…'} valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-emerald-500' : 'text-red-500') : 'text-stone-800 dark:text-stone-200'} />
+              <SmallKpiCard label="MPA" value={k ? formatPct(k.mpa) : '…'} valueColor={k ? (k.mpa >= 15 ? 'text-emerald-500' : k.mpa >= 0 ? 'text-sky-500' : 'text-red-500') : 'text-stone-800 dark:text-stone-200'} />
             </div>
           )}
         </div>

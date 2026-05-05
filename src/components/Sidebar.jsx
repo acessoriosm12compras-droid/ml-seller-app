@@ -1,24 +1,29 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
+import {
+  LayoutDashboard, BarChart2, Activity, PieChart, FileText,
+  ArrowLeftRight, ShoppingBag, ClipboardList, Banknote,
+  Scale, TrendingUp, Percent, Search, Tag, Package, Settings,
+} from 'lucide-react'
 
 const NAV = [
-  { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/graficos', label: 'Gráficos', icon: '📉' },
-  { to: '/analitico', label: 'Analítico', icon: '🔬' },
-  { to: '/curva-abc', label: 'Curva ABC', icon: '🅰️' },
-  { to: '/financeiro-resumo', label: 'Fin. Resumo', icon: '💹' },
-  { to: '/movimentacoes', label: 'Movimentações', icon: '💸' },
-  { to: '/pedidos', label: 'Pedidos', icon: '📦' },
-  { to: '/resultado', label: 'Resultado', icon: '📋' },
-  { to: '/financeiro', label: 'Financeiro', icon: '💰' },
-  { to: '/conciliacao', label: 'Conciliação', icon: '🏦' },
-  { to: '/projecao', label: 'Projeção', icon: '🎯' },
-  { to: '/margem', label: 'Margem', icon: '📈' },
-  { to: '/ranqueamento', label: 'Ranqueamento', icon: '🔍' },
-  { to: '/gerenciamento', label: 'Gerenciamento', icon: '🏷️' },
-  { to: '/inventario', label: 'Inventário', icon: '📦' },
-  { to: '/configuracoes/custos', label: 'Custos', icon: '⚙️' },
+  { to: '/dashboard',           label: 'Dashboard',      icon: LayoutDashboard },
+  { to: '/graficos',            label: 'Gráficos',       icon: BarChart2 },
+  { to: '/analitico',           label: 'Analítico',      icon: Activity },
+  { to: '/curva-abc',           label: 'Curva ABC',      icon: PieChart },
+  { to: '/financeiro-resumo',   label: 'Fin. Resumo',    icon: FileText },
+  { to: '/movimentacoes',       label: 'Movimentações',  icon: ArrowLeftRight },
+  { to: '/pedidos',             label: 'Pedidos',        icon: ShoppingBag },
+  { to: '/resultado',           label: 'Resultado',      icon: ClipboardList },
+  { to: '/financeiro',          label: 'Financeiro',     icon: Banknote },
+  { to: '/conciliacao',         label: 'Conciliação',    icon: Scale },
+  { to: '/projecao',            label: 'Projeção',       icon: TrendingUp },
+  { to: '/margem',              label: 'Margem',         icon: Percent },
+  { to: '/ranqueamento',        label: 'Ranqueamento',   icon: Search },
+  { to: '/gerenciamento',       label: 'Gerenciamento',  icon: Tag },
+  { to: '/inventario',          label: 'Inventário',     icon: Package },
+  { to: '/configuracoes/custos', label: 'Custos',        icon: Settings },
 ]
 
 export default function Sidebar() {
@@ -30,7 +35,7 @@ export default function Sidebar() {
         <span className="text-sky-400 font-bold text-lg tracking-tight">ML Seller</span>
       </div>
       <nav className="flex-1 py-4">
-        {NAV.map(({ to, label, icon }) => (
+        {NAV.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -42,7 +47,7 @@ export default function Sidebar() {
               }`
             }
           >
-            <span>{icon}</span>
+            <Icon size={16} strokeWidth={1.75} />
             <span>{label}</span>
           </NavLink>
         ))}
