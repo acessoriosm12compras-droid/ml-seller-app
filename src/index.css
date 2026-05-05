@@ -5,57 +5,79 @@
 @layer base {
   * {
     scrollbar-width: thin;
-    scrollbar-color: #44403c #1c1917;
+    scrollbar-color: #3f3f46 #18181b;
   }
   *::-webkit-scrollbar { width: 6px; height: 6px; }
-  *::-webkit-scrollbar-track { background: #1c1917; }
-  *::-webkit-scrollbar-thumb { background: #44403c; border-radius: 3px; }
-  *::-webkit-scrollbar-thumb:hover { background: #57534e; }
-  ::selection { background: rgb(14 165 233 / 0.3); color: #f5f5f4; }
+  *::-webkit-scrollbar-track { background: #18181b; }
+  *::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+  *::-webkit-scrollbar-thumb:hover { background: #52525b; }
+  ::selection { background: rgb(14 165 233 / 0.25); color: #f5f5f7; }
 }
 
-/* ── Light mode overrides ── */
-html:not(.dark) {
-  color-scheme: light;
-}
-html:not(.dark) body {
-  background-color: #eae6de;
-  color: #1c1917;
-}
+/* ── Dark mode — cooler neutrals ── */
+html.dark { color-scheme: dark; }
+html.dark body { background-color: #0f0f11; color: #f5f5f7; }
+
+html.dark .bg-stone-950 { background-color: #0a0a0c; }
+html.dark .bg-stone-900 { background-color: #111113; }
+html.dark .bg-stone-800 { background-color: #1c1c1f; }
+
+html.dark .dark\:bg-stone-950 { background-color: #0a0a0c; }
+html.dark .dark\:bg-stone-900 { background-color: #111113; }
+html.dark .dark\:bg-stone-800\/60 { background-color: rgba(28,28,31,0.6); }
+
+html.dark .border-stone-800,
+html.dark .dark\:border-stone-800 { border-color: rgba(255,255,255,0.07); }
+html.dark .border-stone-700      { border-color: rgba(255,255,255,0.10); }
+html.dark .border-stone-700\/50  { border-color: rgba(255,255,255,0.06); }
+html.dark .border-stone-800\/50  { border-color: rgba(255,255,255,0.05); }
+
+html.dark .text-stone-500,
+html.dark .dark\:text-stone-500 { color: #636366; }
+html.dark .text-stone-600,
+html.dark .dark\:text-stone-600 { color: #48484a; }
+html.dark .text-stone-700       { color: #3a3a3c; }
+
+/* Scrollbar dark */
+html.dark * { scrollbar-color: #3f3f46 #111113; }
+html.dark *::-webkit-scrollbar-track { background: #111113; }
+html.dark *::-webkit-scrollbar-thumb { background: #3f3f46; }
+html.dark *::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+/* ── Light mode ── */
+html:not(.dark) { color-scheme: light; }
+html:not(.dark) body { background-color: #f5f5f7; color: #1c1c1e; }
 
 /* Backgrounds */
 html:not(.dark) .bg-stone-950,
-html:not(.dark) .bg-stone-900 { background-color: #e0dbd3; }
-html:not(.dark) .bg-stone-800  { background-color: #d8d3cb; }
-html:not(.dark) .dark\:bg-stone-950 { background-color: #e0dbd3; }
+html:not(.dark) .bg-stone-900  { background-color: #ebebed; }
+html:not(.dark) .bg-stone-800  { background-color: #e2e2e4; }
+html:not(.dark) .dark\:bg-stone-950 { background-color: #ebebed; }
 
-/* Card surfaces — warm near-white */
-html:not(.dark) .bg-white { background-color: #faf8f4; }
+/* Card surfaces */
+html:not(.dark) .bg-white { background-color: #ffffff; }
 
 /* Borders */
-html:not(.dark) .border-stone-200 { border-color: #dedad3; }
-html:not(.dark) .border-stone-800 { border-color: #cec9c1; }
-html:not(.dark) .border-stone-700 { border-color: #c4bfb7; }
+html:not(.dark) .border-stone-200 { border-color: #e5e5ea; }
+html:not(.dark) .border-stone-800 { border-color: #d8d8dc; }
+html:not(.dark) .border-stone-700 { border-color: #cfcfd3; }
 
-/* Preserve colored left borders in light mode (higher specificity than border-stone-* overrides) */
-html:not(.dark) .border-l-sky-500    { border-left-color: #0ea5e9; }
-html:not(.dark) .border-l-blue-500   { border-left-color: #3b82f6; }
-html:not(.dark) .border-l-violet-500 { border-left-color: #8b5cf6; }
+/* Preserve colored left borders */
+html:not(.dark) .border-l-sky-500     { border-left-color: #0ea5e9; }
+html:not(.dark) .border-l-blue-500    { border-left-color: #3b82f6; }
+html:not(.dark) .border-l-violet-500  { border-left-color: #8b5cf6; }
 html:not(.dark) .border-l-emerald-500 { border-left-color: #10b981; }
 
 /* Text */
-html:not(.dark) body { color: #111; }
 html:not(.dark) .text-stone-100,
 html:not(.dark) .text-stone-200,
-html:not(.dark) .text-stone-300 { color: #111; }
-html:not(.dark) .text-stone-400 { color: #3d3730; }
+html:not(.dark) .text-stone-300 { color: #1c1c1e; }
+html:not(.dark) .text-stone-400 { color: #3a3a3c; }
 html:not(.dark) .text-stone-500,
-html:not(.dark) .text-stone-600 { color: #57534e; }
+html:not(.dark) .text-stone-600 { color: #636366; }
 
 /* Scrollbar light */
-html:not(.dark) * {
-  scrollbar-color: #d4cfc9 #ffffff;
-}
-html:not(.dark) *::-webkit-scrollbar-track { background: #ffffff; }
-html:not(.dark) *::-webkit-scrollbar-thumb { background: #d4cfc9; }
-html:not(.dark) *::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+html:not(.dark) * { scrollbar-color: #d1d1d6 #f5f5f7; }
+html:not(.dark) *::-webkit-scrollbar-track { background: #f5f5f7; }
+html:not(.dark) *::-webkit-scrollbar-thumb { background: #d1d1d6; }
+html:not(.dark) *::-webkit-scrollbar-thumb:hover { background: #aeaeb2; }

@@ -2,62 +2,57 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import {
-  LayoutDashboard, BarChart2, Activity, PieChart, FileText,
-  ArrowLeftRight, ShoppingBag, ClipboardList, Banknote,
-  Scale, TrendingUp, Percent, Search, Tag, Package, Settings,
+  LayoutDashboard, PieChart, Banknote,
+  ShoppingBag, Settings, Search, Package,
 } from 'lucide-react'
 
 const NAV = [
-  { to: '/dashboard',           label: 'Dashboard',      icon: LayoutDashboard },
-  { to: '/graficos',            label: 'Gráficos',       icon: BarChart2 },
-  { to: '/analitico',           label: 'Analítico',      icon: Activity },
-  { to: '/curva-abc',           label: 'Curva ABC',      icon: PieChart },
-  { to: '/financeiro-resumo',   label: 'Fin. Resumo',    icon: FileText },
-  { to: '/movimentacoes',       label: 'Movimentações',  icon: ArrowLeftRight },
-  { to: '/pedidos',             label: 'Pedidos',        icon: ShoppingBag },
-  { to: '/resultado',           label: 'Resultado',      icon: ClipboardList },
-  { to: '/financeiro',          label: 'Financeiro',     icon: Banknote },
-  { to: '/conciliacao',         label: 'Conciliação',    icon: Scale },
-  { to: '/projecao',            label: 'Projeção',       icon: TrendingUp },
-  { to: '/margem',              label: 'Margem',         icon: Percent },
-  { to: '/ranqueamento',        label: 'Ranqueamento',   icon: Search },
-  { to: '/gerenciamento',       label: 'Gerenciamento',  icon: Tag },
-  { to: '/inventario',          label: 'Inventário',     icon: Package },
-  { to: '/configuracoes/custos', label: 'Custos',        icon: Settings },
+  { to: '/dashboard',            label: 'Dashboard',    icon: LayoutDashboard },
+  { to: '/curva-abc',            label: 'Curva ABC',    icon: PieChart },
+  { to: '/financeiro',           label: 'Financeiro',   icon: Banknote },
+  { to: '/pedidos',              label: 'Pedidos',      icon: ShoppingBag },
+  { to: '/configuracoes/custos', label: 'Custos',       icon: Settings },
+  { to: '/ranqueamento',         label: 'Ranqueamento', icon: Search },
+  { to: '/inventario',           label: 'Inventário',   icon: Package },
 ]
 
 export default function Sidebar() {
   const { logout } = useAuth()
 
   return (
-    <aside className="w-56 min-h-screen bg-stone-900 dark:bg-stone-950 border-r border-stone-800 flex flex-col">
-      <div className="px-6 py-5 border-b border-stone-800">
-        <span className="text-sky-400 font-bold text-lg tracking-tight">ML Seller</span>
+    <aside
+      className="w-52 min-h-screen flex flex-col shrink-0"
+      style={{ backgroundColor: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+    >
+      <div className="px-6 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="text-sky-400 font-bold text-base tracking-tight">ML Seller</span>
       </div>
-      <nav className="flex-1 py-4">
+
+      <nav className="flex-1 py-2">
         {NAV.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
+              `flex items-center gap-3 mx-2 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 isActive
-                  ? 'bg-sky-500/10 text-sky-400 border-r-2 border-sky-400'
-                  : 'text-stone-400 hover:text-stone-100 hover:bg-stone-800'
+                  ? 'bg-white/[0.08] text-white'
+                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]'
               }`
             }
           >
-            <Icon size={16} strokeWidth={1.75} />
+            <Icon size={15} strokeWidth={1.75} />
             <span>{label}</span>
           </NavLink>
         ))}
       </nav>
-      <div className="px-0 py-4 border-t border-stone-800">
+
+      <div className="py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <ThemeToggle />
-        <div className="px-6">
+        <div className="px-5 mt-1">
           <button
             onClick={logout}
-            className="text-sm text-stone-500 hover:text-stone-300 transition-colors"
+            className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
           >
             Sair
           </button>

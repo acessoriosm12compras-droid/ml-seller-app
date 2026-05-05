@@ -36,10 +36,10 @@ function CustomTooltip({ active, payload, label, isMoney = true }) {
   )
 }
 
-function GsKpiCard({ label, value, borderColor = 'border-stone-700', valueColor = 'text-stone-100' }) {
+function GsKpiCard({ label, value, borderColor = 'border-stone-700', valueColor = 'text-stone-800 dark:text-stone-100' }) {
   return (
-    <div className={`bg-stone-900 border border-stone-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
-      <p className="text-xs text-stone-400 font-medium">{label}</p>
+    <div className={`bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
+      <p className="text-xs text-stone-500 font-medium">{label}</p>
       <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
     </div>
   )
@@ -101,13 +101,13 @@ export default function Graficos() {
             label="Lucro Bruto"
             value={t ? formatBRL(t.lucro_bruto) : '…'}
             borderColor="border-violet-500"
-            valueColor={t ? (t.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-stone-100'}
+            valueColor={t ? (t.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500') : 'text-stone-800 dark:text-stone-100'}
           />
           <GsKpiCard label="Unidades Vendidas" value={t ? t.unidades.toLocaleString('pt-BR') : '…'} borderColor="border-emerald-500" />
         </div>
 
         {/* Chart tabs */}
-        <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
+        <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-5">
             <div className="flex gap-1">
               {TABS.map(tab => (
@@ -116,8 +116,8 @@ export default function Graficos() {
                   onClick={() => setActiveTab(tab.key)}
                   className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                     activeTab === tab.key
-                      ? 'bg-sky-500/20 text-sky-400 font-medium'
-                      : 'text-stone-500 hover:text-stone-300'
+                      ? 'bg-sky-500/20 text-sky-500 font-medium'
+                      : 'text-stone-500 hover:text-stone-700 dark:hover:text-stone-300'
                   }`}
                 >
                   {tab.label}
@@ -148,13 +148,13 @@ export default function Graficos() {
                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                    <XAxis dataKey="label" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} width={52} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                    <XAxis dataKey="label" stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} width={52} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
-                    <Area type="monotone" dataKey="faturamento" name="Faturamento" stroke="#f59e0b" fill="url(#gFat)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                    <Area type="monotone" dataKey="liquido_marketplace" name="Líq. Marketplace" stroke="#3b82f6" fill="url(#gLiq)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                    <Area type="monotone" dataKey="faturamento" name="Faturamento" stroke="#f59e0b" fill="url(#gFat)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: '#f59e0b' }} activeDot={{ r: 5 }} />
+                    <Area type="monotone" dataKey="liquido_marketplace" name="Líq. Marketplace" stroke="#3b82f6" fill="url(#gLiq)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: '#3b82f6' }} activeDot={{ r: 5 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -172,13 +172,13 @@ export default function Graficos() {
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                    <XAxis dataKey="label" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} width={52} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                    <XAxis dataKey="label" stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} width={52} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
-                    <Area type="monotone" dataKey="lucro_bruto" name="Lucro Bruto" stroke="#8b5cf6" fill="url(#gLucro)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                    <Area type="monotone" dataKey="lucro_pos_ads" name="Lucro pós ADS" stroke="#10b981" fill="url(#gMpa)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                    <Area type="monotone" dataKey="lucro_bruto" name="Lucro Bruto" stroke="#8b5cf6" fill="url(#gLucro)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: '#8b5cf6' }} activeDot={{ r: 5 }} />
+                    <Area type="monotone" dataKey="lucro_pos_ads" name="Lucro pós ADS" stroke="#10b981" fill="url(#gMpa)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: '#10b981' }} activeDot={{ r: 5 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -186,9 +186,9 @@ export default function Graficos() {
               {activeTab === 'vendas' && (
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={series} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                    <XAxis dataKey="label" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} width={40} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                    <XAxis dataKey="label" stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} width={40} />
                     <Tooltip content={<CustomTooltip isMoney={false} />} />
                     <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
                     <Bar dataKey="unidades" name="Unidades" fill="#f59e0b" radius={[3, 3, 0, 0]} />
@@ -206,12 +206,12 @@ export default function Graficos() {
                         <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                    <XAxis dataKey="label" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={v => `${v.toFixed(0)}%`} width={44} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                    <XAxis dataKey="label" stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} tickFormatter={v => `${v.toFixed(0)}%`} width={44} />
                     <Tooltip content={<CustomTooltip isMoney={false} />} />
                     <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
-                    <Area type="monotone" dataKey="roi" name="ROI (%)" stroke="#f59e0b" fill="url(#gRoi)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                    <Area type="monotone" dataKey="roi" name="ROI (%)" stroke="#f59e0b" fill="url(#gRoi)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0, fill: '#f59e0b' }} activeDot={{ r: 5 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -223,14 +223,14 @@ export default function Graficos() {
         {t && (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
             {[
-              { label: 'Custo Produtos', value: formatBRL(t.custo_produtos), color: 'text-stone-300' },
-              { label: 'Valor ADS', value: formatBRL(t.valor_ads), color: 'text-stone-300' },
-              { label: 'Lucro pós ADS', value: formatBRL(t.lucro_pos_ads), color: t.lucro_pos_ads >= 0 ? 'text-emerald-400' : 'text-red-400' },
-              { label: 'Nº de Vendas', value: t.n_vendas.toLocaleString('pt-BR'), color: 'text-stone-300' },
-              { label: 'Unidades', value: t.unidades.toLocaleString('pt-BR'), color: 'text-stone-300' },
-              { label: 'ROI Médio', value: formatPct(t.roi_medio), color: t.roi_medio >= 0 ? 'text-emerald-400' : 'text-red-400' },
+              { label: 'Custo Produtos', value: formatBRL(t.custo_produtos), color: 'text-stone-700 dark:text-stone-300' },
+              { label: 'Valor ADS', value: formatBRL(t.valor_ads), color: 'text-stone-700 dark:text-stone-300' },
+              { label: 'Lucro pós ADS', value: formatBRL(t.lucro_pos_ads), color: t.lucro_pos_ads >= 0 ? 'text-emerald-500' : 'text-red-500' },
+              { label: 'Nº de Vendas', value: t.n_vendas.toLocaleString('pt-BR'), color: 'text-stone-700 dark:text-stone-300' },
+              { label: 'Unidades', value: t.unidades.toLocaleString('pt-BR'), color: 'text-stone-700 dark:text-stone-300' },
+              { label: 'ROI Médio', value: formatPct(t.roi_medio), color: t.roi_medio >= 0 ? 'text-emerald-500' : 'text-red-500' },
             ].map(k => (
-              <div key={k.label} className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
+              <div key={k.label} className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
                 <p className="text-xs text-stone-500">{k.label}</p>
                 <p className={`text-base font-semibold ${k.color}`}>{k.value}</p>
               </div>

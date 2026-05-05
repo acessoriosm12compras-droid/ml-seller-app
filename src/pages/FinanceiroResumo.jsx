@@ -201,24 +201,24 @@ export default function FinanceiroResumo() {
               </select>
             </div>
 
-            <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
-              <h2 className="text-sm font-semibold text-stone-200 mb-5">Despesas vs Receitas — {ano}</h2>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200 mb-5">Despesas vs Receitas — {ano}</h2>
               {loadA ? (
-                <p className="text-stone-600 text-sm text-center py-10">Carregando…</p>
+                <p className="text-stone-500 text-sm text-center py-10">Carregando…</p>
               ) : meses.length > 0 ? (
                 <ResponsiveContainer width="100%" height={260}>
                   <BarChart data={meses} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                    <XAxis dataKey="nome" stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#4b5563" tick={{ fontSize: 11, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} width={52} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                    <XAxis dataKey="nome" stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} tickLine={false} axisLine={false} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} width={52} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-400">{n}</span>} />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} formatter={n => <span className="text-stone-600 dark:text-stone-400">{n}</span>} />
                     <Bar dataKey="despesas_operacionais" name="Despesas" fill="#ef4444" radius={[3, 3, 0, 0]} />
                     <Bar dataKey="receitas_extras" name="Receitas Extras" fill="#10b981" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-stone-600 text-sm text-center py-10">Sem dados para {ano}.</p>
+                <p className="text-stone-500 text-sm text-center py-10">Sem dados para {ano}.</p>
               )}
             </div>
 

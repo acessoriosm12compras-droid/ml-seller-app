@@ -142,21 +142,21 @@ export default function ProjecaoVendas() {
             </div>
 
             {/* Bar chart */}
-            <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
-              <h2 className="text-sm font-medium text-stone-400 mb-4">Histórico Mensal</h2>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
+              <h2 className="text-sm font-medium text-stone-600 dark:text-stone-400 mb-4">Histórico Mensal</h2>
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={data.historico_mensal} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="mes" stroke="#6b7280" tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                  <XAxis dataKey="mes" stroke="#a8a29e" tick={{ fontSize: 11, fill: '#78716c' }} />
                   <YAxis
-                    stroke="#6b7280"
-                    tick={{ fontSize: 11 }}
+                    stroke="#a8a29e"
+                    tick={{ fontSize: 11, fill: '#78716c' }}
                     tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
                   />
                   <Tooltip
                     formatter={(v) => [formatBRL(v)]}
-                    contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }}
-                    labelStyle={{ color: '#9ca3af' }}
+                    contentStyle={{ background: '#1c1917', border: '1px solid #44403c', borderRadius: 8 }}
+                    labelStyle={{ color: '#a8a29e' }}
                   />
                   <Legend />
                   <Bar dataKey="valor" name="Realizado" fill="#10b981" />
