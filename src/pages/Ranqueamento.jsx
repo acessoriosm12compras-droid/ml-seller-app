@@ -74,7 +74,7 @@ export default function Ranqueamento() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Ranqueamento" onRefresh={refetch} isLoading={isLoading} />
-      <main className="flex-1 p-6 space-y-4">
+      <main className="flex-1 p-3 sm:p-6 space-y-4">
         <div className="flex justify-between items-center">
           <p className="text-stone-500 text-sm">
             Clique em "Verificar Posições" para buscar a posição de cada anúncio no ML.
@@ -96,6 +96,7 @@ export default function Ranqueamento() {
         )}
         {data && (
           <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-stone-800/50 text-stone-500 border-b border-stone-800">
@@ -137,6 +138,7 @@ export default function Ranqueamento() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </main>

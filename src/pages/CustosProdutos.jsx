@@ -56,7 +56,7 @@ export default function CustosProdutos() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Custos por Produto" onRefresh={refetch} isLoading={isLoading} />
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-3 sm:p-6">
         {/* Back link + search */}
         <div className="flex items-center justify-between mb-6">
           <Link to="/resultado" className="text-sm text-stone-500 hover:text-sky-400 transition-colors">
@@ -72,6 +72,7 @@ export default function CustosProdutos() {
         </div>
 
         <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-stone-800/50 text-stone-500 border-b border-stone-800">
@@ -144,6 +145,7 @@ export default function CustosProdutos() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </main>
     </div>

@@ -43,7 +43,7 @@ export default function ProjecaoVendas() {
     <div className="flex flex-col flex-1">
       <Header title="Projeção de Vendas" onRefresh={refetch} isLoading={isLoading} />
 
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 p-3 sm:p-6 space-y-6">
         {/* Controls row */}
         <div className="flex items-center justify-end gap-3">
           <input
@@ -171,6 +171,7 @@ export default function ProjecaoVendas() {
                 <div className="px-5 py-4 border-b border-stone-800">
                   <h2 className="text-sm font-medium text-stone-400">Top Produtos</h2>
                 </div>
+                <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-stone-800">
@@ -209,6 +210,7 @@ export default function ProjecaoVendas() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
           </>

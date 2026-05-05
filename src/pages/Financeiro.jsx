@@ -24,7 +24,7 @@ export default function Financeiro() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Financeiro" onRefresh={refetch} isLoading={isLoading} />
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 p-3 sm:p-6 space-y-6">
         {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
         {data && (

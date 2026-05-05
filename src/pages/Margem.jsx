@@ -33,11 +33,12 @@ export default function Margem() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Margem" onRefresh={refetch} isLoading={isLoading} />
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-3 sm:p-6">
         {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
         {data && (
           <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-stone-800/50 text-stone-500 border-b border-stone-800">
@@ -67,6 +68,7 @@ export default function Margem() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </main>

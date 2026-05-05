@@ -81,6 +81,7 @@ export default function AdminUsuarios() {
       </form>
 
       <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-stone-800">
@@ -117,6 +118,7 @@ export default function AdminUsuarios() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

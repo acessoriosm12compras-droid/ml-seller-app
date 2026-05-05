@@ -66,7 +66,7 @@ export default function Analitico() {
     <div className="flex flex-col flex-1 min-h-0">
       <Header title="Analítico" onRefresh={refetch} isLoading={isLoading} />
 
-      <main className="flex-1 p-6 overflow-auto space-y-4">
+      <main className="flex-1 p-3 sm:p-6 overflow-auto space-y-4">
         {error && (
           <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4">
             {error.message}

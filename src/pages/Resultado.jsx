@@ -39,7 +39,7 @@ export default function Resultado() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Resultado" onRefresh={refetch} isLoading={isLoading} />
-      <main className="flex-1 p-6 space-y-6">
+      <main className="flex-1 p-3 sm:p-6 space-y-6">
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
 
         {/* Alert: products without cost */}

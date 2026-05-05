@@ -71,7 +71,7 @@ export default function FinanceiroResumo() {
     <div className="flex flex-col flex-1 min-h-0">
       <Header title="Resumo Financeiro" onRefresh={refetch} isLoading={isLoading} />
 
-      <main className="flex-1 p-6 space-y-5 overflow-auto">
+      <main className="flex-1 p-3 sm:p-6 space-y-5 overflow-auto">
         {error && (
           <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4">
             {error.message}
@@ -225,6 +225,7 @@ export default function FinanceiroResumo() {
             {/* Table */}
             {meses.length > 0 && (
               <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-stone-800">
@@ -248,6 +249,7 @@ export default function FinanceiroResumo() {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
           </>

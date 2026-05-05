@@ -51,7 +51,7 @@ export default function Vendas() {
     <div className="flex flex-col flex-1 min-h-0">
       <Header title="Vendas" onRefresh={refetch} isLoading={isLoading} />
 
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-3 sm:p-6 overflow-auto">
         {error && (
           <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
             {error.message}

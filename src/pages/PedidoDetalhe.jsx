@@ -20,7 +20,7 @@ export default function PedidoDetalhe() {
         <span className="text-stone-700">/</span>
         <span className="text-stone-300 text-sm font-medium">Pedido #{id}</span>
       </div>
-      <main className="flex-1 p-6 max-w-2xl">
+      <main className="flex-1 p-3 sm:p-6 max-w-2xl">
         {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
         {data && (

@@ -42,7 +42,7 @@ export default function ImportarCustos() {
       <div className="h-14 bg-stone-900 border-b border-stone-800 flex items-center px-6">
         <h1 className="text-stone-100 font-semibold text-base">Importar Custos</h1>
       </div>
-      <main className="flex-1 p-6 max-w-xl space-y-6">
+      <main className="flex-1 p-3 sm:p-6 max-w-xl space-y-6">
         <div className="bg-stone-900 border border-stone-800 rounded-xl p-6 space-y-4">
           <div>
             <h2 className="text-sm font-medium text-stone-300 mb-1">Importar planilha de custos</h2>

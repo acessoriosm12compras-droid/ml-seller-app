@@ -116,7 +116,7 @@ export default function Pedidos() {
     <div className="flex flex-col flex-1 min-h-0">
       <Header title="Pedidos" onRefresh={refetch} isLoading={isLoading} />
 
-      <main className="flex-1 p-6 space-y-4 overflow-auto">
+      <main className="flex-1 p-3 sm:p-6 space-y-4 overflow-auto">
         {/* Tabs */}
         <div className="flex gap-1 border-b border-stone-800">
           {[
@@ -156,6 +156,7 @@ export default function Pedidos() {
                 </div>
 
                 <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+                  <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-stone-800/50 text-stone-500 border-b border-stone-800">
@@ -192,6 +193,7 @@ export default function Pedidos() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-end mt-2 text-sm text-stone-500">
