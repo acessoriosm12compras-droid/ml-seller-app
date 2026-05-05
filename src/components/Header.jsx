@@ -19,7 +19,7 @@ export default function Header({ title, onRefresh, isLoading }) {
           <select
             value={activeAccount || ''}
             onChange={e => setActiveAccount(e.target.value)}
-            className="bg-stone-800 border border-stone-700 rounded-lg px-2 py-1 text-xs text-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            className="bg-stone-800 border border-stone-700 rounded-lg px-2 py-1 text-xs text-sky-700 dark:text-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
           >
             {CONTAS.map(c => (
               <option key={c} value={c}>{c}</option>
