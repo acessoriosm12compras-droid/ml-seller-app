@@ -32,7 +32,7 @@ export default function Inventario() {
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <Header title="Inventário FULL" onRefresh={refetch} isLoading={isLoading} />
+      <Header title="Inventário" onRefresh={refetch} isLoading={isLoading} />
 
       <main className="flex-1 p-6 space-y-5 overflow-auto">
         {error && (
