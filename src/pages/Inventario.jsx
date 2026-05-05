@@ -158,8 +158,8 @@ export default function Inventario() {
                       <td className="px-4 py-3 text-right text-stone-400">{item.custo_unitario !== null ? formatBRL(item.custo_unitario) : <span className="text-stone-600">—</span>}</td>
                       <td className={`px-4 py-3 text-right text-base ${estoqueColor}`}>
                         {item.estoque}
-                        {item.estoque_disponivel !== undefined && item.estoque_disponivel !== item.estoque && (
-                          <div className="text-stone-500 text-[10px] font-normal">{item.estoque_disponivel} disp.</div>
+                        {item.estoque_total !== undefined && item.estoque_total !== item.estoque && (
+                          <div className="text-stone-500 text-[10px] font-normal">{item.estoque_total} total</div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right text-stone-400">{item.custo_total_estoque !== null ? formatBRL(item.custo_total_estoque) : <span className="text-stone-600">—</span>}</td>
