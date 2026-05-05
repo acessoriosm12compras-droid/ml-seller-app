@@ -19,19 +19,23 @@ html:not(.dark) {
   color-scheme: light;
 }
 html:not(.dark) body {
-  background-color: #f2f1ef;
+  background-color: #eae6de;
   color: #1c1917;
 }
 
 /* Backgrounds */
 html:not(.dark) .bg-stone-950,
-html:not(.dark) .bg-stone-900 { background-color: #f2f1ef; }
-html:not(.dark) .bg-stone-800  { background-color: #eae9e6; }
-html:not(.dark) .dark\:bg-stone-950 { background-color: #f2f1ef; }
+html:not(.dark) .bg-stone-900 { background-color: #e0dbd3; }
+html:not(.dark) .bg-stone-800  { background-color: #d8d3cb; }
+html:not(.dark) .dark\:bg-stone-950 { background-color: #e0dbd3; }
+
+/* Card surfaces — warm near-white */
+html:not(.dark) .bg-white { background-color: #faf8f4; }
 
 /* Borders */
-html:not(.dark) .border-stone-800 { border-color: #e2ddd8; }
-html:not(.dark) .border-stone-700 { border-color: #d4cfc9; }
+html:not(.dark) .border-stone-200 { border-color: #dedad3; }
+html:not(.dark) .border-stone-800 { border-color: #cec9c1; }
+html:not(.dark) .border-stone-700 { border-color: #c4bfb7; }
 
 /* Preserve colored left borders in light mode (higher specificity than border-stone-* overrides) */
 html:not(.dark) .border-l-sky-500    { border-left-color: #0ea5e9; }
