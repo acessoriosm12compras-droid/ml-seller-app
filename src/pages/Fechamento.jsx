@@ -420,6 +420,7 @@ export default function Fechamento() {
   const totalGeral    = totalCompras + totalFretes + totalMontagem + totalDespesas
 
   const isLoading = comprasQ.isLoading || fretesQ.isLoading || montagemQ.isLoading || despesasQ.isLoading
+  const apiError = comprasQ.error || fretesQ.error || montagemQ.error || despesasQ.error
   const refetchAll = () => { comprasQ.refetch(); fretesQ.refetch(); montagemQ.refetch(); despesasQ.refetch() }
 
   return (
@@ -475,6 +476,14 @@ export default function Fechamento() {
           )}
         </div>
 
+        {/* API error banner */}
+        {apiError && (
+          <div className="flex items-center justify-between bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-400">
+            <span>Erro ao carregar dados: {apiError.message}</span>
+            <button onClick={refetchAll} className="text-xs underline hover:text-red-300">Tentar novamente</button>
+          </div>
+        )}
+
         {/* KPIs + Pie chart */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           {/* KPI stack */}
@@ -520,7 +529,7 @@ export default function Fechamento() {
 
         {/* Compras */}
         <Section
-          title="Compras"
+          title={`Compras${compras.length ? ` · ${compras.length} registros` : ''}`}
           columns={comprasCols}
           rows={compras}
           isLoading={comprasQ.isLoading}
@@ -535,7 +544,7 @@ export default function Fechamento() {
 
         {/* Fretes */}
         <Section
-          title="Fretes"
+          title={`Fretes${fretes.length ? ` · ${fretes.length} registros` : ''}`}
           columns={fretesCols}
           rows={fretes}
           isLoading={fretesQ.isLoading}
@@ -550,7 +559,7 @@ export default function Fechamento() {
 
         {/* Montagem */}
         <Section
-          title="Montagem"
+          title={`Montagem${montagem.length ? ` · ${montagem.length} registros` : ''}`}
           columns={montagemCols}
           rows={montagem}
           isLoading={montagemQ.isLoading}
@@ -565,7 +574,7 @@ export default function Fechamento() {
 
         {/* Despesas Variáveis */}
         <Section
-          title="Despesas Variáveis"
+          title={`Despesas Variáveis${despesas.length ? ` · ${despesas.length} registros` : ''}`}
           columns={despesasCols}
           rows={despesas}
           isLoading={despesasQ.isLoading}
