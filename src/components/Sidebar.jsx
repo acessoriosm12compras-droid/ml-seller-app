@@ -11,7 +11,7 @@ const NAV = [
   { to: '/curva-abc',            label: 'Curva ABC',    icon: PieChart },
   { to: '/financeiro',           label: 'Financeiro',   icon: Banknote },
   { to: '/pedidos',              label: 'Pedidos',      icon: ShoppingBag },
-  { to: '/configuracoes/custos', label: 'Custos',       icon: Settings },
+  { to: '/custos-produtos',       label: 'Custos',       icon: Settings },
   { to: '/ranqueamento',         label: 'Ranqueamento', icon: Search },
   { to: '/inventario',           label: 'Inventário',   icon: Package },
 ]
