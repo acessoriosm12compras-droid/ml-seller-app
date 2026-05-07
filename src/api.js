@@ -115,4 +115,25 @@ export const api = {
         body: JSON.stringify({ imposto }),
       }),
   },
+
+  fechamento: {
+    compras: {
+      list: (mes_ano) => request(`/api/fechamento/compras?mes_ano=${mes_ano}`),
+      create: (data) => request('/api/fechamento/compras', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data) => request(`/api/fechamento/compras/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id) => request(`/api/fechamento/compras/${id}`, { method: 'DELETE' }),
+    },
+    fretes: {
+      list: (mes_ano) => request(`/api/fechamento/fretes?mes_ano=${mes_ano}`),
+      create: (data) => request('/api/fechamento/fretes', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data) => request(`/api/fechamento/fretes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id) => request(`/api/fechamento/fretes/${id}`, { method: 'DELETE' }),
+    },
+    montagem: {
+      list: (mes_ano) => request(`/api/fechamento/montagem?mes_ano=${mes_ano}`),
+      create: (data) => request('/api/fechamento/montagem', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data) => request(`/api/fechamento/montagem/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id) => request(`/api/fechamento/montagem/${id}`, { method: 'DELETE' }),
+    },
+  },
 }

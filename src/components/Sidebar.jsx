@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import {
   LayoutDashboard, PieChart, Banknote,
-  ShoppingBag, Settings, Package, SlidersHorizontal,
+  ShoppingBag, Settings, Package, SlidersHorizontal, ClipboardList,
 } from 'lucide-react'
 
 const NAV = [
@@ -13,6 +13,7 @@ const NAV = [
   { to: '/pedidos',        label: 'Pedidos',      icon: ShoppingBag },
   { to: '/custos-produtos', label: 'Custos',      icon: Settings },
   { to: '/inventario',     label: 'Inventário',   icon: Package },
+  { to: '/fechamento',     label: 'Fechamento',   icon: ClipboardList },
   { to: '/configuracoes',  label: 'Configurações', icon: SlidersHorizontal },
 ]
 
