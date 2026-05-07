@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { api } from '../api'
 import Header from '../components/Header'
-import { Plus, Trash2, Check, X, Pencil } from 'lucide-react'
+import { Plus, Trash2, Check, X, Pencil, CalendarRange, XCircle } from 'lucide-react'
 
 function formatBRL(v) {
   if (v === null || v === undefined || v === '') return '—'
@@ -14,6 +14,17 @@ function formatBRL(v) {
 
 function totalOf(rows, field) {
   return rows.reduce((acc, r) => acc + (parseFloat(r[field]) || 0), 0)
+}
+
+function filterByDate(rows, dateFrom, dateTo) {
+  if (!dateFrom && !dateTo) return rows
+  return rows.filter(r => {
+    if (!r.data) return true
+    const d = r.data.slice(0, 10)
+    if (dateFrom && d < dateFrom) return false
+    if (dateTo   && d > dateTo)   return false
+    return true
+  })
 }
 
 const STATUS_OPTIONS = ['RECEBIDO', 'PAGO', 'PENDENTE', 'PRÉVIA', 'ENVIADO', 'AGENDADO']
@@ -267,6 +278,11 @@ export default function Fechamento() {
   const [mesAno, setMesAno] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   )
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo,   setDateTo]   = useState('')
+
+  const hasFilter = dateFrom || dateTo
+  const clearFilter = () => { setDateFrom(''); setDateTo('') }
 
   const qc = useQueryClient()
 
@@ -385,11 +401,17 @@ export default function Fechamento() {
       color: v => statusColor(v) },
   ]
 
-  // Totals
-  const compras  = comprasQ.data  || []
-  const fretes   = fretesQ.data   || []
-  const montagem = montagemQ.data || []
-  const despesas = despesasQ.data || []
+  // Raw data
+  const comprasAll  = comprasQ.data  || []
+  const fretesAll   = fretesQ.data   || []
+  const montagemAll = montagemQ.data || []
+  const despesasAll = despesasQ.data || []
+
+  // Filtered (used for display and totals)
+  const compras  = filterByDate(comprasAll,  dateFrom, dateTo)
+  const fretes   = filterByDate(fretesAll,   dateFrom, dateTo)
+  const montagem = filterByDate(montagemAll, dateFrom, dateTo)
+  const despesas = filterByDate(despesasAll, dateFrom, dateTo)
 
   const totalCompras  = totalOf(compras,  'valor_total')
   const totalFretes   = totalOf(fretes,   'total')
@@ -406,15 +428,51 @@ export default function Fechamento() {
 
       <main className="flex-1 p-3 sm:p-6 space-y-6 overflow-auto">
 
-        {/* Month selector */}
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-stone-500">Mês/Ano</label>
-          <input
-            type="month"
-            value={mesAno}
-            onChange={e => setMesAno(e.target.value)}
-            className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
-          />
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-stone-500">Mês/Ano</label>
+            <input
+              type="month"
+              value={mesAno}
+              onChange={e => { setMesAno(e.target.value); clearFilter() }}
+              className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 border-l border-stone-800 pl-3">
+            <CalendarRange size={14} className="text-stone-500 shrink-0" />
+            <label className="text-xs text-stone-500 whitespace-nowrap">Filtrar datas</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              className="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            />
+            <span className="text-stone-600 text-xs">até</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              className="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            />
+            {hasFilter && (
+              <button
+                onClick={clearFilter}
+                title="Limpar filtro"
+                className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                <XCircle size={14} />
+                <span>Limpar</span>
+              </button>
+            )}
+          </div>
+
+          {hasFilter && (
+            <span className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-full px-2.5 py-0.5">
+              Totais filtrados por data
+            </span>
+          )}
         </div>
 
         {/* KPIs + Pie chart */}
@@ -438,8 +496,16 @@ export default function Fechamento() {
               <p className="text-xl font-bold text-rose-400">{formatBRL(totalDespesas)}</p>
             </div>
             <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-emerald-500 rounded-xl p-4 sm:col-span-2">
-              <p className="text-xs text-stone-500">Total Geral</p>
+              <p className="text-xs text-stone-500">
+                Total Geral
+                {hasFilter && <span className="ml-1.5 text-amber-400">· filtrado</span>}
+              </p>
               <p className="text-2xl font-bold text-emerald-400">{formatBRL(totalGeral)}</p>
+              {hasFilter && (
+                <p className="text-xs text-stone-600 mt-0.5">
+                  {compras.length + fretes.length + montagem.length + despesas.length} registros no intervalo
+                </p>
+              )}
             </div>
           </div>
 
