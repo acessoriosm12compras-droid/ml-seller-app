@@ -222,7 +222,6 @@ export default function Fechamento() {
   const comprasCols = [
     { key: 'data',          label: 'Data',          type: 'date' },
     { key: 'fornecedor',    label: 'Fornecedor' },
-    { key: 'nota_fiscal',   label: 'NF' },
     { key: 'produto',       label: 'Produto' },
     { key: 'quantidade',    label: 'Qtd',   type: 'number', align: 'right',
       render: v => v != null ? <span>{Number(v).toLocaleString('pt-BR')} <span className="text-stone-600 text-[10px]">un</span></span> : <span className="text-stone-700">—</span> },
@@ -318,7 +317,7 @@ export default function Fechamento() {
           setEdit={setComprasEdit}
           newRow={newCompra}
           setNewRow={setNewCompra}
-          onAdd={() => setNewCompra({ data: '', fornecedor: '', nota_fiscal: '', produto: '', quantidade: '', valor_unitario: '', valor_total: '', status: '', nota: '' })}
+          onAdd={() => setNewCompra({ data: '', fornecedor: '', produto: '', quantidade: '', valor_unitario: '', valor_total: '', status: '', nota: '' })}
           onSave={handleSave(comprasMut, comprasEdit, setComprasEdit, setNewCompra)}
           onDelete={handleDelete(comprasMut)}
         />
