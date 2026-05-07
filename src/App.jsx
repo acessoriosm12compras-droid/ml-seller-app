@@ -11,7 +11,6 @@ import PedidoDetalhe from './pages/PedidoDetalhe'
 import Financeiro from './pages/Financeiro'
 import Margem from './pages/Margem'
 import Ranqueamento from './pages/Ranqueamento'
-import ImportarCustos from './pages/ImportarCustos'
 import CustosProdutos from './pages/CustosProdutos'
 import AdminUsuarios from './pages/AdminUsuarios'
 import Resultado from './pages/Resultado'
@@ -64,7 +63,6 @@ export default function App() {
               <Route path="financeiro-resumo" element={<FinanceiroResumo />} />
               <Route path="gerenciamento" element={<Gerenciamento />} />
               <Route path="inventario" element={<Inventario />} />
-              <Route path="configuracoes/custos" element={<ImportarCustos />} />
               <Route
                 path="admin/usuarios"
                 element={

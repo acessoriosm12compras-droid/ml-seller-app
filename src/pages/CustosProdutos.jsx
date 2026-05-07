@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Download } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
@@ -53,6 +54,26 @@ export default function CustosProdutos() {
     p.titulo.toLowerCase().includes(search.toLowerCase())
   )
 
+  function handleDownload() {
+    const produtos = data?.produtos ?? []
+    const rows = [
+      ['ml_item_id', 'titulo', 'custo'],
+      ...produtos.map(p => [
+        p.item_id,
+        `"${(p.titulo ?? '').replace(/"/g, '""')}"`,
+        p.custo_unitario !== null ? String(p.custo_unitario) : '',
+      ]),
+    ]
+    const csv = rows.map(r => r.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `custos_${activeAccount}_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="flex flex-col flex-1">
       <Header title="Custos por Produto" onRefresh={refetch} isLoading={isLoading} />
@@ -62,13 +83,24 @@ export default function CustosProdutos() {
           <Link to="/resultado" className="text-sm text-stone-500 hover:text-sky-400 transition-colors">
             ← Voltar para Resultado
           </Link>
-          <input
-            type="text"
-            placeholder="Buscar produto..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-1 focus:ring-sky-500 w-64"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder="Buscar produto..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-1 focus:ring-sky-500 w-64"
+            />
+            <button
+              onClick={handleDownload}
+              disabled={!data?.produtos?.length}
+              title="Baixar CSV"
+              className="flex items-center gap-1.5 px-3 py-2 bg-stone-800 border border-stone-700 rounded-lg text-sm text-stone-400 hover:text-stone-200 hover:border-stone-600 disabled:opacity-40 transition-colors"
+            >
+              <Download size={14} />
+              CSV
+            </button>
+          </div>
         </div>
 
         <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">

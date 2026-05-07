@@ -45,25 +45,6 @@ export const api = {
   atualizarRanqueamento: () =>
     request('/api/ranqueamento/atualizar', { method: 'POST' }),
 
-  importarCustos: (file) => {
-    const token = _getToken()
-    const form = new FormData()
-    form.append('arquivo', file)
-    const headers = {}
-    if (token) headers['Authorization'] = `Bearer ${token}`
-    return fetch(`${BASE}/api/importar-custos`, {
-      method: 'POST',
-      headers,
-      body: form,
-    }).then(async res => {
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw Object.assign(new Error(err.erro || `HTTP ${res.status}`), { status: res.status })
-      }
-      return res.json()
-    })
-  },
-
   resultado: (params) =>
     request(`/api/resultado?${new URLSearchParams(params)}`),
 
