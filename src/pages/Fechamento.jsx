@@ -187,11 +187,15 @@ export default function Fechamento() {
   const setComprasEdit  = makeSetEdit(comprasEdit,  setComprasEditMap)
   const setFretesEdit   = makeSetEdit(fretesEdit,   setFretesEditMap)
   const setMontagemEdit = makeSetEdit(montagemEdit, setMontagemEditMap)
+  const [despesasEdit,  setDespesasEditMap]  = useState({})
+  const setDespesasEdit = makeSetEdit(despesasEdit, setDespesasEditMap)
+  const [newDespesa,    setNewDespesa]   = useState(null)
 
   // Mutations — must be at top level (Rules of Hooks)
   const invCompras  = () => qc.invalidateQueries({ queryKey: ['fechamento-compras',  mesAno] })
   const invFretes   = () => qc.invalidateQueries({ queryKey: ['fechamento-fretes',   mesAno] })
   const invMontagem = () => qc.invalidateQueries({ queryKey: ['fechamento-montagem', mesAno] })
+  const invDespesas = () => qc.invalidateQueries({ queryKey: ['fechamento-despesas', mesAno] })
 
   const saveCompra  = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.compras.update(id, data)  : api.fechamento.compras.create({ ...data, mes_ano: mesAno }),  onSuccess: invCompras })
   const delCompra   = useMutation({ mutationFn: (id) => api.fechamento.compras.delete(id),  onSuccess: invCompras })
@@ -199,10 +203,13 @@ export default function Fechamento() {
   const delFrete    = useMutation({ mutationFn: (id) => api.fechamento.fretes.delete(id),   onSuccess: invFretes })
   const saveMontag  = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.montagem.update(id, data) : api.fechamento.montagem.create({ ...data, mes_ano: mesAno }), onSuccess: invMontagem })
   const delMontag   = useMutation({ mutationFn: (id) => api.fechamento.montagem.delete(id), onSuccess: invMontagem })
+  const saveDesp    = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.despesas.update(id, data) : api.fechamento.despesas.create({ ...data, mes_ano: mesAno }), onSuccess: invDespesas })
+  const delDesp     = useMutation({ mutationFn: (id) => api.fechamento.despesas.delete(id), onSuccess: invDespesas })
 
   const comprasMut  = { save: saveCompra,  del: delCompra }
   const fretesMut   = { save: saveFrete,   del: delFrete }
   const montagemMut = { save: saveMontag,  del: delMontag }
+  const despesasMut = { save: saveDesp,    del: delDesp }
 
   function handleSave(mutations, editMap, setEditFn, setNew) {
     return (id, data) => {
@@ -254,21 +261,35 @@ export default function Fechamento() {
       render: v => formatBRL(v), color: () => 'text-sky-400 font-semibold' },
   ]
 
+  const despesasCols = [
+    { key: 'data',      label: 'Data',     type: 'date' },
+    { key: 'descricao', label: 'Descrição' },
+    { key: 'valor',     label: 'Valor', type: 'number', align: 'right',
+      render: v => formatBRL(v), color: () => 'text-rose-400 font-semibold' },
+    { key: 'status',    label: 'Status',
+      color: v => v === 'PAGO' || v === 'Pago' ? 'text-emerald-400' : 'text-amber-400' },
+  ]
+
+  // Queries
+  const despesasQ = useQuery({ queryKey: ['fechamento-despesas', mesAno], queryFn: () => api.fechamento.despesas.list(mesAno) })
+
   // Totals
   const compras  = comprasQ.data  || []
   const fretes   = fretesQ.data   || []
   const montagem = montagemQ.data || []
+  const despesas = despesasQ.data || []
 
   const totalCompras  = totalOf(compras,  'valor_total')
   const totalFretes   = totalOf(fretes,   'total')
   const totalMontagem = totalOf(montagem, 'valor')
-  const totalGeral    = totalCompras + totalFretes + totalMontagem
+  const totalDespesas = totalOf(despesas, 'valor')
+  const totalGeral    = totalCompras + totalFretes + totalMontagem + totalDespesas
 
   const refetchAll = () => {
-    comprasQ.refetch(); fretesQ.refetch(); montagemQ.refetch()
+    comprasQ.refetch(); fretesQ.refetch(); montagemQ.refetch(); despesasQ.refetch()
   }
 
-  const isLoading = comprasQ.isLoading || fretesQ.isLoading || montagemQ.isLoading
+  const isLoading = comprasQ.isLoading || fretesQ.isLoading || montagemQ.isLoading || despesasQ.isLoading
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -288,7 +309,7 @@ export default function Fechamento() {
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
           <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-sky-500 rounded-xl p-4">
             <p className="text-xs text-stone-500">Total Compras</p>
             <p className="text-xl font-bold text-sky-400">{formatBRL(totalCompras)}</p>
@@ -300,6 +321,10 @@ export default function Fechamento() {
           <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-amber-500 rounded-xl p-4">
             <p className="text-xs text-stone-500">Total Montagem</p>
             <p className="text-xl font-bold text-amber-400">{formatBRL(totalMontagem)}</p>
+          </div>
+          <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-rose-500 rounded-xl p-4">
+            <p className="text-xs text-stone-500">Despesas Variáveis</p>
+            <p className="text-xl font-bold text-rose-400">{formatBRL(totalDespesas)}</p>
           </div>
           <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-emerald-500 rounded-xl p-4">
             <p className="text-xs text-stone-500">Total Geral</p>
@@ -350,6 +375,21 @@ export default function Fechamento() {
           onAdd={() => setNewMontagem({ data: '', montador: '', valor: '' })}
           onSave={handleSave(montagemMut, montagemEdit, setMontagemEdit, setNewMontagem)}
           onDelete={handleDelete(montagemMut)}
+        />
+
+        {/* Despesas Variáveis */}
+        <Section
+          title="Despesas Variáveis"
+          columns={despesasCols}
+          rows={despesas}
+          isLoading={despesasQ.isLoading}
+          editMap={despesasEdit}
+          setEdit={setDespesasEdit}
+          newRow={newDespesa}
+          setNewRow={setNewDespesa}
+          onAdd={() => setNewDespesa({ data: '', descricao: '', valor: '', status: 'PAGO' })}
+          onSave={handleSave(despesasMut, despesasEdit, setDespesasEdit, setNewDespesa)}
+          onDelete={handleDelete(despesasMut)}
         />
 
       </main>

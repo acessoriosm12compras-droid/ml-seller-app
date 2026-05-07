@@ -135,5 +135,11 @@ export const api = {
       update: (id, data) => request(`/api/fechamento/montagem/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
       delete: (id) => request(`/api/fechamento/montagem/${id}`, { method: 'DELETE' }),
     },
+    despesas: {
+      list: (mes_ano) => request(`/api/fechamento/despesas?mes_ano=${mes_ano}`),
+      create: (data) => request('/api/fechamento/despesas', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data) => request(`/api/fechamento/despesas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id) => request(`/api/fechamento/despesas/${id}`, { method: 'DELETE' }),
+    },
   },
 }
