@@ -25,16 +25,12 @@ export default function Configuracoes() {
     },
   })
 
-  function handleBlur(conta) {
+  function handleSave(conta) {
     const raw = editing[conta.nome]
     if (raw === undefined) return
     const value = parseFloat(raw.replace(',', '.'))
     if (isNaN(value) || value < 0 || value > 100) {
       setStatus(s => ({ ...s, [conta.nome]: 'error' }))
-      return
-    }
-    if (value === conta.imposto) {
-      setEditing(s => { const n = { ...s }; delete n[conta.nome]; return n })
       return
     }
     setStatus(s => ({ ...s, [conta.nome]: 'saving' }))
@@ -75,7 +71,7 @@ export default function Configuracoes() {
                   <p className="text-stone-500 text-xs">Mercado Livre</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     <input
                       type="text"
@@ -87,8 +83,7 @@ export default function Configuracoes() {
                           setEditing(s => ({ ...s, [conta.nome]: String(conta.imposto.toFixed(2)).replace('.', ',') }))
                         }
                       }}
-                      onBlur={() => handleBlur(conta)}
-                      onKeyDown={e => { if (e.key === 'Enter') e.target.blur() }}
+                      onKeyDown={e => { if (e.key === 'Enter') handleSave(conta) }}
                       className={`bg-stone-800 border rounded px-2 py-1 text-right text-sm text-stone-200 focus:outline-none focus:ring-1 w-20 ${
                         st === 'error'
                           ? 'border-red-500 focus:ring-red-500'
@@ -98,8 +93,15 @@ export default function Configuracoes() {
                     <span className="text-stone-400 text-sm">%</span>
                   </div>
 
-                  <div className="w-20 text-xs text-right">
-                    {st === 'saving' && <span className="text-stone-500">Salvando...</span>}
+                  <button
+                    onClick={() => handleSave(conta)}
+                    disabled={!isEditing || st === 'saving'}
+                    className="px-3 py-1.5 bg-sky-500 hover:bg-sky-400 disabled:opacity-40 text-stone-950 text-xs font-semibold rounded-lg transition-colors"
+                  >
+                    {st === 'saving' ? 'Salvando...' : 'Salvar'}
+                  </button>
+
+                  <div className="w-14 text-xs">
                     {st === 'saved' && <span className="text-emerald-400">✓ Salvo</span>}
                     {st === 'error' && <span className="text-red-400">✗ Erro</span>}
                   </div>
