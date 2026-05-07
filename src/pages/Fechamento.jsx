@@ -19,8 +19,8 @@ function totalOf(rows, field) {
 function filterByDate(rows, dateFrom, dateTo) {
   if (!dateFrom && !dateTo) return rows
   return rows.filter(r => {
-    if (!r.data) return true
-    const d = r.data.slice(0, 10)
+    if (!r.data) return false          // sem data: excluir quando filtro ativo
+    const d = String(r.data).slice(0, 10)   // garante string "YYYY-MM-DD"
     if (dateFrom && d < dateFrom) return false
     if (dateTo   && d > dateTo)   return false
     return true
