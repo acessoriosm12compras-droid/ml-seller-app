@@ -10,7 +10,6 @@ import Pedidos from './pages/Pedidos'
 import PedidoDetalhe from './pages/PedidoDetalhe'
 import Financeiro from './pages/Financeiro'
 import Margem from './pages/Margem'
-import Ranqueamento from './pages/Ranqueamento'
 import CustosProdutos from './pages/CustosProdutos'
 import AdminUsuarios from './pages/AdminUsuarios'
 import Resultado from './pages/Resultado'
@@ -52,7 +51,6 @@ export default function App() {
               <Route path="pedidos/:id" element={<PedidoDetalhe />} />
               <Route path="financeiro" element={<Financeiro />} />
               <Route path="margem" element={<Margem />} />
-              <Route path="ranqueamento" element={<Ranqueamento />} />
               <Route path="resultado" element={<Resultado />} />
               <Route path="custos-produtos" element={<CustosProdutos />} />
               <Route path="conciliacao" element={<Conciliacao />} />
