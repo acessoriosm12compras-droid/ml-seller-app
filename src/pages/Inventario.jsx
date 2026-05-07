@@ -112,7 +112,17 @@ export default function Inventario() {
         {/* Table */}
         <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs table-fixed">
+              <colgroup>
+                <col className="w-[260px]" />
+                <col className="w-[110px]" />
+                <col className="w-[90px]" />
+                <col className="w-[100px]" />
+                <col className="w-[80px]" />
+                <col className="w-[100px]" />
+                <col className="w-[120px]" />
+                <col className="w-[110px]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-stone-800">
                   <th className="px-4 py-3 text-left text-stone-500">Produto</th>
@@ -144,12 +154,12 @@ export default function Inventario() {
                     : 'text-emerald-400'
                   return (
                     <tr key={item.ml_item_id} className={`border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors ${item.estoque_baixo ? 'bg-red-500/5' : ''}`}>
-                      <td className="px-4 py-3 text-stone-300 max-w-[220px]">
-                        <div className="flex items-center gap-2">
-                          {item.estoque_baixo && <span title="Estoque baixo" className="text-red-400 text-xs">⚠</span>}
-                          <div>
+                      <td className="px-4 py-3 text-stone-300 overflow-hidden">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {item.estoque_baixo && <span title="Estoque baixo" className="text-red-400 text-xs shrink-0">⚠</span>}
+                          <div className="min-w-0">
                             <div className="truncate" title={item.titulo}>{item.titulo}</div>
-                            <div className="text-stone-600 font-mono text-[10px]">{item.ml_item_id}</div>
+                            <div className="text-stone-600 font-mono text-[10px] truncate">{item.ml_item_id}</div>
                           </div>
                         </div>
                       </td>
