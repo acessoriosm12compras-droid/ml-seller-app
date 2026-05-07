@@ -24,6 +24,7 @@ import Movimentacoes from './pages/Movimentacoes'
 import FinanceiroResumo from './pages/FinanceiroResumo'
 import Gerenciamento from './pages/Gerenciamento'
 import Inventario from './pages/Inventario'
+import Configuracoes from './pages/Configuracoes'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -63,6 +64,7 @@ export default function App() {
               <Route path="financeiro-resumo" element={<FinanceiroResumo />} />
               <Route path="gerenciamento" element={<Gerenciamento />} />
               <Route path="inventario" element={<Inventario />} />
+              <Route path="configuracoes" element={<Configuracoes />} />
               <Route
                 path="admin/usuarios"
                 element={

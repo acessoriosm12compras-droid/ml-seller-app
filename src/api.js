@@ -106,4 +106,13 @@ export const api = {
     trigger: (data) => request('/api/sync', { method: 'POST', body: JSON.stringify(data || {}) }),
     status: () => request('/api/sync/status'),
   },
+
+  configuracoes: {
+    contas: () => request('/api/configuracoes/contas'),
+    updateImposto: (nome, imposto) =>
+      request(`/api/configuracoes/contas/${encodeURIComponent(nome)}/imposto`, {
+        method: 'PATCH',
+        body: JSON.stringify({ imposto }),
+      }),
+  },
 }

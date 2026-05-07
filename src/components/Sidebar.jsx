@@ -3,17 +3,18 @@ import { useAuth } from '../context/AuthContext'
 import ThemeToggle from './ThemeToggle'
 import {
   LayoutDashboard, PieChart, Banknote,
-  ShoppingBag, Settings, Search, Package,
+  ShoppingBag, Settings, Search, Package, SlidersHorizontal,
 } from 'lucide-react'
 
 const NAV = [
-  { to: '/dashboard',            label: 'Dashboard',    icon: LayoutDashboard },
-  { to: '/curva-abc',            label: 'Curva ABC',    icon: PieChart },
-  { to: '/financeiro',           label: 'Financeiro',   icon: Banknote },
-  { to: '/pedidos',              label: 'Pedidos',      icon: ShoppingBag },
-  { to: '/custos-produtos',       label: 'Custos',       icon: Settings },
-  { to: '/ranqueamento',         label: 'Ranqueamento', icon: Search },
-  { to: '/inventario',           label: 'Inventário',   icon: Package },
+  { to: '/dashboard',      label: 'Dashboard',    icon: LayoutDashboard },
+  { to: '/curva-abc',      label: 'Curva ABC',    icon: PieChart },
+  { to: '/financeiro',     label: 'Financeiro',   icon: Banknote },
+  { to: '/pedidos',        label: 'Pedidos',      icon: ShoppingBag },
+  { to: '/custos-produtos', label: 'Custos',      icon: Settings },
+  { to: '/ranqueamento',   label: 'Ranqueamento', icon: Search },
+  { to: '/inventario',     label: 'Inventário',   icon: Package },
+  { to: '/configuracoes',  label: 'Configurações', icon: SlidersHorizontal },
 ]
 
 export default function Sidebar() {
