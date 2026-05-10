@@ -7,6 +7,8 @@ export default function Configuracoes() {
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState({}) // { nome: string value }
   const [status, setStatus] = useState({})   // { nome: 'saving' | 'saved' | 'error' }
+  const [syncStatus, setSyncStatus] = useState(null) // null | 'loading' | { ok, resultados, periodo } | { erro }
+  const [syncPeriodo, setSyncPeriodo] = useState('90d')
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['configuracoes-contas'],
@@ -38,12 +40,23 @@ export default function Configuracoes() {
     setEditing(s => { const n = { ...s }; delete n[conta.nome]; return n })
   }
 
+  async function handleSync() {
+    setSyncStatus('loading')
+    try {
+      const result = await api.sync.trigger({ periodo: syncPeriodo })
+      setSyncStatus(result)
+      queryClient.invalidateQueries()
+    } catch (e) {
+      setSyncStatus({ erro: e.message || 'Erro desconhecido' })
+    }
+  }
+
   const contas = data?.contas ?? []
 
   return (
     <div className="flex flex-col flex-1">
       <Header title="Configurações" onRefresh={refetch} isLoading={isLoading} />
-      <main className="flex-1 p-3 sm:p-6 max-w-2xl">
+      <main className="flex-1 p-3 sm:p-6 max-w-2xl space-y-4">
         <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-stone-800">
             <h2 className="text-sm font-medium text-stone-300">Alíquota de Imposto por Conta</h2>
@@ -109,6 +122,52 @@ export default function Configuracoes() {
               </div>
             )
           })}
+        </div>
+        <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-stone-800">
+            <h2 className="text-sm font-medium text-stone-300">Sincronizar Dados</h2>
+            <p className="text-xs text-stone-500 mt-0.5">Força a busca de pedidos, collections e anúncios do Mercado Livre</p>
+          </div>
+          <div className="px-4 py-4 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <label className="text-xs text-stone-400">Período:</label>
+              <select
+                value={syncPeriodo}
+                onChange={e => setSyncPeriodo(e.target.value)}
+                disabled={syncStatus === 'loading'}
+                className="bg-stone-800 border border-stone-700 rounded px-2 py-1 text-xs text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              >
+                <option value="30d">Últimos 30 dias</option>
+                <option value="90d">Últimos 90 dias</option>
+                <option value="180d">Últimos 180 dias</option>
+              </select>
+              <button
+                onClick={handleSync}
+                disabled={syncStatus === 'loading'}
+                className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 disabled:opacity-40 text-stone-950 text-xs font-semibold rounded-lg transition-colors"
+              >
+                {syncStatus === 'loading' ? 'Sincronizando...' : 'Sincronizar Agora'}
+              </button>
+            </div>
+
+            {syncStatus && syncStatus !== 'loading' && (
+              <div className={`text-xs rounded-lg px-3 py-2 ${syncStatus.erro ? 'bg-red-950 text-red-300 border border-red-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'}`}>
+                {syncStatus.erro ? (
+                  <span>Erro: {syncStatus.erro}</span>
+                ) : (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-medium">Sincronização concluída — {syncStatus.periodo?.de} a {syncStatus.periodo?.ate}</span>
+                    <span>Pedidos: {syncStatus.resultados?.pedidos ?? '—'} | Collections: {syncStatus.resultados?.collections ?? '—'} | Dias de ADS: {syncStatus.resultados?.ads_dias ?? '—'}</span>
+                    {(syncStatus.resultados?.pedidos_erro || syncStatus.resultados?.collections_erro || syncStatus.resultados?.ads_erro) && (
+                      <span className="text-yellow-400 mt-0.5">
+                        Avisos: {[syncStatus.resultados.pedidos_erro, syncStatus.resultados.collections_erro, syncStatus.resultados.ads_erro].filter(Boolean).join(' | ')}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
