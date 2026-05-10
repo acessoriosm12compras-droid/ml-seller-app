@@ -25,6 +25,7 @@ import Gerenciamento from './pages/Gerenciamento'
 import Inventario from './pages/Inventario'
 import Configuracoes from './pages/Configuracoes'
 import Fechamento from './pages/Fechamento'
+import Ads from './pages/Ads'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -65,6 +66,7 @@ export default function App() {
               <Route path="inventario" element={<Inventario />} />
               <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="fechamento" element={<Fechamento />} />
+              <Route path="ads" element={<Ads />} />
               <Route
                 path="admin/usuarios"
                 element={

@@ -142,4 +142,7 @@ export const api = {
       delete: (id) => request(`/api/fechamento/despesas/${id}`, { method: 'DELETE' }),
     },
   },
+
+  ads: (params) =>
+    request(`/api/ads/campanhas?${new URLSearchParams(params)}`),
 }
