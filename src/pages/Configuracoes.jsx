@@ -44,8 +44,26 @@ export default function Configuracoes() {
     setSyncStatus('loading')
     try {
       const result = await api.sync.trigger({ periodo: syncPeriodo })
-      setSyncStatus(result)
-      queryClient.invalidateQueries()
+      if (result.background) {
+        // Poll state every 4s until done
+        setSyncStatus('polling')
+        const poll = setInterval(async () => {
+          try {
+            const state = await api.sync.state()
+            if (state.status === 'done') {
+              clearInterval(poll)
+              setSyncStatus({ ok: true, resultados: state.resultados, periodo: { de: state.periodo, ate: '' } })
+              queryClient.invalidateQueries()
+            } else if (state.status === 'error') {
+              clearInterval(poll)
+              setSyncStatus({ erro: state.erro || 'Erro no background sync' })
+            }
+          } catch { /* keep polling */ }
+        }, 4000)
+      } else {
+        setSyncStatus(result)
+        queryClient.invalidateQueries()
+      }
     } catch (e) {
       setSyncStatus({ erro: e.message || 'Erro desconhecido' })
     }
@@ -134,7 +152,7 @@ export default function Configuracoes() {
               <select
                 value={syncPeriodo}
                 onChange={e => setSyncPeriodo(e.target.value)}
-                disabled={syncStatus === 'loading'}
+                disabled={syncStatus === 'loading' || syncStatus === 'polling'}
                 className="bg-stone-800 border border-stone-700 rounded px-2 py-1 text-xs text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
               >
                 <option value="30d">Últimos 30 dias</option>
@@ -143,10 +161,10 @@ export default function Configuracoes() {
               </select>
               <button
                 onClick={handleSync}
-                disabled={syncStatus === 'loading'}
+                disabled={syncStatus === 'loading' || syncStatus === 'polling'}
                 className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 disabled:opacity-40 text-stone-950 text-xs font-semibold rounded-lg transition-colors"
               >
-                {syncStatus === 'loading' ? 'Sincronizando...' : 'Sincronizar Agora'}
+                {syncStatus === 'loading' || syncStatus === 'polling' ? 'Sincronizando...' : 'Sincronizar Agora'}
               </button>
             </div>
 

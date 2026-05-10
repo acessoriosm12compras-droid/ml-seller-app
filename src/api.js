@@ -105,6 +105,7 @@ export const api = {
   sync: {
     trigger: (data) => request('/api/sync', { method: 'POST', body: JSON.stringify(data || {}) }),
     status: () => request('/api/sync/status'),
+    state: () => request('/api/sync/state'),
   },
 
   configuracoes: {
