@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -44,14 +44,6 @@ function GsKpiCard({ label, value, variacao, valueColor, info }) {
   )
 }
 
-function SmallKpiCard({ label, value, valueColor }) {
-  return (
-    <div className="bg-white dark:bg-[#161618] border border-stone-100 dark:border-white/[0.04] rounded-xl px-4 py-3 flex flex-col gap-1 shadow-sm dark:shadow-none">
-      <p className="text-[11px] font-semibold text-stone-400 dark:text-zinc-500 uppercase tracking-wider">{label}</p>
-      <p className={`text-sm font-semibold ${valueColor ?? 'text-stone-900 dark:text-white'}`}>{value}</p>
-    </div>
-  )
-}
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -74,7 +66,6 @@ export default function Dashboard() {
   const de = params.get('de') || ''
   const ate = params.get('ate') || ''
   const { activeAccount } = useAuth()
-  const [expandedKpis, setExpandedKpis] = useState(false)
 
   useEffect(() => {
     if (!params.get('periodo')) {
@@ -136,7 +127,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Row 1: 4 main KPI cards ── */}
+        {/* ── Linha 1: 4 KPIs principais ── */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <GsKpiCard
             label="Faturamento"
@@ -157,35 +148,61 @@ export default function Dashboard() {
             info="Líquido do Marketplace menos o custo dos produtos (CMV)"
           />
           <GsKpiCard
-            label="Margem pós ADS"
+            label="Margem"
+            value={k ? formatPct(k.margem) : '…'}
+            valueColor={k ? (k.margem >= 15 ? 'text-emerald-500' : k.margem >= 0 ? 'text-sky-500' : 'text-red-500') : undefined}
+            info="Lucro Bruto ÷ Faturamento"
+          />
+        </div>
+
+        {/* ── Linha 2: Vendas, Unidades, Ticket, ROI ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <GsKpiCard
+            label="Número de Vendas"
+            value={k ? k.n_vendas.toLocaleString('pt-BR') : '…'}
+            variacao={k?.pedidos_variacao}
+          />
+          <GsKpiCard
+            label="Número de Unidades Vendidas"
+            value={k ? k.unidades.toLocaleString('pt-BR') : '…'}
+          />
+          <GsKpiCard
+            label="Ticket Médio"
+            value={k ? formatBRL(k.ticket_medio) : '…'}
+            variacao={k?.ticket_variacao}
+          />
+          <GsKpiCard
+            label="Retorno Sobre Investimento"
+            value={k ? formatPct(k.roi) : '…'}
+            valueColor={k ? (k.roi >= 30 ? 'text-emerald-500' : k.roi >= 0 ? 'text-sky-500' : 'text-red-500') : undefined}
+            info="Lucro Bruto ÷ CMV"
+          />
+        </div>
+
+        {/* ── Linha 3: ADS, TACoS, Lucro pós ADS, MPA ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <GsKpiCard
+            label="Valor em Ads"
+            value={k ? formatBRL(k.valor_ads) : '…'}
+          />
+          <GsKpiCard
+            label="TACoS"
+            value={k && k.tacos > 0 ? formatPct(k.tacos) : '—'}
+            valueColor={k && k.tacos > 0 ? 'text-sky-500' : undefined}
+            info="Gasto em ADS ÷ Faturamento"
+          />
+          <GsKpiCard
+            label="Lucro bruto pós ADS"
+            value={k ? formatBRL(k.lucro_pos_ads) : '…'}
+            valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-emerald-500' : 'text-red-500') : undefined}
+            info="Lucro Bruto menos o gasto em ADS"
+          />
+          <GsKpiCard
+            label="MPA"
             value={k ? formatPct(k.mpa) : '…'}
             valueColor={k ? (k.mpa >= 15 ? 'text-emerald-500' : k.mpa >= 0 ? 'text-sky-500' : 'text-red-500') : undefined}
             info="Lucro pós ADS ÷ Faturamento"
           />
-        </div>
-
-        {/* ── Expandable secondary KPIs ── */}
-        <div>
-          <button
-            onClick={() => setExpandedKpis(v => !v)}
-            className="flex items-center gap-2 text-xs text-stone-400 dark:text-zinc-600 hover:text-stone-700 dark:hover:text-zinc-300 transition-colors mb-3"
-          >
-            <span>{expandedKpis ? '▲' : '▼'}</span>
-            <span>{expandedKpis ? 'Ocultar métricas' : 'Mais métricas'}</span>
-          </button>
-
-          {expandedKpis && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-8 gap-3">
-              <SmallKpiCard label="Nº de Vendas" value={k ? k.n_vendas.toLocaleString('pt-BR') : '…'} />
-              <SmallKpiCard label="Unidades" value={k ? k.unidades.toLocaleString('pt-BR') : '…'} />
-              <SmallKpiCard label="Ticket Médio" value={k ? formatBRL(k.ticket_medio) : '…'} />
-              <SmallKpiCard label="Reclamações" value={k ? k.reclamacoes : '…'} valueColor={k && k.reclamacoes > 0 ? 'text-red-500' : undefined} />
-              <SmallKpiCard label="Valor em ADS" value={k ? formatBRL(k.valor_ads) : '…'} />
-              <SmallKpiCard label="TACoS" value={k ? formatPct(k.tacos) : '…'} valueColor={k && k.tacos > 0 ? 'text-sky-500' : undefined} />
-              <SmallKpiCard label="Lucro pós ADS" value={k ? formatBRL(k.lucro_pos_ads) : '…'} valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-emerald-500' : 'text-red-500') : undefined} />
-              <SmallKpiCard label="Margem" value={k ? formatPct(k.margem) : '…'} valueColor={k ? (k.margem >= 15 ? 'text-emerald-500' : k.margem >= 0 ? 'text-sky-500' : 'text-red-500') : undefined} />
-            </div>
-          )}
         </div>
 
         {/* ── Resumo de Receitas chart ── */}
