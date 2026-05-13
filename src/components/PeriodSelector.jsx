@@ -26,6 +26,8 @@ export default function PeriodSelector() {
   const [params, setParams] = useSearchParams()
   const [open, setOpen] = useState(false)
   const [showCustom, setShowCustom] = useState(false)
+  const [customDe, setCustomDe] = useState(params.get('de') || '')
+  const [customAte, setCustomAte] = useState(params.get('ate') || '')
   const ref = useRef(null)
 
   const current = params.get('periodo') || 'hoje'
@@ -48,6 +50,8 @@ export default function PeriodSelector() {
     }
     setShowCustom(false)
     setOpen(false)
+    setCustomDe('')
+    setCustomAte('')
     setParams(p => {
       const np = new URLSearchParams(p)
       np.set('periodo', value)
@@ -109,14 +113,22 @@ export default function PeriodSelector() {
               <div className="px-3 pb-2 pt-1 flex flex-col gap-1.5">
                 <input
                   type="date"
-                  defaultValue={params.get('de') || ''}
-                  onChange={e => applyCustom(e.target.value, params.get('ate') || '')}
+                  value={customDe}
+                  onChange={e => {
+                    const val = e.target.value
+                    setCustomDe(val)
+                    if (val && customAte) applyCustom(val, customAte)
+                  }}
                   className="w-full bg-stone-800 border border-stone-700 rounded px-2 py-1 text-xs text-stone-200 focus:outline-none focus:border-sky-500"
                 />
                 <input
                   type="date"
-                  defaultValue={params.get('ate') || ''}
-                  onChange={e => applyCustom(params.get('de') || '', e.target.value)}
+                  value={customAte}
+                  onChange={e => {
+                    const val = e.target.value
+                    setCustomAte(val)
+                    if (customDe && val) applyCustom(customDe, val)
+                  }}
                   className="w-full bg-stone-800 border border-stone-700 rounded px-2 py-1 text-xs text-stone-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
