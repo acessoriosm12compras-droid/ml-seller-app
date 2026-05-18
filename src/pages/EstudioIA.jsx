@@ -183,12 +183,147 @@ export default function EstudioIA() {
     })
   }
 
-  // ── Download do resultado como .md ────────────────────────────────────────
+  // ── Converte Markdown básico para HTML ───────────────────────────────────
+  function mdParaHtml(md) {
+    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const inline = (s) =>
+      esc(s)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+
+    const lines = md.split('\n')
+    const out = []
+    let inUl = false
+    let inOl = false
+    let inPre = false
+    let paraBuffer = []
+
+    const flushPara = () => {
+      if (paraBuffer.length) {
+        out.push(`<p>${paraBuffer.join('<br>')}</p>`)
+        paraBuffer = []
+      }
+    }
+
+    for (const raw of lines) {
+      const line = raw.trimEnd()
+
+      if (line.startsWith('```')) {
+        flushPara()
+        if (inUl) { out.push('</ul>'); inUl = false }
+        if (inOl) { out.push('</ol>'); inOl = false }
+        if (inPre) { out.push('</code></pre>'); inPre = false }
+        else { out.push('<pre><code>'); inPre = true }
+        continue
+      }
+      if (inPre) { out.push(esc(line)); continue }
+
+      if (/^#{1,6} /.test(line)) {
+        flushPara()
+        if (inUl) { out.push('</ul>'); inUl = false }
+        if (inOl) { out.push('</ol>'); inOl = false }
+        const lvl = line.match(/^(#+)/)[1].length
+        const tag = `h${Math.min(lvl, 6)}`
+        out.push(`<${tag}>${inline(line.replace(/^#+\s/, ''))}</${tag}>`)
+        continue
+      }
+
+      if (/^[-*] /.test(line)) {
+        flushPara()
+        if (inOl) { out.push('</ol>'); inOl = false }
+        if (!inUl) { out.push('<ul>'); inUl = true }
+        out.push(`<li>${inline(line.slice(2))}</li>`)
+        continue
+      }
+
+      if (/^\d+\. /.test(line)) {
+        flushPara()
+        if (inUl) { out.push('</ul>'); inUl = false }
+        if (!inOl) { out.push('<ol>'); inOl = true }
+        out.push(`<li>${inline(line.replace(/^\d+\.\s/, ''))}</li>`)
+        continue
+      }
+
+      if (/^---+$/.test(line)) {
+        flushPara()
+        if (inUl) { out.push('</ul>'); inUl = false }
+        if (inOl) { out.push('</ol>'); inOl = false }
+        out.push('<hr>')
+        continue
+      }
+
+      if (line === '') {
+        flushPara()
+        if (inUl) { out.push('</ul>'); inUl = false }
+        if (inOl) { out.push('</ol>'); inOl = false }
+        continue
+      }
+
+      if (inUl || inOl) {
+        // linha solta dentro de lista — fecha e abre parágrafo
+        if (inUl) { out.push('</ul>'); inUl = false }
+        if (inOl) { out.push('</ol>'); inOl = false }
+      }
+      paraBuffer.push(inline(line))
+    }
+
+    flushPara()
+    if (inUl) out.push('</ul>')
+    if (inOl) out.push('</ol>')
+    if (inPre) out.push('</code></pre>')
+
+    return out.join('\n')
+  }
+
+  // ── Download do resultado como .html ─────────────────────────────────────
   function baixarArquivo() {
     if (!resultado) return
     const date = new Date().toISOString().slice(0, 10)
-    const nomeArquivo = `estudio-${termo.replace(/\s+/g, '-').toLowerCase()}-${date}.md`
-    const blob = new Blob([resultado], { type: 'text/markdown;charset=utf-8' })
+    const nomeArquivo = `estudio-${termo.replace(/\s+/g, '-').toLowerCase()}-${date}.html`
+    const corpo = mdParaHtml(resultado)
+    const html = [
+      '<!DOCTYPE html>',
+      '<html lang="pt-BR">',
+      '<head>',
+      '<meta charset="UTF-8">',
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+      `<title>Estúdio IA — ${termo}</title>`,
+      '<style>',
+      '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}',
+      'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0c0c0e;color:#d4d4d8;line-height:1.75;padding:40px 20px 80px}',
+      '.wrapper{max-width:820px;margin:0 auto}',
+      '.topo{margin-bottom:36px;padding-bottom:20px;border-bottom:1px solid #27272a}',
+      '.topo h1{font-size:1.3rem;color:#38bdf8;font-weight:700;margin-bottom:4px}',
+      '.topo p{font-size:0.78rem;color:#52525b}',
+      'h1{font-size:1.45rem;color:#38bdf8;margin:40px 0 12px;font-weight:700}',
+      'h2{font-size:1.1rem;color:#7dd3fc;margin:28px 0 10px;font-weight:600}',
+      'h3{font-size:1rem;color:#93c5fd;margin:20px 0 8px;font-weight:600}',
+      'h4,h5,h6{font-size:0.95rem;color:#bae6fd;margin:16px 0 6px;font-weight:600}',
+      'p{margin:8px 0;color:#a1a1aa}',
+      'ul,ol{margin:8px 0 8px 24px;color:#a1a1aa}',
+      'li{margin:4px 0}',
+      'strong{color:#e4e4e7;font-weight:600}',
+      'em{color:#c4c4c8;font-style:italic}',
+      'code{background:#1e1e2e;color:#7dd3fc;padding:2px 6px;border-radius:4px;font-size:0.85em;font-family:monospace}',
+      'pre{background:#1e1e2e;border:1px solid #27272a;border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0}',
+      'pre code{background:none;padding:0;color:#a8ff78}',
+      'hr{border:none;border-top:1px solid #27272a;margin:32px 0}',
+      'a{color:#38bdf8;text-decoration:none}',
+      '</style>',
+      '</head>',
+      '<body>',
+      '<div class="wrapper">',
+      '<div class="topo">',
+      `<h1>Estúdio IA — ${termo}</h1>`,
+      `<p>Gerado em ${date} · ML Seller Dashboard</p>`,
+      '</div>',
+      corpo,
+      '</div>',
+      '</body>',
+      '</html>',
+    ].join('\n')
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -366,7 +501,7 @@ export default function EstudioIA() {
                     title="Baixar estudo completo como .md"
                     className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
                   >
-                    <Download size={12} /> Baixar .md
+                    <Download size={12} /> Baixar HTML
                   </button>
                   <button
                     onClick={() => copiar(tabAtiva, tabConteudo)}
