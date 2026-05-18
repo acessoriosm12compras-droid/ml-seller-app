@@ -1,22 +1,21 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import ThemeToggle from './ThemeToggle'
 import {
   LayoutDashboard, PieChart, Banknote,
-  ShoppingBag, Settings, Package, SlidersHorizontal, ClipboardList, Megaphone, Sparkles,
+  ShoppingBag, Settings, Package, SlidersHorizontal, ClipboardList, Megaphone, Sparkles, LogOut,
 } from 'lucide-react'
 
 const NAV = [
-  { to: '/dashboard',      label: 'Dashboard',    icon: LayoutDashboard },
-  { to: '/curva-abc',      label: 'Curva ABC',    icon: PieChart },
-  { to: '/financeiro',     label: 'Financeiro',   icon: Banknote },
-  { to: '/pedidos',        label: 'Pedidos',      icon: ShoppingBag },
-  { to: '/ads',            label: 'Mercado Ads',  icon: Megaphone },
-  { to: '/estudio-ia',     label: 'Estúdio IA',   icon: Sparkles },
-  { to: '/custos-produtos', label: 'Custos',      icon: Settings },
-  { to: '/inventario',     label: 'Inventário',   icon: Package },
-  { to: '/fechamento',     label: 'Fechamento',   icon: ClipboardList },
-  { to: '/configuracoes',  label: 'Configurações', icon: SlidersHorizontal },
+  { to: '/dashboard',       label: 'Dashboard',     icon: LayoutDashboard },
+  { to: '/curva-abc',       label: 'Curva ABC',      icon: PieChart },
+  { to: '/financeiro',      label: 'Financeiro',     icon: Banknote },
+  { to: '/pedidos',         label: 'Pedidos',        icon: ShoppingBag },
+  { to: '/ads',             label: 'Mercado Ads',    icon: Megaphone },
+  { to: '/estudio-ia',      label: 'Estúdio IA',     icon: Sparkles },
+  { to: '/custos-produtos', label: 'Custos',         icon: Settings },
+  { to: '/inventario',      label: 'Inventário',     icon: Package },
+  { to: '/fechamento',      label: 'Fechamento',     icon: ClipboardList },
+  { to: '/configuracoes',   label: 'Configurações',  icon: SlidersHorizontal },
 ]
 
 export default function Sidebar() {
@@ -24,64 +23,75 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop sidebar ── */}
+      {/* ── Desktop sidebar — icon-only ── */}
       <aside
-        className="hidden md:flex w-52 min-h-screen flex-col shrink-0"
+        className="hidden md:flex w-14 min-h-screen flex-col shrink-0"
         style={{ backgroundColor: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <div className="px-6 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <span className="text-sky-400 font-bold text-base tracking-tight">ML Seller</span>
+        {/* Logo */}
+        <div
+          className="flex items-center justify-center h-14 shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }}>
+            <span className="text-white font-black" style={{ fontSize: '9px', letterSpacing: '-0.02em' }}>ML</span>
+          </div>
         </div>
 
-        <nav className="flex-1 py-2">
+        {/* Nav */}
+        <nav className="flex-1 py-3 flex flex-col items-center gap-0.5">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
+              title={label}
               className={({ isActive }) =>
-                `flex items-center gap-3 mx-2 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                `w-10 h-9 flex items-center justify-center rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-white/[0.08] text-white'
-                    : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]'
+                    ? 'bg-sky-500/[0.15] text-sky-400'
+                    : 'text-zinc-600 hover:text-zinc-200 hover:bg-white/[0.05]'
                 }`
               }
             >
-              <Icon size={15} strokeWidth={1.75} />
-              <span>{label}</span>
+              <Icon size={16} strokeWidth={1.75} />
             </NavLink>
           ))}
         </nav>
 
-        <div className="py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <ThemeToggle />
-          <div className="px-5 mt-1">
-            <button
-              onClick={logout}
-              className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
-            >
-              Sair
-            </button>
-          </div>
+        {/* Logout */}
+        <div
+          className="pb-4 pt-2 flex justify-center shrink-0"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <button
+            onClick={logout}
+            title="Sair"
+            className="w-10 h-9 flex items-center justify-center rounded-lg text-zinc-700 hover:text-zinc-300 transition-colors"
+          >
+            <LogOut size={15} strokeWidth={1.75} />
+          </button>
         </div>
       </aside>
 
-      {/* ── Mobile bottom tab bar ── */}
+      {/* ── Mobile bottom tab bar — 5 itens principais ── */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch"
         style={{ backgroundColor: '#0d0d0f', borderTop: '1px solid rgba(255,255,255,0.08)', height: '56px' }}
       >
-        {NAV.map(({ to, label, icon: Icon }) => (
+        {NAV.slice(0, 5).map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             title={label}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center transition-colors ${
+              `flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
                 isActive ? 'text-sky-400' : 'text-zinc-600 hover:text-zinc-300'
               }`
             }
           >
-            <Icon size={20} strokeWidth={1.75} />
+            <Icon size={19} strokeWidth={1.75} />
+            <span className="text-[9px] font-medium">{label}</span>
           </NavLink>
         ))}
       </nav>

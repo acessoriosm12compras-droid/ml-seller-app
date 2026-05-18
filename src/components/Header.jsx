@@ -1,3 +1,4 @@
+import { RefreshCw, Loader2, Moon } from 'lucide-react'
 import PeriodSelector from './PeriodSelector'
 import { useAuth } from '../context/AuthContext'
 
@@ -12,14 +13,17 @@ export default function Header({ title, onRefresh, isLoading }) {
   }
 
   return (
-    <header className="bg-stone-900 dark:bg-stone-950 border-b border-stone-800 flex items-center justify-between gap-2 px-4 sm:px-6 py-2 min-h-14">
+    <header
+      className="flex items-center justify-between gap-2 px-4 sm:px-6 min-h-14 shrink-0"
+      style={{ backgroundColor: '#0d0d0f', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+    >
       <div className="flex items-center gap-3 shrink-0">
-        <h1 className="text-stone-100 font-semibold text-base">{title}</h1>
+        <h1 className="text-stone-100 font-semibold text-sm tracking-tight">{title}</h1>
         {role === 'admin' && (
           <select
             value={activeAccount || ''}
             onChange={e => setActiveAccount(e.target.value)}
-            className="bg-stone-800 border border-stone-700 rounded-lg px-2 py-1 text-xs text-sky-700 dark:text-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            className="bg-white/[0.05] border border-white/[0.08] rounded-lg px-2 py-1 text-xs text-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
           >
             {CONTAS.map(c => (
               <option key={c} value={c}>{c}</option>
@@ -28,22 +32,26 @@ export default function Header({ title, onRefresh, isLoading }) {
         )}
       </div>
 
-      <div className="flex items-center gap-2 ml-auto">
+      <div className="flex items-center gap-1 ml-auto">
         <PeriodSelector />
-        <button
-          onClick={onRefresh}
-          disabled={isLoading}
-          className="p-2 text-stone-400 hover:text-stone-200 disabled:opacity-40 transition-colors"
-          title="Atualizar"
-        >
-          {isLoading ? '⏳' : '🔄'}
-        </button>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            title="Atualizar"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.05] disabled:opacity-40 transition-colors"
+          >
+            {isLoading
+              ? <Loader2 size={14} className="animate-spin" />
+              : <RefreshCw size={14} />}
+          </button>
+        )}
         <button
           onClick={toggleDark}
-          className="hidden sm:block p-2 text-stone-400 hover:text-stone-200 transition-colors"
           title="Alternar tema"
+          className="hidden sm:flex w-8 h-8 items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.05] transition-colors"
         >
-          🌙
+          <Moon size={14} />
         </button>
       </div>
     </header>

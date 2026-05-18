@@ -20,22 +20,48 @@ function formatPct(v) {
   return `${v.toFixed(2)}%`
 }
 
-function GsKpiCard({ label, value, variacao, valueColor, info }) {
+// Mapa de esquemas de cor por tipo de KPI (layout C sobre estrutura A)
+const COLOR_SCHEMES = {
+  amber:   { bg: 'rgba(245,158,11,0.07)',  border: 'rgba(245,158,11,0.18)',  text: '#f59e0b' },
+  blue:    { bg: 'rgba(59,130,246,0.07)',  border: 'rgba(59,130,246,0.18)',  text: '#60a5fa' },
+  green:   { bg: 'rgba(16,185,129,0.07)',  border: 'rgba(16,185,129,0.18)',  text: '#34d399' },
+  sky:     { bg: 'rgba(14,165,233,0.07)',  border: 'rgba(14,165,233,0.18)',  text: '#38bdf8' },
+  indigo:  { bg: 'rgba(99,102,241,0.07)',  border: 'rgba(99,102,241,0.18)',  text: '#818cf8' },
+  violet:  { bg: 'rgba(139,92,246,0.07)',  border: 'rgba(139,92,246,0.18)',  text: '#a78bfa' },
+  cyan:    { bg: 'rgba(6,182,212,0.07)',   border: 'rgba(6,182,212,0.18)',   text: '#22d3ee' },
+  orange:  { bg: 'rgba(249,115,22,0.07)',  border: 'rgba(249,115,22,0.18)',  text: '#fb923c' },
+  rose:    { bg: 'rgba(244,63,94,0.07)',   border: 'rgba(244,63,94,0.18)',   text: '#fb7185' },
+  teal:    { bg: 'rgba(20,184,166,0.07)',  border: 'rgba(20,184,166,0.18)',  text: '#2dd4bf' },
+}
+
+function GsKpiCard({ label, value, variacao, valueColor, info, scheme }) {
   const varNum = typeof variacao === 'number' ? variacao : null
   const isPositive = varNum !== null && varNum >= 0
   const isNegative = varNum !== null && varNum < 0
+  const s = scheme ? COLOR_SCHEMES[scheme] : null
 
   return (
-    <div className="bg-white dark:bg-[#161618] rounded-2xl p-5 border border-stone-100 dark:border-white/[0.04] flex flex-col gap-2 shadow-sm dark:shadow-none">
+    <div
+      className="rounded-xl p-4 flex flex-col gap-2"
+      style={{
+        backgroundColor: s ? s.bg : 'rgba(255,255,255,0.02)',
+        border: `1px solid ${s ? s.border : 'rgba(255,255,255,0.06)'}`,
+      }}
+    >
       <div className="flex items-center gap-1.5">
-        <p className="text-[11px] font-semibold text-stone-400 dark:text-zinc-500 uppercase tracking-wider truncate">{label}</p>
+        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider truncate">{label}</p>
         {info && (
-          <span title={info} className="text-stone-300 dark:text-zinc-700 cursor-default text-[10px] select-none">ⓘ</span>
+          <span title={info} className="text-zinc-700 cursor-default text-[10px] select-none">ⓘ</span>
         )}
       </div>
-      <p className={`text-2xl font-bold tracking-tight ${valueColor ?? 'text-stone-900 dark:text-white'}`}>{value}</p>
+      <p
+        className="text-2xl font-bold tracking-tight"
+        style={{ color: valueColor ? undefined : (s ? s.text : '#fff'), }}
+      >
+        <span className={valueColor ?? ''}>{value}</span>
+      </p>
       {varNum !== null && (
-        <p className={`text-xs flex items-center gap-1 ${isPositive ? 'text-emerald-500' : isNegative ? 'text-red-500' : 'text-stone-400'}`}>
+        <p className={`text-xs flex items-center gap-1 ${isPositive ? 'text-emerald-500' : isNegative ? 'text-red-400' : 'text-zinc-500'}`}>
           <span>{isPositive ? '▲' : '▼'}</span>
           <span>{Math.abs(varNum).toFixed(1)}% vs período anterior</span>
         </p>
@@ -128,80 +154,91 @@ export default function Dashboard() {
         )}
 
         {/* ── Linha 1: 4 KPIs principais ── */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           <GsKpiCard
             label="Faturamento"
             value={k ? formatBRL(k.faturamento) : '…'}
             variacao={k?.faturamento_variacao}
             info="Soma de unit_price × quantidade de todos os pedidos pagos"
+            scheme="amber"
           />
           <GsKpiCard
             label="Líq. do Marketplace"
             value={k ? formatBRL(k.liquido_marketplace) : '…'}
             info="Faturamento descontando as taxas cobradas pelo Mercado Livre"
+            scheme="blue"
           />
           <GsKpiCard
             label="Lucro Bruto"
             value={k ? formatBRL(k.lucro_bruto) : '…'}
             variacao={k?.lucro_variacao}
-            valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500') : undefined}
+            valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : undefined}
             info="Líquido do Marketplace menos o custo dos produtos (CMV)"
+            scheme="green"
           />
           <GsKpiCard
             label="Margem"
             value={k ? formatPct(k.margem) : '…'}
-            valueColor={k ? (k.margem >= 15 ? 'text-emerald-500' : k.margem >= 0 ? 'text-sky-500' : 'text-red-500') : undefined}
+            valueColor={k ? (k.margem >= 15 ? 'text-sky-400' : k.margem >= 0 ? 'text-sky-400' : 'text-red-400') : undefined}
             info="Lucro Bruto ÷ Faturamento"
+            scheme="sky"
           />
         </div>
 
         {/* ── Linha 2: Vendas, Unidades, Ticket, ROI ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <GsKpiCard
             label="Número de Vendas"
             value={k ? k.n_vendas.toLocaleString('pt-BR') : '…'}
             variacao={k?.pedidos_variacao}
+            scheme="indigo"
           />
           <GsKpiCard
-            label="Número de Unidades Vendidas"
+            label="Unidades Vendidas"
             value={k ? k.unidades.toLocaleString('pt-BR') : '…'}
+            scheme="violet"
           />
           <GsKpiCard
             label="Ticket Médio"
             value={k ? formatBRL(k.ticket_medio) : '…'}
             variacao={k?.ticket_variacao}
+            scheme="cyan"
           />
           <GsKpiCard
-            label="Retorno Sobre Investimento"
+            label="ROI"
             value={k ? formatPct(k.roi) : '…'}
-            valueColor={k ? (k.roi >= 30 ? 'text-emerald-500' : k.roi >= 0 ? 'text-sky-500' : 'text-red-500') : undefined}
+            valueColor={k ? (k.roi >= 30 ? 'text-emerald-400' : k.roi >= 0 ? 'text-emerald-400' : 'text-red-400') : undefined}
             info="Lucro Bruto ÷ CMV"
+            scheme="green"
           />
         </div>
 
         {/* ── Linha 3: ADS, TACoS, Lucro pós ADS, MPA ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <GsKpiCard
             label="Valor em Ads"
             value={k ? formatBRL(k.valor_ads) : '…'}
+            scheme="orange"
           />
           <GsKpiCard
             label="TACoS"
             value={k && k.tacos > 0 ? formatPct(k.tacos) : '—'}
-            valueColor={k && k.tacos > 0 ? 'text-sky-500' : undefined}
             info="Gasto em ADS ÷ Faturamento"
+            scheme="rose"
           />
           <GsKpiCard
-            label="Lucro bruto pós ADS"
+            label="Lucro pós ADS"
             value={k ? formatBRL(k.lucro_pos_ads) : '…'}
-            valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-emerald-500' : 'text-red-500') : undefined}
+            valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-teal-400' : 'text-red-400') : undefined}
             info="Lucro Bruto menos o gasto em ADS"
+            scheme="teal"
           />
           <GsKpiCard
             label="MPA"
             value={k ? formatPct(k.mpa) : '…'}
-            valueColor={k ? (k.mpa >= 15 ? 'text-emerald-500' : k.mpa >= 0 ? 'text-sky-500' : 'text-red-500') : undefined}
+            valueColor={k ? (k.mpa >= 15 ? 'text-teal-400' : k.mpa >= 0 ? 'text-teal-400' : 'text-red-400') : undefined}
             info="Lucro pós ADS ÷ Faturamento"
+            scheme="teal"
           />
         </div>
 
