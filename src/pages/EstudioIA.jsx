@@ -75,8 +75,10 @@ export default function EstudioIA() {
   const [erroGerar, setErroGerar]     = useState('')
   const [tabAtiva, setTabAtiva]       = useState('estudo')
   const [copiado, setCopiado]         = useState('')
+  const [retryIn, setRetryIn]         = useState(0)   // countdown de rate limit
 
-  const abortRef = useRef(null)
+  const abortRef    = useRef(null)
+  const retryTimer  = useRef(null)
 
   // ── Busca produtos no ML ──────────────────────────────────────────────────
   async function buscarProdutos(e) {
@@ -159,6 +161,24 @@ export default function EstudioIA() {
             continue // ignora linhas malformadas
           }
           if (parsed.done) { setGerando(false); return }
+          if (parsed.rate_limit) {
+            // rate limit → countdown + retry automático
+            setGerando(false)
+            let secs = parsed.retry_after || 62
+            setRetryIn(secs)
+            if (retryTimer.current) clearInterval(retryTimer.current)
+            retryTimer.current = setInterval(() => {
+              secs -= 1
+              setRetryIn(secs)
+              if (secs <= 0) {
+                clearInterval(retryTimer.current)
+                retryTimer.current = null
+                setRetryIn(0)
+                gerarEstudio()
+              }
+            }, 1000)
+            return
+          }
           if (parsed.erro) throw new Error(parsed.erro)
           if (parsed.chunk) {
             setResultado(prev => prev + parsed.chunk)
@@ -454,6 +474,19 @@ export default function EstudioIA() {
                 : <><Sparkles size={15} /> Gerar Estudo</>
               }
             </button>
+          </div>
+        )}
+
+        {/* ── Banner rate limit ── */}
+        {retryIn > 0 && (
+          <div className="bg-amber-950/60 border border-amber-800/50 rounded-xl p-4 flex items-center gap-3">
+            <Loader2 size={16} className="text-amber-400 animate-spin shrink-0" />
+            <div>
+              <p className="text-amber-300 text-sm font-medium">Limite de requisições atingido</p>
+              <p className="text-amber-500 text-xs mt-0.5">
+                Tentando novamente em <span className="font-bold text-amber-300">{retryIn}s</span> automaticamente...
+              </p>
+            </div>
           </div>
         )}
 
