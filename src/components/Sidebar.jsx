@@ -23,53 +23,72 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop sidebar — icon-only ── */}
+      {/* ── Desktop sidebar — expande no hover ── */}
       <aside
-        className="hidden md:flex w-14 min-h-screen flex-col shrink-0"
-        style={{ backgroundColor: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+        className="group hidden md:flex flex-col shrink-0 overflow-hidden z-40"
+        style={{
+          width: '56px',
+          minHeight: '100vh',
+          backgroundColor: '#0d0d0f',
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+          transition: 'width 220ms cubic-bezier(0.4,0,0.2,1)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.width = '200px' }}
+        onMouseLeave={e => { e.currentTarget.style.width = '56px' }}
       >
         {/* Logo */}
         <div
-          className="flex items-center justify-center h-14 shrink-0"
+          className="flex items-center h-14 shrink-0 px-3.5 gap-3"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }}>
-            <span className="text-white font-black" style={{ fontSize: '9px', letterSpacing: '-0.02em' }}>ML</span>
+          <div
+            className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }}
+          >
+            <span className="text-white font-black" style={{ fontSize: '9px' }}>ML</span>
           </div>
+          <span className="text-sky-400 font-bold text-sm whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75">
+            ML Seller
+          </span>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-3 flex flex-col items-center gap-0.5">
+        <nav className="flex-1 py-3 flex flex-col gap-0.5 px-2">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               title={label}
               className={({ isActive }) =>
-                `w-10 h-9 flex items-center justify-center rounded-lg transition-colors ${
+                `flex items-center gap-3 h-9 px-2 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-sky-500/[0.15] text-sky-400'
                     : 'text-zinc-600 hover:text-zinc-200 hover:bg-white/[0.05]'
                 }`
               }
             >
-              <Icon size={16} strokeWidth={1.75} />
+              <Icon size={16} strokeWidth={1.75} className="shrink-0" />
+              <span className="text-sm font-medium whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75">
+                {label}
+              </span>
             </NavLink>
           ))}
         </nav>
 
         {/* Logout */}
         <div
-          className="pb-4 pt-2 flex justify-center shrink-0"
+          className="pb-4 pt-2 px-2 shrink-0"
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
           <button
             onClick={logout}
             title="Sair"
-            className="w-10 h-9 flex items-center justify-center rounded-lg text-zinc-700 hover:text-zinc-300 transition-colors"
+            className="flex items-center gap-3 w-full h-9 px-2 rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.05] transition-colors"
           >
-            <LogOut size={15} strokeWidth={1.75} />
+            <LogOut size={15} strokeWidth={1.75} className="shrink-0" />
+            <span className="text-sm whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75">
+              Sair
+            </span>
           </button>
         </div>
       </aside>
