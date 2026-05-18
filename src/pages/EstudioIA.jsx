@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Search, Sparkles, Copy, Check, RefreshCw, Loader2, ExternalLink } from 'lucide-react'
 import Header from '../components/Header'
@@ -58,7 +58,7 @@ function splitResultado(texto) {
 }
 
 export default function EstudioIA() {
-  const { token } = useAuth()
+  const { getToken } = useAuth()
 
   // Step 1 — busca
   const [termo, setTermo]             = useState('')
@@ -91,7 +91,7 @@ export default function EstudioIA() {
 
     try {
       const res = await fetch(`${BASE}/api/estudio/buscar?termo=${encodeURIComponent(t)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${getToken()}` },
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`)
@@ -104,7 +104,7 @@ export default function EstudioIA() {
   }
 
   // ── Gera estudo via SSE ───────────────────────────────────────────────────
-  const gerarEstudio = useCallback(async () => {
+  async function gerarEstudio() {
     if (!produtos.length) return
 
     setGerando(true)
@@ -122,7 +122,7 @@ export default function EstudioIA() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({
           termo,
@@ -171,7 +171,7 @@ export default function EstudioIA() {
     } finally {
       setGerando(false)
     }
-  }, [produtos, termo, tipoSelecionado, token])
+  }
 
   // ── Copia conteúdo da tab ─────────────────────────────────────────────────
   function copiar(chave, texto) {
