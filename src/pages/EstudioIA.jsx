@@ -152,15 +152,16 @@ export default function EstudioIA() {
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           const json = line.slice(6)
+          let parsed
           try {
-            const parsed = JSON.parse(json)
-            if (parsed.done) { setGerando(false); return }
-            if (parsed.erro) throw new Error(parsed.erro)
-            if (parsed.chunk) {
-              setResultado(prev => prev + parsed.chunk)
-            }
+            parsed = JSON.parse(json)
           } catch {
-            // ignora linhas malformadas
+            continue // ignora linhas malformadas
+          }
+          if (parsed.done) { setGerando(false); return }
+          if (parsed.erro) throw new Error(parsed.erro)
+          if (parsed.chunk) {
+            setResultado(prev => prev + parsed.chunk)
           }
         }
       }
