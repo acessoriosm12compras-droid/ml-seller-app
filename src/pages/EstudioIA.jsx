@@ -238,7 +238,10 @@ export default function EstudioIA() {
           {/* Lista de produtos */}
           {produtos.length > 0 && (
             <div className="space-y-2 pt-1">
-              <p className="text-stone-500 text-xs">Top {produtos.length} mais vendidos para "{termo}"</p>
+              <p className="text-stone-500 text-xs">
+                Top {produtos.length} destaques do ML
+                {produtos[0]?.category_name && <> · categoria <span className="text-stone-400">{produtos[0].category_name}</span></>}
+              </p>
               {produtos.map((p, i) => (
                 <div key={p.id}
                   className="flex items-center gap-3 bg-stone-800 border border-stone-700 rounded-lg p-3"
