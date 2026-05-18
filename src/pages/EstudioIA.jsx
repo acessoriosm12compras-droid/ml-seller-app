@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Search, Sparkles, Copy, Check, RefreshCw, Loader2, ExternalLink } from 'lucide-react'
+import { Search, Sparkles, Copy, Check, RefreshCw, Loader2, ExternalLink, Download } from 'lucide-react'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
 
@@ -183,6 +183,20 @@ export default function EstudioIA() {
     })
   }
 
+  // ── Download do resultado como .md ────────────────────────────────────────
+  function baixarArquivo() {
+    if (!resultado) return
+    const date = new Date().toISOString().slice(0, 10)
+    const nomeArquivo = `estudio-${termo.replace(/\s+/g, '-').toLowerCase()}-${date}.md`
+    const blob = new Blob([resultado], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = nomeArquivo
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const secoes = splitResultado(resultado)
 
   const tabs = [
@@ -345,16 +359,26 @@ export default function EstudioIA() {
                 ) : (
                   <span />
                 )}
-                <button
-                  onClick={() => copiar(tabAtiva, tabConteudo)}
-                  disabled={!tabConteudo}
-                  className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  {copiado === tabAtiva
-                    ? <><Check size={12} className="text-emerald-400" /> Copiado!</>
-                    : <><Copy size={12} /> Copiar tudo</>
-                  }
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={baixarArquivo}
+                    disabled={!resultado}
+                    title="Baixar estudo completo como .md"
+                    className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <Download size={12} /> Baixar .md
+                  </button>
+                  <button
+                    onClick={() => copiar(tabAtiva, tabConteudo)}
+                    disabled={!tabConteudo}
+                    className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    {copiado === tabAtiva
+                      ? <><Check size={12} className="text-emerald-400" /> Copiado!</>
+                      : <><Copy size={12} /> Copiar tudo</>
+                    }
+                  </button>
+                </div>
               </div>
 
               {/* Texto em markdown */}
