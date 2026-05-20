@@ -31,7 +31,7 @@ function fmtVpd(v) {
 }
 
 function fmtBRL(v) {
-  if (!v) return '—'
+  if (v === null || v === undefined) return '—'
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
 }
 
@@ -191,6 +191,14 @@ export default function EstudioIA() {
   const abortRef  = useRef(null)
   const retryTimer = useRef(null)
 
+  // Cleanup ao desmontar: cancela fetch e timer de retry
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) abortRef.current.abort()
+      if (retryTimer.current) clearInterval(retryTimer.current)
+    }
+  }, [])
+
   // Seleciona todos ao carregar produtos
   useEffect(() => {
     if (produtos.length > 0) {
@@ -336,13 +344,15 @@ export default function EstudioIA() {
             if (retryTimer.current) clearInterval(retryTimer.current)
             retryTimer.current = setInterval(() => {
               secs -= 1
-              setRetryIn(secs)
-              if (secs <= 0) {
-                clearInterval(retryTimer.current)
-                retryTimer.current = null
-                setRetryIn(0)
-                gerarEstudio()
-              }
+              setRetryIn(s => {
+                if (s <= 1) {
+                  clearInterval(retryTimer.current)
+                  retryTimer.current = null
+                  gerarEstudio()
+                  return 0
+                }
+                return s - 1
+              })
             }, 1000)
             return
           }
@@ -420,12 +430,15 @@ ${corpo}
 
   // Produtos filtrados (client-side)
   const produtosFiltrados = produtos.filter(p => {
-    if (filtros.minVendas && (p.sold_quantity ?? 0) < Number(filtros.minVendas)) return false
+    // sold_quantity null significa dado indisponível — não filtrar (benefício da dúvida)
+    if (filtros.minVendas && p.sold_quantity !== null && p.sold_quantity !== undefined
+        && p.sold_quantity < Number(filtros.minVendas)) return false
     if (filtros.minPreco  && (p.price ?? 0) < Number(filtros.minPreco))  return false
     if (filtros.maxPreco  && (p.price ?? 0) > Number(filtros.maxPreco))  return false
     if (filtros.minVelocidade) {
       const vpd = vendasPorDia(p)
-      if ((vpd ?? 0) < Number(filtros.minVelocidade)) return false
+      // só filtra se tiver dado suficiente para calcular velocidade
+      if (vpd !== null && vpd < Number(filtros.minVelocidade)) return false
     }
     return true
   })
@@ -867,7 +880,7 @@ ${corpo}
               }}
             >
               {gerando
-                ? <><Loader2 size={15} className="animate-spin" /> Gerando com Claude...</>
+                ? <><Loader2 size={15} className="animate-spin" /> Gerando com Gemini...</>
                 : <><Sparkles size={15} /> Gerar</>
               }
             </button>
