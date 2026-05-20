@@ -420,7 +420,7 @@ ${corpo}
         </div>
 
         {/* ── Layout: 1 col sem resultado / 2 cols com resultado ── */}
-        <div className={temResultado ? 'grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4 items-start' : 'space-y-4'}>
+        <div className={temResultado ? 'grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-5 items-start' : 'space-y-4'}>
 
         {/* ── Coluna esquerda: configuração ── */}
         <div className="space-y-4">
@@ -748,11 +748,11 @@ ${corpo}
                 </div>
               </div>
 
-              <div className="bg-stone-800 rounded-xl p-4 min-h-32 max-h-[75vh] overflow-y-auto">
+              <div className="bg-stone-800 rounded-xl p-5 min-h-32 max-h-[75vh] overflow-y-auto">
                 {tabConteudo ? (
-                  <div className="prose prose-invert prose-sm max-w-none
+                  <div className="prose prose-invert max-w-none
                     prose-headings:text-sky-400 prose-headings:font-semibold
-                    prose-h2:text-base prose-h3:text-sm
+                    prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
                     prose-p:text-stone-300 prose-p:leading-relaxed
                     prose-li:text-stone-300
                     prose-strong:text-stone-100
