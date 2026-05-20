@@ -160,7 +160,7 @@ export default function EstudioIA() {
 
   // ── Filtros ───────────────────────────────────────────────────────
   const [filtroAberto, setFiltroAberto] = useState(false)
-  const [filtros, setFiltros] = useState({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '' })
+  const [filtros, setFiltros] = useState({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '', dataDe: '', dataAte: '' })
 
   const setFiltro = (key, val) => setFiltros(prev => ({ ...prev, [key]: val }))
 
@@ -230,20 +230,28 @@ export default function EstudioIA() {
   }
 
   // ── Busca produtos no ML ──────────────────────────────────────────
-  async function buscarProdutos(e) {
+  async function buscarProdutos(e, opcoesExtras = {}) {
     e?.preventDefault()
     const t = termo.trim()
     if (!t) return
+
+    const dataDe  = opcoesExtras.dataDe  ?? ''
+    const dataAte = opcoesExtras.dataAte ?? ''
+    const isRefiltro = opcoesExtras.refiltro ?? false
 
     setBuscando(true)
     setErroBusca('')
     setProdutos([])
     setResultado('')
-    setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '' })
-    setFiltroAberto(false)
+    if (!isRefiltro) {
+      setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '', dataDe: '', dataAte: '' })
+      setFiltroAberto(false)
+    }
 
     const isLink = t.startsWith('http')
-    const params = isLink ? `link=${encodeURIComponent(t)}` : `termo=${encodeURIComponent(t)}`
+    let params = isLink ? `link=${encodeURIComponent(t)}` : `termo=${encodeURIComponent(t)}`
+    if (dataDe)  params += `&data_de=${dataDe}`
+    if (dataAte) params += `&data_ate=${dataAte}`
 
     try {
       const res = await fetch(`${BASE}/api/estudio/buscar?${params}`, {
@@ -257,6 +265,11 @@ export default function EstudioIA() {
     } finally {
       setBuscando(false)
     }
+  }
+
+  function aplicarFiltroData() {
+    if (!termo.trim()) return
+    buscarProdutos(null, { dataDe: filtros.dataDe, dataAte: filtros.dataAte, refiltro: true })
   }
 
   // ── Gera via SSE ──────────────────────────────────────────────────
@@ -561,52 +574,91 @@ ${corpo}
                   {/* Painel de filtros */}
                   {filtroAberto && (
                     <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4 space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-stone-400 text-xs flex items-center gap-1">
-                            <Zap size={10} className="text-amber-400" /> Velocidade mín (vendas/dia)
-                          </label>
-                          <input
-                            type="number" min="0" placeholder="ex: 5"
-                            value={filtros.minVelocidade}
-                            onChange={e => setFiltro('minVelocidade', e.target.value)}
-                            className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
-                          />
+                      {/* ── Filtros de data (requerem re-busca) ── */}
+                      <div className="space-y-2">
+                        <p className="text-stone-500 text-xs uppercase tracking-widest">📅 Anúncios criados no período</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-stone-400 text-xs">De</label>
+                            <input
+                              type="date"
+                              value={filtros.dataDe}
+                              onChange={e => setFiltro('dataDe', e.target.value)}
+                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-stone-400 text-xs">Até</label>
+                            <input
+                              type="date"
+                              value={filtros.dataAte}
+                              onChange={e => setFiltro('dataAte', e.target.value)}
+                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-stone-400 text-xs">📊 Vendas mínimas (total)</label>
-                          <input
-                            type="number" min="0" placeholder="ex: 100"
-                            value={filtros.minVendas}
-                            onChange={e => setFiltro('minVendas', e.target.value)}
-                            className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-stone-400 text-xs">💰 Preço mínimo (R$)</label>
-                          <input
-                            type="number" min="0" placeholder="ex: 50"
-                            value={filtros.minPreco}
-                            onChange={e => setFiltro('minPreco', e.target.value)}
-                            className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-stone-400 text-xs">💰 Preço máximo (R$)</label>
-                          <input
-                            type="number" min="0" placeholder="ex: 500"
-                            value={filtros.maxPreco}
-                            onChange={e => setFiltro('maxPreco', e.target.value)}
-                            className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
-                          />
+                        {(filtros.dataDe || filtros.dataAte) && (
+                          <button
+                            onClick={aplicarFiltroData}
+                            disabled={buscando}
+                            className="w-full flex items-center justify-center gap-2 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
+                          >
+                            {buscando ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
+                            Buscar anúncios desse período
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="border-t border-stone-700/50 pt-3 space-y-2">
+                        <p className="text-stone-500 text-xs uppercase tracking-widest">⚡ Filtros instantâneos</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-stone-400 text-xs flex items-center gap-1">
+                              <Zap size={10} className="text-amber-400" /> Velocidade mín (vendas/dia)
+                            </label>
+                            <input
+                              type="number" min="0" placeholder="ex: 5"
+                              value={filtros.minVelocidade}
+                              onChange={e => setFiltro('minVelocidade', e.target.value)}
+                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-stone-400 text-xs">📊 Vendas mínimas (total)</label>
+                            <input
+                              type="number" min="0" placeholder="ex: 100"
+                              value={filtros.minVendas}
+                              onChange={e => setFiltro('minVendas', e.target.value)}
+                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-stone-400 text-xs">💰 Preço mínimo (R$)</label>
+                            <input
+                              type="number" min="0" placeholder="ex: 50"
+                              value={filtros.minPreco}
+                              onChange={e => setFiltro('minPreco', e.target.value)}
+                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-stone-400 text-xs">💰 Preço máximo (R$)</label>
+                            <input
+                              type="number" min="0" placeholder="ex: 500"
+                              value={filtros.maxPreco}
+                              onChange={e => setFiltro('maxPreco', e.target.value)}
+                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
                         </div>
                       </div>
+
                       {filtrosAtivos && (
                         <button
-                          onClick={() => setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '' })}
+                          onClick={() => setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '', dataDe: '', dataAte: '' })}
                           className="text-xs text-stone-500 hover:text-stone-300 transition-colors"
                         >
-                          ✕ Limpar filtros
+                          ✕ Limpar todos os filtros
                         </button>
                       )}
                     </div>
