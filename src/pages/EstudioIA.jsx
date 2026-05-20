@@ -386,6 +386,7 @@ ${corpo}
   }
 
   const secoes = splitResultado(resultado)
+  const temResultado = !!(resultado || gerando || erroGerar)
 
   // Tabs dinâmicas — só os tipos selecionados
   const tabs = TIPOS
@@ -408,15 +409,21 @@ ${corpo}
     <div className="flex flex-col min-h-screen bg-stone-950">
       <Header title="Estúdio IA" />
 
-      <div className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full space-y-4">
+      <div className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
 
         {/* ── Cabeçalho ── */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-4">
           <Sparkles size={18} className="text-sky-400" />
           <p className="text-stone-400 text-sm">
-            Selecione produtos e deixe o Claude gerar persona, pesquisa de mercado, prompts de imagem e vídeo.
+            Selecione produtos e deixe a IA gerar persona, pesquisa de mercado, prompts de imagem e vídeo.
           </p>
         </div>
+
+        {/* ── Layout: 1 col sem resultado / 2 cols com resultado ── */}
+        <div className={temResultado ? 'grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4 items-start' : 'space-y-4'}>
+
+        {/* ── Coluna esquerda: configuração ── */}
+        <div className="space-y-4">
 
         {/* ── Step 1: Modo de entrada + produtos ── */}
         <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-4">
@@ -687,9 +694,11 @@ ${corpo}
           </div>
         )}
 
-        {/* ── Resultado ── */}
-        {(resultado || gerando || erroGerar) && (
-          <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-3">
+        </div>{/* ── fim coluna esquerda ── */}
+
+        {/* ── Coluna direita: resultado ── */}
+        {temResultado && (
+          <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-3 lg:sticky lg:top-4">
             <p className="text-stone-400 text-xs uppercase tracking-widest">Resultado</p>
 
             {erroGerar && <p className="text-red-400 text-sm">{erroGerar}</p>}
@@ -715,7 +724,7 @@ ${corpo}
                 {gerando && !secoes[tabAtiva] ? (
                   <span className="text-emerald-400 text-xs flex items-center gap-1">
                     <span className="inline-block w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                    Gerando com Claude Sonnet...
+                    Gerando...
                   </span>
                 ) : <span />}
                 <div className="flex items-center gap-2">
@@ -739,7 +748,7 @@ ${corpo}
                 </div>
               </div>
 
-              <div className="bg-stone-800 rounded-xl p-4 min-h-32 max-h-[60vh] overflow-y-auto">
+              <div className="bg-stone-800 rounded-xl p-4 min-h-32 max-h-[75vh] overflow-y-auto">
                 {tabConteudo ? (
                   <div className="prose prose-invert prose-sm max-w-none
                     prose-headings:text-sky-400 prose-headings:font-semibold
@@ -771,6 +780,7 @@ ${corpo}
           </div>
         )}
 
+        </div>{/* ── fim grid ── */}
       </div>
     </div>
   )
