@@ -479,16 +479,18 @@ ${corpo}
 
               {erroBusca && <p className="text-red-400 text-xs">{erroBusca}</p>}
 
-              {/* Lista top 10 com checkboxes */}
+              {/* Grid de produtos */}
               {produtos.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-stone-500 text-xs">
-                      Top {produtos.length} mais vendidos
+                    <div>
+                      <span className="text-stone-300 text-sm font-medium">Top {produtos.length} mais vendidos</span>
                       {produtos[0]?.category_name && (
-                        <> · <span className="text-stone-400">{produtos[0].category_name}</span></>
+                        <span className="ml-2 text-xs text-stone-500 bg-stone-800 px-2 py-0.5 rounded-full">
+                          {produtos[0].category_name}
+                        </span>
                       )}
-                    </p>
+                    </div>
                     <button
                       onClick={() => setSelecionados(
                         selecionados.size === produtos.length
@@ -501,45 +503,67 @@ ${corpo}
                     </button>
                   </div>
 
+                  <div className={temResultado
+                    ? 'space-y-2'
+                    : 'grid grid-cols-1 sm:grid-cols-2 gap-3'
+                  }>
                   {produtos.map((p, i) => {
                     const sel = selecionados.has(p.id)
                     return (
                       <div
                         key={p.id}
                         onClick={() => toggleProduto(p.id)}
-                        className={`flex items-center gap-3 rounded-lg p-3 cursor-pointer transition-colors border ${
+                        className={`relative flex gap-3 rounded-xl p-4 cursor-pointer transition-all border ${
                           sel
-                            ? 'bg-sky-500/[0.07] border-sky-500/25'
-                            : 'bg-stone-800 border-stone-700 opacity-50 hover:opacity-70'
+                            ? 'bg-stone-800 border-stone-600 shadow-sm'
+                            : 'bg-stone-800/50 border-stone-700/50 opacity-45 hover:opacity-65'
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${
-                          sel ? 'bg-sky-500 border-sky-500' : 'bg-stone-700 border-stone-600'
-                        }`}>
-                          {sel && <Check size={10} className="text-white" strokeWidth={3} />}
+                        {/* Checkbox + rank */}
+                        <div className="flex flex-col items-center gap-2 shrink-0">
+                          <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+                            sel ? 'bg-sky-500 border-sky-500' : 'bg-stone-700 border-stone-600'
+                          }`}>
+                            {sel && <Check size={10} className="text-white" strokeWidth={3} />}
+                          </div>
+                          <span className={`text-xs font-bold tabular-nums ${
+                            i === 0 ? 'text-amber-400' : i === 1 ? 'text-stone-400' : i === 2 ? 'text-amber-700' : 'text-stone-600'
+                          }`}>#{i + 1}</span>
                         </div>
-                        <span className="text-stone-600 text-xs w-5 shrink-0 text-right">#{i + 1}</span>
+
+                        {/* Thumbnail */}
                         {p.thumbnail && (
                           <img src={p.thumbnail} alt={p.title}
-                            className="w-9 h-9 object-cover rounded bg-stone-700 shrink-0" />
+                            className={`object-cover rounded-lg bg-stone-700 shrink-0 ${temResultado ? 'w-12 h-12' : 'w-16 h-16'}`} />
                         )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-stone-200 text-xs font-medium truncate">{p.title}</p>
-                          <p className="text-stone-500 text-xs mt-0.5">
-                            {fmtBRL(p.price)}
-                            {p.sold_quantity > 0 && ` · ${fmtNum(p.sold_quantity)} vendas`}
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          <p className={`text-stone-200 font-medium leading-snug ${temResultado ? 'text-xs line-clamp-2' : 'text-sm line-clamp-2'}`}>
+                            {p.title}
                           </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sky-400 font-semibold text-sm">{fmtBRL(p.price)}</span>
+                            {p.sold_quantity > 0 && (
+                              <span className="text-xs text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                {fmtNum(p.sold_quantity)} vendas
+                              </span>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Link externo */}
                         {p.permalink && (
                           <a href={p.permalink} target="_blank" rel="noreferrer"
                             onClick={e => e.stopPropagation()}
-                            className="text-stone-500 hover:text-sky-400 shrink-0">
+                            className="absolute top-3 right-3 text-stone-600 hover:text-sky-400 transition-colors">
                             <ExternalLink size={12} />
                           </a>
                         )}
                       </div>
                     )
                   })}
+                  </div>
 
                   <p className="text-stone-600 text-xs">
                     {selecionados.size} de {produtos.length} selecionado{selecionados.size !== 1 ? 's' : ''}
