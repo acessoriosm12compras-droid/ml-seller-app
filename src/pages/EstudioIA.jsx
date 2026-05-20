@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import {
   Search, Sparkles, Copy, Check, RefreshCw, Loader2,
-  ExternalLink, Download, Package,
+  ExternalLink, Download, Package, SlidersHorizontal, Zap,
 } from 'lucide-react'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
@@ -17,6 +17,18 @@ const TIPOS = [
   { id: 'imagem',   label: '🖼️ Prompts de Imagem',   desc: '6 prompts para IA (FLUX, Midjourney…)' },
   { id: 'video',    label: '🎬 Prompts de Vídeo',    desc: 'Kling AI + roteiro Reels/TikTok' },
 ]
+
+function vendasPorDia(p) {
+  if (!p.sold_quantity || !p.date_created) return null
+  const dias = Math.max(1, (Date.now() - new Date(p.date_created)) / 86_400_000)
+  return Math.round((p.sold_quantity / dias) * 10) / 10
+}
+
+function fmtVpd(v) {
+  if (v === null || v === undefined) return null
+  if (v < 1) return `<1/dia`
+  return `~${v % 1 === 0 ? v : v.toFixed(1)}/dia`
+}
 
 function fmtBRL(v) {
   if (!v) return '—'
@@ -146,6 +158,12 @@ export default function EstudioIA() {
   const [erroBusca, setErroBusca] = useState('')
   const [selecionados, setSelecionados] = useState(new Set())
 
+  // ── Filtros ───────────────────────────────────────────────────────
+  const [filtroAberto, setFiltroAberto] = useState(false)
+  const [filtros, setFiltros] = useState({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '' })
+
+  const setFiltro = (key, val) => setFiltros(prev => ({ ...prev, [key]: val }))
+
   // ── Meus Produtos ─────────────────────────────────────────────────
   const [buscaMeus, setBuscaMeus] = useState('')
   const [meusSel, setMeusSel]     = useState(new Set())
@@ -221,6 +239,8 @@ export default function EstudioIA() {
     setErroBusca('')
     setProdutos([])
     setResultado('')
+    setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '' })
+    setFiltroAberto(false)
 
     const isLink = t.startsWith('http')
     const params = isLink ? `link=${encodeURIComponent(t)}` : `termo=${encodeURIComponent(t)}`
@@ -385,6 +405,20 @@ ${corpo}
     URL.revokeObjectURL(url)
   }
 
+  // Produtos filtrados (client-side)
+  const produtosFiltrados = produtos.filter(p => {
+    if (filtros.minVendas && (p.sold_quantity ?? 0) < Number(filtros.minVendas)) return false
+    if (filtros.minPreco  && (p.price ?? 0) < Number(filtros.minPreco))  return false
+    if (filtros.maxPreco  && (p.price ?? 0) > Number(filtros.maxPreco))  return false
+    if (filtros.minVelocidade) {
+      const vpd = vendasPorDia(p)
+      if ((vpd ?? 0) < Number(filtros.minVelocidade)) return false
+    }
+    return true
+  })
+
+  const filtrosAtivos = Object.values(filtros).some(v => v !== '')
+
   const secoes = splitResultado(resultado)
   const temResultado = !!(resultado || gerando || erroGerar)
 
@@ -482,33 +516,111 @@ ${corpo}
               {/* Grid de produtos */}
               {produtos.length > 0 && (
                 <div className="space-y-3">
+                  {/* Cabeçalho + filtro toggle */}
                   <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-stone-300 text-sm font-medium">Top {produtos.length} mais vendidos</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-stone-300 text-sm font-medium">
+                        Top {produtos.length} mais vendidos
+                      </span>
                       {produtos[0]?.category_name && (
-                        <span className="ml-2 text-xs text-stone-500 bg-stone-800 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-stone-500 bg-stone-800 px-2 py-0.5 rounded-full">
                           {produtos[0].category_name}
                         </span>
                       )}
-                    </div>
-                    <button
-                      onClick={() => setSelecionados(
-                        selecionados.size === produtos.length
-                          ? new Set()
-                          : new Set(produtos.map(p => p.id))
+                      {filtrosAtivos && (
+                        <span className="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full">
+                          {produtosFiltrados.length} de {produtos.length}
+                        </span>
                       )}
-                      className="text-xs text-sky-500 hover:text-sky-400 transition-colors"
-                    >
-                      {selecionados.size === produtos.length ? 'Limpar todos' : 'Marcar todos'}
-                    </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setFiltroAberto(v => !v)}
+                        className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                          filtroAberto || filtrosAtivos
+                            ? 'bg-sky-500/15 border-sky-500/30 text-sky-400'
+                            : 'bg-stone-800 border-stone-700 text-stone-400 hover:text-stone-200'
+                        }`}
+                      >
+                        <SlidersHorizontal size={12} />
+                        Filtros{filtrosAtivos ? ` (${Object.values(filtros).filter(Boolean).length})` : ''}
+                      </button>
+                      <button
+                        onClick={() => setSelecionados(
+                          selecionados.size === produtosFiltrados.length
+                            ? new Set()
+                            : new Set(produtosFiltrados.map(p => p.id))
+                        )}
+                        className="text-xs text-sky-500 hover:text-sky-400 transition-colors"
+                      >
+                        {selecionados.size === produtosFiltrados.length ? 'Limpar' : 'Marcar todos'}
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Painel de filtros */}
+                  {filtroAberto && (
+                    <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-stone-400 text-xs flex items-center gap-1">
+                            <Zap size={10} className="text-amber-400" /> Velocidade mín (vendas/dia)
+                          </label>
+                          <input
+                            type="number" min="0" placeholder="ex: 5"
+                            value={filtros.minVelocidade}
+                            onChange={e => setFiltro('minVelocidade', e.target.value)}
+                            className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-stone-400 text-xs">📊 Vendas mínimas (total)</label>
+                          <input
+                            type="number" min="0" placeholder="ex: 100"
+                            value={filtros.minVendas}
+                            onChange={e => setFiltro('minVendas', e.target.value)}
+                            className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-stone-400 text-xs">💰 Preço mínimo (R$)</label>
+                          <input
+                            type="number" min="0" placeholder="ex: 50"
+                            value={filtros.minPreco}
+                            onChange={e => setFiltro('minPreco', e.target.value)}
+                            className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-stone-400 text-xs">💰 Preço máximo (R$)</label>
+                          <input
+                            type="number" min="0" placeholder="ex: 500"
+                            value={filtros.maxPreco}
+                            onChange={e => setFiltro('maxPreco', e.target.value)}
+                            className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                      </div>
+                      {filtrosAtivos && (
+                        <button
+                          onClick={() => setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '' })}
+                          className="text-xs text-stone-500 hover:text-stone-300 transition-colors"
+                        >
+                          ✕ Limpar filtros
+                        </button>
+                      )}
+                    </div>
+                  )}
+
 
                   <div className={temResultado
                     ? 'space-y-2'
                     : 'grid grid-cols-1 sm:grid-cols-2 gap-3'
                   }>
-                  {produtos.map((p, i) => {
+                  {produtosFiltrados.map((p, i) => {
                     const sel = selecionados.has(p.id)
+                    const vpd = vendasPorDia(p)
+                    const vpdLabel = fmtVpd(vpd)
                     return (
                       <div
                         key={p.id}
@@ -549,6 +661,11 @@ ${corpo}
                                 {fmtNum(p.sold_quantity)} vendas
                               </span>
                             )}
+                            {vpdLabel && (
+                              <span className="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                                <Zap size={9} className="shrink-0" />{vpdLabel}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -566,7 +683,7 @@ ${corpo}
                   </div>
 
                   <p className="text-stone-600 text-xs">
-                    {selecionados.size} de {produtos.length} selecionado{selecionados.size !== 1 ? 's' : ''}
+                    {selecionados.size} de {produtosFiltrados.length} selecionado{selecionados.size !== 1 ? 's' : ''}
                   </p>
                 </div>
               )}
