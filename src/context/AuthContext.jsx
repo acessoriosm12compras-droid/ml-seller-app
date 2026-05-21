@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { setTokenProvider } from '../api'
+import { setTokenProvider, api } from '../api'
 
 const AuthContext = createContext(null)
 
@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeAccount, setActiveAccount] = useState(null)
+  const [mlContas, setMlContas] = useState(null) // null = ainda carregando
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,6 +27,7 @@ export function AuthProvider({ children }) {
         setActiveAccount(meta.conta_ml || null)
       } else {
         setActiveAccount(null)
+        setMlContas(null)
       }
     })
 
@@ -34,6 +36,11 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     setTokenProvider(() => session?.access_token || null)
+    if (session) {
+      api.minhasContas()
+        .then(({ contas }) => setMlContas(contas))
+        .catch(() => setMlContas([]))
+    }
   }, [session])
 
   async function login(email, password) {
@@ -45,6 +52,7 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setSession(null)
     setActiveAccount(null)
+    setMlContas(null)
   }
 
   const user = session?.user || null
@@ -56,6 +64,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       isLoggedIn, loading, user, role, contaMl,
       activeAccount, setActiveAccount,
+      mlContas, setMlContas,
       login, logout,
       getToken: () => session?.access_token || null,
     }}>

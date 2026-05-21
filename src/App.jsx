@@ -27,6 +27,7 @@ import Configuracoes from './pages/Configuracoes'
 import Fechamento from './pages/Fechamento'
 import Ads from './pages/Ads'
 import EstudioIA from './pages/EstudioIA'
+import Onboarding from './pages/Onboarding'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -40,6 +41,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route
               path="/"
               element={

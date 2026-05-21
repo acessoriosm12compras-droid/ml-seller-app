@@ -23,6 +23,9 @@ async function request(path, options = {}) {
 
 export const api = {
   me: () => request('/auth/me'),
+  minhasContas: () => request('/auth/minhas-contas'),
+  mlUrl: (conta, redirect = '/onboarding') =>
+    request(`/auth/ml/url?conta=${encodeURIComponent(conta)}&redirect=${encodeURIComponent(redirect)}`),
 
   dashboard: (params) =>
     request(`/api/dashboard?${new URLSearchParams(params)}`),
