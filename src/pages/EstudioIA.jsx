@@ -237,7 +237,16 @@ export default function EstudioIA() {
     })
   }
 
-  // ── Busca produtos no ML ──────────────────────────────────────────
+  // ── Busca produtos no ML diretamente do browser ──────────────────
+  // A busca é feita client-side para evitar o bloqueio 403 que o ML aplica
+  // a IPs de datacenter (EasyPanel). O browser usa IP residencial do usuário.
+  function _normalizarThumbnail(url) {
+    if (!url) return url
+    return url
+      .replace(/-I\.jpg/, '-O.jpg').replace(/-I\.webp/, '-O.webp')
+      .replace(/-F\.jpg/, '-O.jpg').replace(/-F\.webp/, '-O.webp')
+  }
+
   async function buscarProdutos(e, opcoesExtras = {}) {
     e?.preventDefault()
     const t = termo.trim()
@@ -257,17 +266,76 @@ export default function EstudioIA() {
     }
 
     const isLink = t.startsWith('http')
-    let params = isLink ? `link=${encodeURIComponent(t)}` : `termo=${encodeURIComponent(t)}`
-    if (dataDe)  params += `&data_de=${dataDe}`
-    if (dataAte) params += `&data_ate=${dataAte}`
 
     try {
-      const res = await fetch(`${BASE}/api/estudio/buscar?${params}`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`)
-      setProdutos(data.produtos || [])
+      let produtos = []
+
+      if (isLink) {
+        // Busca por link: extrai MLB ID → busca categoria → highlights da categoria
+        const mlbMatch = t.match(/MLB\d+/)
+        if (!mlbMatch) throw new Error('Link inválido — não foi possível identificar o ID do produto.')
+        const itemId = mlbMatch[0]
+
+        const itemRes = await fetch(`https://api.mercadolibre.com/items/${itemId}`)
+        if (!itemRes.ok) throw new Error('Produto não encontrado no Mercado Livre.')
+        const itemData = await itemRes.json()
+        const catId = itemData.category_id
+        if (!catId) throw new Error('Categoria do produto não identificada.')
+
+        const [hlRes, catRes] = await Promise.all([
+          fetch(`https://api.mercadolibre.com/highlights/MLB/category/${catId}`),
+          fetch(`https://api.mercadolibre.com/categories/${catId}`),
+        ])
+        const catName = catRes.ok ? (await catRes.json()).name : ''
+        const hlIds = hlRes.ok
+          ? (await hlRes.json()).content?.filter(p => p.id?.startsWith('MLB')).slice(0, 12).map(p => p.id)
+          : []
+
+        if (hlIds.length) {
+          const batchRes = await fetch(
+            `https://api.mercadolibre.com/items?ids=${hlIds.join(',')}&attributes=id,title,price,sold_quantity,date_created,thumbnail,permalink`
+          )
+          const batch = batchRes.ok ? await batchRes.json() : []
+          for (const entry of batch) {
+            if (entry.code === 200 && produtos.length < 10) {
+              const b = entry.body
+              produtos.push({
+                id: b.id, title: b.title, price: b.price,
+                currency_id: b.currency_id || 'BRL',
+                sold_quantity: b.sold_quantity,
+                thumbnail: _normalizarThumbnail(b.thumbnail),
+                permalink: b.permalink, category_name: catName,
+                date_created: b.date_created || '',
+              })
+            }
+          }
+        }
+      } else {
+        // Busca por termo: chamada pública do ML direto do browser
+        const params = new URLSearchParams({ q: t, limit: '20' })
+        if (dataDe)  params.set('date_created.from', `${dataDe}T00:00:00.000-0300`)
+        if (dataAte) params.set('date_created.to',   `${dataAte}T23:59:59.000-0300`)
+
+        const res = await fetch(`https://api.mercadolibre.com/sites/MLB/search?${params}`)
+        if (!res.ok) throw new Error(`Erro ao buscar no ML: ${res.status}`)
+        const data = await res.json()
+        const results = (data.results || []).sort((a, b) => (b.sold_quantity || 0) - (a.sold_quantity || 0))
+
+        for (const item of results.slice(0, 10)) {
+          produtos.push({
+            id: item.id, title: item.title, price: item.price,
+            currency_id: item.currency_id || 'BRL',
+            sold_quantity: item.sold_quantity,
+            thumbnail: _normalizarThumbnail(item.thumbnail),
+            permalink: item.permalink,
+            category_name: item.category_id || '',
+            date_created: item.date_created || '',
+          })
+        }
+      }
+
+      setProdutos(produtos)
+      if (!produtos.length) setErroBusca('Nenhum produto encontrado para esse termo.')
     } catch (err) {
       setErroBusca(err.message)
     } finally {
