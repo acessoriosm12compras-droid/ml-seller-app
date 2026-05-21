@@ -26,6 +26,7 @@ export const api = {
   minhasContas: () => request('/auth/minhas-contas'),
   mlUrl: (conta, redirect = '/onboarding') =>
     request(`/auth/ml/url?conta=${encodeURIComponent(conta)}&redirect=${encodeURIComponent(redirect)}`),
+  plano: () => request('/api/plano'),
 
   dashboard: (params) =>
     request(`/api/dashboard?${new URLSearchParams(params)}`),
