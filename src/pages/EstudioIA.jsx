@@ -158,6 +158,11 @@ export default function EstudioIA() {
   const [erroBusca, setErroBusca] = useState('')
   const [selecionados, setSelecionados] = useState(new Set())
 
+  // ── Modo manual (colar links) ─────────────────────────────────────
+  const [modoManual, setModoManual] = useState(false)
+  const [linksTexto, setLinksTexto] = useState('')
+  const [buscandoLinks, setBuscandoLinks] = useState(false)
+
   // ── Filtros ───────────────────────────────────────────────────────
   const [filtroAberto, setFiltroAberto] = useState(false)
   const [filtros, setFiltros] = useState({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '', dataDe: '', dataAte: '' })
@@ -237,7 +242,7 @@ export default function EstudioIA() {
     })
   }
 
-  // ── Busca produtos via backend (app token ML) ────────────────────
+  // ── Busca produtos via backend ────────────────────────────────────
   async function buscarProdutos(e, opcoesExtras = {}) {
     e?.preventDefault()
     const t = termo.trim()
@@ -251,6 +256,7 @@ export default function EstudioIA() {
     setErroBusca('')
     setProdutos([])
     setResultado('')
+    setModoManual(false)
     if (!isRefiltro) {
       setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '', dataDe: '', dataAte: '' })
       setFiltroAberto(false)
@@ -267,11 +273,46 @@ export default function EstudioIA() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`)
-      setProdutos(data.produtos || [])
+      const lista = data.produtos || []
+      setProdutos(lista)
+      // Se 0 resultados em busca por termo, ativa modo manual
+      if (lista.length === 0 && !isLink) setModoManual(true)
     } catch (err) {
       setErroBusca(err.message)
     } finally {
       setBuscando(false)
+    }
+  }
+
+  // ── Busca por links colados manualmente ──────────────────────────
+  async function buscarPorLinks(e) {
+    e?.preventDefault()
+    const linhas = linksTexto.split(/[\n,]+/).map(l => l.trim()).filter(Boolean)
+    if (!linhas.length) return
+
+    setBuscandoLinks(true)
+    setErroBusca('')
+    setProdutos([])
+    setResultado('')
+
+    try {
+      const params = `links=${encodeURIComponent(linhas.join(','))}`
+      const res = await fetch(`${BASE}/api/estudio/buscar-itens?${params}`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`)
+      const lista = data.produtos || []
+      if (lista.length === 0) {
+        setErroBusca('Nenhum produto encontrado. Verifique se os links são de anúncios do Mercado Livre.')
+      } else {
+        setProdutos(lista)
+        setModoManual(false)
+      }
+    } catch (err) {
+      setErroBusca(err.message)
+    } finally {
+      setBuscandoLinks(false)
     }
   }
 
@@ -538,6 +579,51 @@ ${corpo}
               </form>
 
               {erroBusca && <p className="text-red-400 text-xs">{erroBusca}</p>}
+
+              {/* ── Modo manual: cole os links ── */}
+              {modoManual && !buscando && produtos.length === 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-amber-400 text-lg">⚠️</span>
+                    <div>
+                      <p className="text-amber-300 text-sm font-medium">Busca automática indisponível</p>
+                      <p className="text-stone-400 text-xs mt-1">
+                        O ML bloqueia buscas automáticas para este tipo de app. Cole os links dos concorrentes abaixo — funciona perfeitamente!
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <a
+                      href={`https://lista.mercadolivre.com.br/${encodeURIComponent(termo.trim().replace(/\s+/g, '-'))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium rounded-lg transition-colors"
+                    >
+                      <ExternalLink size={12} /> Pesquisar "{termo}" no ML
+                    </a>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-stone-400 text-xs">Cole os links dos produtos (um por linha):</p>
+                    <textarea
+                      value={linksTexto}
+                      onChange={e => setLinksTexto(e.target.value)}
+                      placeholder={`https://www.mercadolivre.com.br/produto-1/p/MLB123\nhttps://www.mercadolivre.com.br/produto-2/p/MLB456\nhttps://www.mercadolivre.com.br/produto-3/p/MLB789`}
+                      rows={4}
+                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-xs text-stone-300 placeholder-stone-600 focus:outline-none focus:border-sky-500 font-mono resize-none"
+                    />
+                    <button
+                      onClick={buscarPorLinks}
+                      disabled={buscandoLinks || !linksTexto.trim()}
+                      className="flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      {buscandoLinks ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                      Buscar produtos colados
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Grid de produtos */}
               {produtos.length > 0 && (
