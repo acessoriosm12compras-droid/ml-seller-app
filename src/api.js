@@ -150,4 +150,10 @@ export const api = {
 
   ads: (params) =>
     request(`/api/ads/campanhas?${new URLSearchParams(params)}`),
+
+  reposicao: {
+    semanal: (params) => request(`/api/reposicao/semanal?${new URLSearchParams(params)}`),
+    atualizarEstoqueMinimo: (data) =>
+      request('/api/reposicao/estoque-minimo', { method: 'PUT', body: JSON.stringify(data) }),
+  },
 }

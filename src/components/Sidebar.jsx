@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import {
   LayoutDashboard, PieChart, Banknote,
   ShoppingBag, Settings, Package, SlidersHorizontal, ClipboardList, Megaphone, Sparkles, LogOut,
+  ShoppingCart,
 } from 'lucide-react'
 
 const NAV = [
@@ -13,6 +14,7 @@ const NAV = [
   { to: '/ads',             label: 'Mercado Ads',    icon: Megaphone },
   { to: '/estudio-ia',      label: 'Estúdio IA',     icon: Sparkles },
   { to: '/custos-produtos', label: 'Custos',         icon: Settings },
+  { to: '/reposicao',       label: 'Reposição',      icon: ShoppingCart },
   { to: '/inventario',      label: 'Inventário',     icon: Package },
   { to: '/fechamento',      label: 'Fechamento',     icon: ClipboardList },
   { to: '/configuracoes',   label: 'Configurações',  icon: SlidersHorizontal },

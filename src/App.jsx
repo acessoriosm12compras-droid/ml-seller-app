@@ -28,6 +28,7 @@ import Fechamento from './pages/Fechamento'
 import Ads from './pages/Ads'
 import EstudioIA from './pages/EstudioIA'
 import Onboarding from './pages/Onboarding'
+import ReposicaoSemanal from './pages/ReposicaoSemanal'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -71,6 +72,7 @@ export default function App() {
               <Route path="fechamento" element={<Fechamento />} />
               <Route path="ads" element={<Ads />} />
               <Route path="estudio-ia" element={<EstudioIA />} />
+              <Route path="reposicao" element={<ReposicaoSemanal />} />
               <Route
                 path="admin/usuarios"
                 element={
