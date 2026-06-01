@@ -48,14 +48,10 @@ export function AuthProvider({ children }) {
     if (error) throw new Error(error.message)
   }
 
-  async function loginWithGoogle() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin + '/dashboard',
-      },
-    })
-    if (error) throw new Error(error.message)
+  function loginWithGoogle() {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const redirectTo = encodeURIComponent(window.location.origin + '/dashboard')
+    window.location.href = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`
   }
 
   async function logout() {
