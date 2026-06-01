@@ -48,6 +48,16 @@ export function AuthProvider({ children }) {
     if (error) throw new Error(error.message)
   }
 
+  async function loginWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/dashboard',
+      },
+    })
+    if (error) throw new Error(error.message)
+  }
+
   async function logout() {
     await supabase.auth.signOut()
     setSession(null)
@@ -65,7 +75,7 @@ export function AuthProvider({ children }) {
       isLoggedIn, loading, user, role, contaMl,
       activeAccount, setActiveAccount,
       mlContas, setMlContas,
-      login, logout,
+      login, loginWithGoogle, logout,
       getToken: () => session?.access_token || null,
     }}>
       {children}
