@@ -34,34 +34,34 @@ const COLOR_SCHEMES = {
   teal:    { bg: 'rgba(20,184,166,0.07)',  border: 'rgba(20,184,166,0.18)',  text: '#2dd4bf' },
 }
 
-function GsKpiCard({ label, value, variacao, valueColor, info, scheme }) {
+function GsKpiCard({ label, value, variacao, valueColor, info, filled }) {
   const varNum = typeof variacao === 'number' ? variacao : null
   const isPositive = varNum !== null && varNum >= 0
-  const isNegative = varNum !== null && varNum < 0
-  const s = scheme ? COLOR_SCHEMES[scheme] : null
 
   return (
     <div
-      className="rounded-xl p-4 flex flex-col gap-2"
-      style={{
-        backgroundColor: s ? s.bg : 'rgba(255,255,255,0.02)',
-        border: `1px solid ${s ? s.border : 'rgba(255,255,255,0.06)'}`,
-      }}
+      className={`rounded-2xl p-5 flex flex-col gap-2 border ${filled ? 'border-transparent' : 'bg-white border-stone-200'}`}
+      style={filled ? { backgroundColor: '#F6B73C', boxShadow: '0 14px 30px rgba(232,155,22,0.25)' } : undefined}
     >
       <div className="flex items-center gap-1.5">
-        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider truncate">{label}</p>
+        <p
+          className={`text-[11px] font-semibold uppercase tracking-wider truncate ${filled ? '' : 'text-stone-500'}`}
+          style={filled ? { color: '#7a5410' } : undefined}
+        >
+          {label}
+        </p>
         {info && (
-          <span title={info} className="text-zinc-700 cursor-default text-[10px] select-none">ⓘ</span>
+          <span title={info} className="text-stone-400 cursor-default text-[10px] select-none">ⓘ</span>
         )}
       </div>
-      <p
-        className="text-2xl font-bold tracking-tight"
-        style={{ color: valueColor ? undefined : (s ? s.text : '#fff'), }}
-      >
-        <span className={valueColor ?? ''}>{value}</span>
+      <p className="text-2xl font-bold tracking-tight" style={filled ? { color: '#fff' } : undefined}>
+        <span className={filled ? '' : (valueColor ?? 'text-stone-800')}>{value}</span>
       </p>
       {varNum !== null && (
-        <p className={`text-xs flex items-center gap-1 ${isPositive ? 'text-emerald-500' : isNegative ? 'text-red-400' : 'text-zinc-500'}`}>
+        <p
+          className={`text-xs flex items-center gap-1 ${filled ? '' : (isPositive ? 'text-emerald-600' : 'text-red-500')}`}
+          style={filled ? { color: '#ffffff' } : undefined}
+        >
           <span>{isPositive ? '▲' : '▼'}</span>
           <span>{Math.abs(varNum).toFixed(1)}% vs período anterior</span>
         </p>
@@ -160,7 +160,7 @@ export default function Dashboard() {
             value={k ? formatBRL(k.faturamento) : '…'}
             variacao={k?.faturamento_variacao}
             info="Soma de unit_price × quantidade de todos os pedidos pagos"
-            scheme="amber"
+            filled
           />
           <GsKpiCard
             label="Líq. do Marketplace"
