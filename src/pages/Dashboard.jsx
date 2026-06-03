@@ -5,6 +5,10 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
+import {
+  DollarSign, TrendingUp, Percent, ShoppingCart,
+  Sparkles, ArrowUpRight,
+} from 'lucide-react'
 import { api } from '../api'
 import Header from '../components/Header'
 import ProdutosTable from '../components/resultado/ProdutosTable'
@@ -20,29 +24,32 @@ function formatPct(v) {
   return `${v.toFixed(2)}%`
 }
 
-// Mapa de esquemas de cor por tipo de KPI (layout C sobre estrutura A)
-const COLOR_SCHEMES = {
-  amber:   { bg: 'rgba(245,158,11,0.07)',  border: 'rgba(245,158,11,0.18)',  text: '#f59e0b' },
-  blue:    { bg: 'rgba(59,130,246,0.07)',  border: 'rgba(59,130,246,0.18)',  text: '#60a5fa' },
-  green:   { bg: 'rgba(16,185,129,0.07)',  border: 'rgba(16,185,129,0.18)',  text: '#34d399' },
-  sky:     { bg: 'rgba(14,165,233,0.07)',  border: 'rgba(14,165,233,0.18)',  text: '#38bdf8' },
-  indigo:  { bg: 'rgba(99,102,241,0.07)',  border: 'rgba(99,102,241,0.18)',  text: '#818cf8' },
-  violet:  { bg: 'rgba(139,92,246,0.07)',  border: 'rgba(139,92,246,0.18)',  text: '#a78bfa' },
-  cyan:    { bg: 'rgba(6,182,212,0.07)',   border: 'rgba(6,182,212,0.18)',   text: '#22d3ee' },
-  orange:  { bg: 'rgba(249,115,22,0.07)',  border: 'rgba(249,115,22,0.18)',  text: '#fb923c' },
-  rose:    { bg: 'rgba(244,63,94,0.07)',   border: 'rgba(244,63,94,0.18)',   text: '#fb7185' },
-  teal:    { bg: 'rgba(20,184,166,0.07)',  border: 'rgba(20,184,166,0.18)',  text: '#2dd4bf' },
+// Tons pastel para o "chip" do ícone de cada KPI (visual creme/âmbar)
+const TINTS = {
+  amber:  { bg: '#FDEFD2', fg: '#B5740A' },
+  mint:   { bg: '#D6EFE2', fg: '#1f7a59' },
+  lilac:  { bg: '#E7E1FB', fg: '#5b4bbd' },
+  sky:    { bg: '#DCEBFB', fg: '#2f72c4' },
 }
 
-function GsKpiCard({ label, value, variacao, valueColor, info, filled }) {
+function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Icon, tint }) {
   const varNum = typeof variacao === 'number' ? variacao : null
   const isPositive = varNum !== null && varNum >= 0
+  const t = tint ? TINTS[tint] : null
 
   return (
     <div
       className={`rounded-2xl p-5 flex flex-col gap-2 border ${filled ? 'border-transparent' : 'bg-white border-stone-200'}`}
       style={filled ? { backgroundColor: '#F6B73C', boxShadow: '0 14px 30px rgba(232,155,22,0.25)' } : undefined}
     >
+      {Icon && (
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center mb-1"
+          style={filled ? { backgroundColor: 'rgba(255,255,255,0.3)' } : { backgroundColor: t?.bg || '#F6EEDF' }}
+        >
+          <Icon size={18} color={filled ? '#fff' : (t?.fg || '#B5740A')} strokeWidth={2.2} />
+        </div>
+      )}
       <div className="flex items-center gap-1.5">
         <p
           className={`text-[11px] font-semibold uppercase tracking-wider truncate ${filled ? '' : 'text-stone-500'}`}
@@ -66,6 +73,54 @@ function GsKpiCard({ label, value, variacao, valueColor, info, filled }) {
           <span>{Math.abs(varNum).toFixed(1)}% vs período anterior</span>
         </p>
       )}
+    </div>
+  )
+}
+
+// Curva ABC (Pareto) calculada a partir dos produtos do período exibidos na tela.
+// Regra igual à do backend: acumulado <=70% = A, <=90% = B, senão C.
+function calcABC(produtos) {
+  const arr = [...(produtos || [])]
+    .filter(p => (p.total_faturado || 0) > 0)
+    .sort((a, b) => b.total_faturado - a.total_faturado)
+  const total = arr.reduce((s, p) => s + (p.total_faturado || 0), 0)
+  const c = { A: { fat: 0, n: 0 }, B: { fat: 0, n: 0 }, C: { fat: 0, n: 0 } }
+  let acc = 0
+  for (const p of arr) {
+    const rep = total ? (p.total_faturado / total) * 100 : 0
+    acc += rep
+    const cls = acc <= 70 ? 'A' : acc <= 90 ? 'B' : 'C'
+    c[cls].fat += p.total_faturado
+    c[cls].n += 1
+  }
+  const pct = k => (total ? Math.round((c[k].fat / total) * 100) : 0)
+  return { total, n: arr.length, A: { ...c.A, pct: pct('A') }, B: { ...c.B, pct: pct('B') }, C: { ...c.C, pct: pct('C') } }
+}
+
+function DonutABC({ abc }) {
+  const C = 2 * Math.PI * 15.9
+  const seg = (pct, prev) => ({
+    dasharray: `${(pct / 100) * C} ${C - (pct / 100) * C}`,
+    dashoffset: C * 0.25 - (prev / 100) * C,
+  })
+  const a = seg(abc.A.pct, 0)
+  const b = seg(abc.B.pct, abc.A.pct)
+  const d = seg(abc.C.pct, abc.A.pct + abc.B.pct)
+  return (
+    <div className="flex items-center gap-5">
+      <svg width="120" height="120" viewBox="0 0 42 42" className="shrink-0">
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#F0E7D6" strokeWidth="5.5" />
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#3FAE7E" strokeWidth="5.5" strokeLinecap="round" strokeDasharray={a.dasharray} strokeDashoffset={a.dashoffset} />
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#F6B73C" strokeWidth="5.5" strokeLinecap="round" strokeDasharray={b.dasharray} strokeDashoffset={b.dashoffset} />
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#E89B6B" strokeWidth="5.5" strokeLinecap="round" strokeDasharray={d.dasharray} strokeDashoffset={d.dashoffset} />
+        <text x="21" y="20.5" textAnchor="middle" fontSize="6.5" fontWeight="700" fill="#3A352E">{abc.n}</text>
+        <text x="21" y="26" textAnchor="middle" fontSize="3.2" fontWeight="700" fill="#8A8378">SKUs</text>
+      </svg>
+      <div className="flex flex-col gap-2.5 flex-1 text-sm">
+        <div className="flex items-center gap-2 font-semibold"><i className="w-2.5 h-2.5 rounded" style={{ background: '#3FAE7E' }} />Classe A<span className="ml-auto text-stone-500">{abc.A.pct}%</span></div>
+        <div className="flex items-center gap-2 font-semibold"><i className="w-2.5 h-2.5 rounded" style={{ background: '#F6B73C' }} />Classe B<span className="ml-auto text-stone-500">{abc.B.pct}%</span></div>
+        <div className="flex items-center gap-2 font-semibold"><i className="w-2.5 h-2.5 rounded" style={{ background: '#E89B6B' }} />Classe C<span className="ml-auto text-stone-500">{abc.C.pct}%</span></div>
+      </div>
     </div>
   )
 }
@@ -127,6 +182,7 @@ export default function Dashboard() {
   }))
 
   const semCusto = (data?.top_produtos || []).filter(p => p.custo_unitario === null)
+  const abc = calcABC(data?.top_produtos)
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -153,35 +209,39 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Linha 1: 4 KPIs principais ── */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        {/* ── Linha 1: 4 KPIs principais (estilo hero, com ícone) ── */}
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <GsKpiCard
             label="Faturamento"
             value={k ? formatBRL(k.faturamento) : '…'}
             variacao={k?.faturamento_variacao}
             info="Soma de unit_price × quantidade de todos os pedidos pagos"
+            icon={DollarSign}
             filled
           />
           <GsKpiCard
             label="Líq. do Marketplace"
             value={k ? formatBRL(k.liquido_marketplace) : '…'}
             info="Faturamento descontando as taxas cobradas pelo Mercado Livre"
-            scheme="blue"
+            icon={ShoppingCart}
+            tint="sky"
           />
           <GsKpiCard
             label="Lucro Bruto"
             value={k ? formatBRL(k.lucro_bruto) : '…'}
             variacao={k?.lucro_variacao}
-            valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-400' : 'text-red-400') : undefined}
+            valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-600' : 'text-red-500') : undefined}
             info="Líquido do Marketplace menos o custo dos produtos (CMV)"
-            scheme="green"
+            icon={TrendingUp}
+            tint="mint"
           />
           <GsKpiCard
             label="Margem"
             value={k ? formatPct(k.margem) : '…'}
-            valueColor={k ? (k.margem >= 15 ? 'text-sky-400' : k.margem >= 0 ? 'text-sky-400' : 'text-red-400') : undefined}
+            valueColor={k ? (k.margem >= 0 ? 'text-stone-800' : 'text-red-500') : undefined}
             info="Lucro Bruto ÷ Faturamento"
-            scheme="sky"
+            icon={Percent}
+            tint="lilac"
           />
         </div>
 
@@ -242,7 +302,9 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* ── Resumo de Receitas chart ── */}
+        {/* ── Gráfico de receitas + Curva ABC lado a lado ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 items-start">
+
         <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Resumo de Receitas</h2>
@@ -312,6 +374,53 @@ export default function Dashboard() {
               </AreaChart>
             </ResponsiveContainer>
           )}
+        </div>
+
+        {/* ── Coluna lateral: Curva ABC + Estúdio IA ── */}
+        <div className="flex flex-col gap-4">
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Curva ABC</h2>
+              <Link to="/curva-abc" className="text-xs text-stone-500 hover:text-sky-400 transition-colors">Detalhes →</Link>
+            </div>
+            {abc.total > 0 ? (
+              <>
+                <p className="text-xs text-stone-500 mb-3">Concentração do faturamento (produtos do período)</p>
+                <DonutABC abc={abc} />
+                <div className="flex gap-6 mt-4 pt-4 border-t border-stone-200">
+                  <div>
+                    <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">Ticket médio</p>
+                    <p className="text-lg font-bold text-stone-800">{k ? formatBRL(k.ticket_medio) : '…'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">ROI</p>
+                    <p className="text-lg font-bold" style={{ color: '#1f7a59' }}>{k ? formatPct(k.roi) : '…'}</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-stone-500 text-sm py-6 text-center">Sem produtos no período.</p>
+            )}
+          </div>
+
+          <Link
+            to="/estudio-ia"
+            className="rounded-xl p-5 flex flex-col gap-3 text-white"
+            style={{ background: 'linear-gradient(135deg,#6E5BD6,#9b6ef0)' }}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2"><Sparkles size={16} /> Estúdio IA</h2>
+              <ArrowUpRight size={18} />
+            </div>
+            <p className="text-sm" style={{ color: '#ece8ff' }}>
+              Gere persona, pesquisa de mercado e capas a partir dos produtos mais vendidos.
+            </p>
+            <span className="mt-1 inline-flex items-center gap-2 bg-white text-violet-700 font-semibold text-sm rounded-xl px-4 py-2 w-fit">
+              ✨ Analisar um produto
+            </span>
+          </Link>
+        </div>
+
         </div>
 
         {/* ── Top 15 produtos vendidos ── */}
