@@ -510,7 +510,7 @@ hr{border:none;border-top:1px solid #27272a;margin:32px 0}
 <div class="wrapper">
 <div class="topo">
 <h1>Estúdio IA — ${termo || 'Meus Produtos'}</h1>
-<p>Gerado em ${date} · ML Seller Dashboard</p>
+<p>Gerado em ${date} · Seller ML</p>
 </div>
 ${corpo}
 </div>

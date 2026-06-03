@@ -68,7 +68,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-stone-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
-          <h1 className="text-sky-400 font-bold text-3xl mb-1">ML Seller</h1>
+          <h1 className="text-sky-400 font-bold text-3xl mb-1">Seller ML</h1>
           <p className="text-stone-500 text-sm">Gestão de Vendas — Mercado Livre</p>
         </div>
 

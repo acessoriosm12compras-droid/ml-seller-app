@@ -45,7 +45,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-stone-900 border border-stone-800 mb-4">
             <span className="text-sky-400 font-bold text-2xl">SM</span>
           </div>
-          <h1 className="text-white font-bold text-2xl mb-1">Seller ML</h1>
+          <h1 className="text-stone-800 font-bold text-2xl mb-1">Seller ML</h1>
           <p className="text-stone-500 text-sm">Gestão de Vendas — Mercado Livre</p>
         </div>
 

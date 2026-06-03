@@ -45,12 +45,12 @@ export default function Sidebar() {
         >
           <div
             className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }}
+            style={{ background: 'linear-gradient(135deg, #F6B73C, #E89B16)' }}
           >
-            <span className="text-white font-black" style={{ fontSize: '9px' }}>ML</span>
+            <span className="text-white font-black" style={{ fontSize: '9px' }}>SM</span>
           </div>
           <span className="text-sky-400 font-bold text-sm whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75">
-            ML Seller
+            Seller ML
           </span>
         </div>
 
