@@ -4,39 +4,15 @@ import { supabase } from '../lib/supabase'
 const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(null) // null = not yet initialized
+  // Visual ML Seller é claro fixo (creme/âmbar). Modo escuro foi removido.
+  const [theme] = useState('light')
 
   useEffect(() => {
-    // Load from Supabase user_metadata, fallback to OS preference
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const saved = session?.user?.user_metadata?.tema
-      const osPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      const initial = saved || osPreference
-      setTheme(initial)
-      applyTheme(initial)
-    })
+    document.documentElement.classList.remove('dark')
   }, [])
 
-  function applyTheme(t) {
-    if (t === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }
-
-  async function toggleTheme() {
-    if (!theme) return
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
-    applyTheme(next)
-    // Persist in Supabase user_metadata
-    try {
-      await supabase.auth.updateUser({ data: { tema: next } })
-    } catch (e) {
-      console.warn('Failed to persist theme preference:', e)
-    }
-  }
+  // Mantido por compatibilidade com quem chama useTheme(); não faz nada.
+  function toggleTheme() {}
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

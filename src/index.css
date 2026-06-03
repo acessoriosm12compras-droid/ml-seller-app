@@ -44,40 +44,86 @@ html.dark *::-webkit-scrollbar-track { background: #111113; }
 html.dark *::-webkit-scrollbar-thumb { background: #3f3f46; }
 html.dark *::-webkit-scrollbar-thumb:hover { background: #52525b; }
 
-/* ── Light mode ── */
+/* ══════════════════════════════════════════════════════════════════
+   Tema claro — visual ML Seller (creme + âmbar, cantos macios)
+   Todas as telas usam as mesmas classes utilitárias; o remapeamento
+   abaixo dá o visual novo ao app inteiro de uma vez.
+   ══════════════════════════════════════════════════════════════════ */
 html:not(.dark) { color-scheme: light; }
-html:not(.dark) body { background-color: #f5f3ef; color: #1c1c1e; }
+html:not(.dark) body { background-color: #FBF5EB; color: #3A352E; }
 
-/* Backgrounds */
-html:not(.dark) .bg-stone-950,
-html:not(.dark) .bg-stone-900  { background-color: #ece9e3; }
-html:not(.dark) .bg-stone-800  { background-color: #e3e0d9; }
-html:not(.dark) .dark\:bg-stone-950 { background-color: #ece9e3; }
+/* Fundo da página e superfícies */
+html:not(.dark) .bg-stone-950 { background-color: #FBF5EB; }
+html:not(.dark) .bg-stone-900,
+html:not(.dark) .dark\:bg-stone-950,
+html:not(.dark) .dark\:bg-stone-900 { background-color: #FFFFFF; }
+html:not(.dark) .bg-stone-800,
+html:not(.dark) .dark\:bg-stone-800\/60 { background-color: #F6EEDF; }
+html:not(.dark) .bg-white { background-color: #FFFFFF; }
 
-/* Card surfaces */
-html:not(.dark) .bg-white { background-color: #ffffff; }
+/* Bordas suaves e quentes */
+html:not(.dark) .border-stone-200 { border-color: #EFE7D7; }
+html:not(.dark) .border-stone-800,
+html:not(.dark) .dark\:border-stone-800 { border-color: #EFE7D7; }
+html:not(.dark) .border-stone-700,
+html:not(.dark) .border-stone-700\/50,
+html:not(.dark) .border-stone-800\/50 { border-color: #E7DCC8; }
 
-/* Borders */
-html:not(.dark) .border-stone-200 { border-color: #e5e5ea; }
-html:not(.dark) .border-stone-800 { border-color: #d8d8dc; }
-html:not(.dark) .border-stone-700 { border-color: #cfcfd3; }
+/* Texto (o app mistura stone e zinc) */
+html:not(.dark) .text-stone-100,
+html:not(.dark) .text-stone-200,
+html:not(.dark) .text-stone-300,
+html:not(.dark) .text-zinc-100,
+html:not(.dark) .text-zinc-200,
+html:not(.dark) .text-zinc-300 { color: #3A352E; }
+html:not(.dark) .text-stone-400,
+html:not(.dark) .text-zinc-400 { color: #6B645A; }
+html:not(.dark) .text-stone-500,
+html:not(.dark) .text-stone-600,
+html:not(.dark) .text-zinc-500,
+html:not(.dark) .text-zinc-600 { color: #8A8378; }
 
-/* Preserve colored left borders */
-html:not(.dark) .border-l-sky-500     { border-left-color: #0ea5e9; }
+/* Acento âmbar (substitui o azul sky no tema claro) */
+html:not(.dark) .text-sky-400,
+html:not(.dark) .text-sky-500,
+html:not(.dark) .text-sky-600,
+html:not(.dark) .text-blue-400 { color: #B5740A; }
+html:not(.dark) .bg-sky-400,
+html:not(.dark) .bg-sky-500,
+html:not(.dark) .bg-sky-600 { background-color: #E89B16; }
+html:not(.dark) .bg-sky-500\/5  { background-color: rgba(232,155,22,0.06); }
+html:not(.dark) .bg-sky-500\/10 { background-color: rgba(232,155,22,0.10); }
+html:not(.dark) .bg-sky-500\/15,
+html:not(.dark) .bg-sky-500\/\[0\.15\] { background-color: rgba(232,155,22,0.15); }
+html:not(.dark) .bg-sky-500\/20 { background-color: rgba(232,155,22,0.20); }
+html:not(.dark) .bg-sky-500\/60 { background-color: rgba(232,155,22,0.55); }
+html:not(.dark) .bg-blue-500\/10 { background-color: rgba(232,155,22,0.10); }
+html:not(.dark) .bg-blue-500\/20 { background-color: rgba(232,155,22,0.20); }
+html:not(.dark) .border-sky-400,
+html:not(.dark) .border-sky-500 { border-color: #E89B16; }
+html:not(.dark) .border-sky-500\/20 { border-color: rgba(232,155,22,0.20); }
+html:not(.dark) .border-sky-500\/25 { border-color: rgba(232,155,22,0.25); }
+html:not(.dark) .border-sky-500\/30 { border-color: rgba(232,155,22,0.30); }
+html:not(.dark) .border-sky-500\/40 { border-color: rgba(232,155,22,0.40); }
+html:not(.dark) .ring-sky-500 { --tw-ring-color: #E89B16; }
+
+/* Bordas-laterais coloridas (categorias) — sky vira âmbar, demais preservadas */
+html:not(.dark) .border-l-sky-500     { border-left-color: #E89B16; }
 html:not(.dark) .border-l-blue-500    { border-left-color: #3b82f6; }
 html:not(.dark) .border-l-violet-500  { border-left-color: #8b5cf6; }
 html:not(.dark) .border-l-emerald-500 { border-left-color: #10b981; }
 
-/* Text */
-html:not(.dark) .text-stone-100,
-html:not(.dark) .text-stone-200,
-html:not(.dark) .text-stone-300 { color: #1c1c1e; }
-html:not(.dark) .text-stone-400 { color: #3a3a3c; }
-html:not(.dark) .text-stone-500,
-html:not(.dark) .text-stone-600 { color: #636366; }
+/* Hover sutil sobre superfície clara (sidebar usa bg-white/[0.05]) */
+html:not(.dark) .hover\:bg-white\/\[0\.05\]:hover,
+html:not(.dark) .hover\:bg-white\/5:hover { background-color: rgba(58,53,46,0.05); }
 
-/* Scrollbar light */
-html:not(.dark) * { scrollbar-color: #d1d1d6 #f5f5f7; }
-html:not(.dark) *::-webkit-scrollbar-track { background: #f5f5f7; }
-html:not(.dark) *::-webkit-scrollbar-thumb { background: #d1d1d6; }
-html:not(.dark) *::-webkit-scrollbar-thumb:hover { background: #aeaeb2; }
+/* Cantos mais arredondados — o toque "macio" do visual */
+html:not(.dark) .rounded-lg { border-radius: 14px; }
+html:not(.dark) .rounded-xl { border-radius: 18px; }
+
+/* Seleção e scrollbar quentes */
+html:not(.dark) ::selection { background: rgba(232,155,22,0.22); color: #3A352E; }
+html:not(.dark) * { scrollbar-color: #E7DCC8 #FBF5EB; }
+html:not(.dark) *::-webkit-scrollbar-track { background: #FBF5EB; }
+html:not(.dark) *::-webkit-scrollbar-thumb { background: #E7DCC8; }
+html:not(.dark) *::-webkit-scrollbar-thumb:hover { background: #D9CBB0; }

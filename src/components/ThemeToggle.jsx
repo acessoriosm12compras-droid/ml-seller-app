@@ -1,15 +1,5 @@
-import { useTheme } from '../context/ThemeContext'
-
+// Modo escuro removido — o visual ML Seller é claro fixo (creme/âmbar).
+// Componente mantido como no-op pra não quebrar quem o importa.
 export default function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme()
-  return (
-    <button
-      onClick={toggleTheme}
-      className="flex items-center gap-2 px-5 py-2 text-xs text-zinc-600 hover:text-zinc-300 transition-colors w-full"
-      title={theme === 'dark' ? 'Mudar para claro' : 'Mudar para escuro'}
-    >
-      <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-      <span>{theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</span>
-    </button>
-  )
+  return null
 }
