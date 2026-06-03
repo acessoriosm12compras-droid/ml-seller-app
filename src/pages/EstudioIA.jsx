@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import {
   Search, Sparkles, Copy, Check, RefreshCw, Loader2,
-  ExternalLink, Download, Package, SlidersHorizontal, Zap,
+  ExternalLink, Download, Package, SlidersHorizontal, Zap, Clock,
 } from 'lucide-react'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
@@ -192,6 +192,12 @@ export default function EstudioIA() {
   const [tabAtiva, setTabAtiva]   = useState('persona')
   const [copiado, setCopiado]     = useState('')
   const [retryIn, setRetryIn]     = useState(0)
+  const [estudoId, setEstudoId]   = useState(null)
+
+  // ── Histórico de estudos ──────────────────────────────────────────
+  const [historico, setHistorico]   = useState([])
+  const [histAberto, setHistAberto] = useState(false)
+  const [carregandoHist, setCarregandoHist] = useState(false)
 
   const abortRef  = useRef(null)
   const retryTimer = useRef(null)
@@ -210,6 +216,49 @@ export default function EstudioIA() {
       setSelecionados(new Set(produtos.map(p => p.id)))
     }
   }, [produtos])
+
+  // Carrega o histórico de estudos ao montar
+  useEffect(() => {
+    carregarHistorico()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function carregarHistorico() {
+    setCarregandoHist(true)
+    try {
+      const res = await fetch(`${BASE}/api/estudio/historico?limit=20`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setHistorico(data.estudos || [])
+    } catch {
+      /* histórico é best-effort — silencioso */
+    } finally {
+      setCarregandoHist(false)
+    }
+  }
+
+  async function abrirEstudo(id) {
+    try {
+      const res = await fetch(`${BASE}/api/estudio/${id}`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      })
+      if (!res.ok) return
+      const { estudo } = await res.json()
+      if (estudo?.conteudo_md) {
+        setResultado(estudo.conteudo_md)
+        setEstudoId(estudo.id)
+        setErroGerar('')
+        const primeiroTipo = TIPOS.find(t => (estudo.tipos || []).includes(t.id))
+        if (primeiroTipo) setTabAtiva(primeiroTipo.id)
+        setHistAberto(false)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    } catch {
+      /* silencioso */
+    }
+  }
 
   // ── Helpers ───────────────────────────────────────────────────────
   function toggleProduto(id) {
@@ -377,7 +426,12 @@ export default function EstudioIA() {
           if (!line.startsWith('data: ')) continue
           let parsed
           try { parsed = JSON.parse(line.slice(6)) } catch { continue }
-          if (parsed.done) { setGerando(false); return }
+          if (parsed.done) {
+            if (parsed.estudo_id) setEstudoId(parsed.estudo_id)
+            setGerando(false)
+            carregarHistorico()
+            return
+          }
           if (parsed.rate_limit) {
             setGerando(false)
             let secs = parsed.retry_after || 62
@@ -513,12 +567,62 @@ ${corpo}
       <div className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
 
         {/* ── Cabeçalho ── */}
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles size={18} className="text-sky-400" />
-          <p className="text-stone-400 text-sm">
-            Selecione produtos e deixe a IA gerar persona, pesquisa de mercado, prompts de imagem e vídeo.
-          </p>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-sky-400" />
+            <p className="text-stone-400 text-sm">
+              Selecione produtos e deixe a IA gerar persona, pesquisa de mercado, prompts de imagem e vídeo.
+            </p>
+          </div>
+          <button
+            onClick={() => setHistAberto(v => !v)}
+            className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-stone-900 border border-stone-800 text-stone-300 hover:text-white hover:border-stone-700 transition-colors"
+          >
+            <Clock size={14} />
+            Histórico
+            {historico.length > 0 && (
+              <span className="text-xs bg-sky-500/20 text-sky-400 rounded-full px-2 py-0.5">{historico.length}</span>
+            )}
+          </button>
         </div>
+
+        {/* ── Histórico de estudos ── */}
+        {histAberto && (
+          <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-stone-200 text-sm font-semibold">Estudos recentes</h3>
+              {carregandoHist && <Loader2 size={14} className="animate-spin text-stone-500" />}
+            </div>
+            {historico.length === 0 ? (
+              <p className="text-stone-500 text-xs">Nenhum estudo salvo ainda. Gere o primeiro abaixo.</p>
+            ) : (
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {historico.map(h => (
+                  <button
+                    key={h.id}
+                    onClick={() => abrirEstudo(h.id)}
+                    className="w-full text-left bg-stone-800/60 hover:bg-stone-800 border border-stone-700/60 rounded-lg px-3 py-2.5 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-stone-200 text-sm font-medium truncate">{h.termo || h.link || 'Estudo'}</span>
+                      <span className="text-stone-500 text-xs shrink-0">
+                        {h.created_at ? new Date(h.created_at).toLocaleDateString('pt-BR') : ''}
+                      </span>
+                    </div>
+                    {h.persona && <p className="text-stone-400 text-xs mt-1 line-clamp-1">{h.persona}</p>}
+                    {Array.isArray(h.tipos) && h.tipos.length > 0 && (
+                      <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                        {h.tipos.map(t => (
+                          <span key={t} className="text-[10px] uppercase tracking-wide bg-stone-700/60 text-stone-400 rounded px-1.5 py-0.5">{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Layout: 1 col sem resultado / 2 cols com resultado ── */}
         <div className={temResultado ? 'grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-5 items-start' : 'space-y-4'}>

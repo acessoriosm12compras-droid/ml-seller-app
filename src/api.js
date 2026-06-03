@@ -156,4 +156,9 @@ export const api = {
     atualizarEstoqueMinimo: (data) =>
       request('/api/reposicao/estoque-minimo', { method: 'PUT', body: JSON.stringify(data) }),
   },
+
+  estudio: {
+    historico: (limit = 20) => request(`/api/estudio/historico?limit=${limit}`),
+    get: (id) => request(`/api/estudio/${id}`),
+  },
 }
