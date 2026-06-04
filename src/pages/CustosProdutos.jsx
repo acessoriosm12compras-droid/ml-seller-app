@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Download, AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Download, Upload, AlertTriangle, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
+
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 function fmtBRL(v) {
   if (v == null) return '—'
@@ -36,12 +38,39 @@ function getDivergencia(produto) {
 }
 
 export default function CustosProdutos() {
-  const { activeAccount } = useAuth()
+  const { activeAccount, getToken } = useAuth()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [filtro, setFiltro] = useState('todos') // todos | problemas | sem_custo
   const [editingCosts, setEditingCosts] = useState({})
   const [savingStatus, setSavingStatus] = useState({})
+  const [importando, setImportando] = useState(false)
+  const [importResult, setImportResult] = useState(null)
+
+  async function handleImport(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''  // permite re-selecionar o mesmo arquivo depois
+    if (!file) return
+    setImportando(true)
+    setImportResult(null)
+    try {
+      const form = new FormData()
+      form.append('arquivo', file)
+      const res = await fetch(`${BASE}/api/importar-custos-planilha`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body: form,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`)
+      setImportResult(data)
+      refetch()
+    } catch (err) {
+      setImportResult({ erro: err.message })
+    } finally {
+      setImportando(false)
+    }
+  }
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['custos', activeAccount],
@@ -151,8 +180,32 @@ export default function CustosProdutos() {
             >
               <Download size={14} /> CSV
             </button>
+            <label
+              title="Importar custos de uma planilha .xlsx (por SKU)"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors ${importando ? 'opacity-60 cursor-wait bg-stone-800 border border-stone-700 text-stone-400' : 'bg-sky-500/15 border border-sky-500/30 text-sky-400 hover:bg-sky-500/25'}`}
+            >
+              {importando ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              {importando ? 'Importando…' : 'Importar planilha'}
+              <input type="file" accept=".xlsx" className="hidden" onChange={handleImport} disabled={importando} />
+            </label>
           </div>
         </div>
+
+        {/* Resultado da importação de planilha */}
+        {importResult && (
+          <div className={`rounded-lg px-4 py-3 text-sm border ${importResult.erro ? 'bg-red-500/10 border-red-500/20 text-red-300' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'}`}>
+            {importResult.erro ? (
+              <span>Falha na importação: {importResult.erro}</span>
+            ) : (
+              <span>
+                <span className="font-bold">{importResult.importados}</span> de {importResult.total_linhas} custos importados.
+                {importResult.nao_encontrados?.length > 0 && (
+                  <> {importResult.nao_encontrados.length} SKU(s) não encontrados no ML: {importResult.nao_encontrados.slice(0, 20).join(', ')}{importResult.nao_encontrados.length > 20 ? '…' : ''}</>
+                )}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Alertas de divergência */}
         {!isLoading && nProblemas > 0 && (
