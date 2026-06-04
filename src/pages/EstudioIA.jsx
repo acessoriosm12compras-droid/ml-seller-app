@@ -155,6 +155,7 @@ export default function EstudioIA() {
   const [termo, setTermo]         = useState('')
   const [buscando, setBuscando]   = useState(false)
   const [produtos, setProdutos]   = useState([])
+  const [mercado, setMercado]     = useState(null)
   const [erroBusca, setErroBusca] = useState('')
   const [selecionados, setSelecionados] = useState(new Set())
 
@@ -304,6 +305,7 @@ export default function EstudioIA() {
     setBuscando(true)
     setErroBusca('')
     setProdutos([])
+    setMercado(null)
     setResultado('')
     setModoManual(false)
     if (!isRefiltro) {
@@ -324,6 +326,7 @@ export default function EstudioIA() {
       if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`)
       const lista = data.produtos || []
       setProdutos(lista)
+      setMercado(data.mercado || null)
       // Se 0 resultados em busca por termo, ativa modo manual
       if (lista.length === 0 && !isLink) setModoManual(true)
     } catch (err) {
@@ -402,6 +405,7 @@ export default function EstudioIA() {
           termo: modoEntrada === 'meus-produtos' ? 'meus produtos' : termo,
           produtos: produtosParaGerar,
           tipos: Array.from(tiposSel),
+          mercado: modoEntrada === 'meus-produtos' ? null : mercado,
         }),
         signal: controller.signal,
       })
@@ -726,6 +730,41 @@ ${corpo}
                       Buscar produtos colados
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Painel de mercado real (tendências + mais vendidos do ML) */}
+              {mercado && ((mercado.tendencias && mercado.tendencias.length > 0) || (mercado.mais_vendidos && mercado.mais_vendidos.length > 0)) && (
+                <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-stone-300 text-sm font-semibold">Mercado real — Mercado Livre</span>
+                    {mercado.categoria && (
+                      <span className="text-xs text-stone-500 bg-stone-800 px-2 py-0.5 rounded-full">{mercado.categoria}</span>
+                    )}
+                  </div>
+                  {mercado.tendencias && mercado.tendencias.length > 0 && (
+                    <div>
+                      <p className="text-xs text-stone-500 mb-1.5">Mais buscados (tendências reais)</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {mercado.tendencias.slice(0, 15).map((t, i) => (
+                          <span key={i} className="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full px-2 py-0.5">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {mercado.mais_vendidos && mercado.mais_vendidos.length > 0 && (
+                    <div>
+                      <p className="text-xs text-stone-500 mb-1.5">Mais vendidos da categoria</p>
+                      <ul className="space-y-1">
+                        {mercado.mais_vendidos.slice(0, 5).map((m, i) => (
+                          <li key={i} className="text-xs text-stone-300 flex justify-between gap-2">
+                            <span className="truncate">{i + 1}. {m.title}</span>
+                            <span className="text-stone-500 shrink-0">{m.price ? `R$ ${m.price}` : ''}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
 
