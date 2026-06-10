@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
@@ -8,9 +9,10 @@ function formatBRL(v) {
 
 export default function PedidoDetalhe() {
   const { id } = useParams()
+  const { activeAccount } = useAuth()
   const { data, isLoading, error } = useQuery({
-    queryKey: ['pedido', id],
-    queryFn: () => api.pedido(id),
+    queryKey: ['pedido', id, activeAccount],
+    queryFn: () => api.pedido(id, activeAccount ? { conta_ml: activeAccount } : {}),
   })
 
   return (

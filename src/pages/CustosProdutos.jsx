@@ -56,6 +56,7 @@ export default function CustosProdutos() {
     try {
       const form = new FormData()
       form.append('arquivo', file)
+      if (activeAccount) form.append('conta_ml', activeAccount)
       const res = await fetch(`${BASE}/api/importar-custos-planilha`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${getToken()}` },

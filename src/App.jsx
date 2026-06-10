@@ -15,7 +15,6 @@ import AdminUsuarios from './pages/AdminUsuarios'
 import Resultado from './pages/Resultado'
 import Conciliacao from './pages/Conciliacao'
 import ProjecaoVendas from './pages/ProjecaoVendas'
-import Vendas from './pages/Vendas'
 import Graficos from './pages/Graficos'
 import Analitico from './pages/Analitico'
 import CurvaAbc from './pages/CurvaAbc'
@@ -29,6 +28,7 @@ import Ads from './pages/Ads'
 import EstudioIA from './pages/EstudioIA'
 import Onboarding from './pages/Onboarding'
 import ReposicaoSemanal from './pages/ReposicaoSemanal'
+import NotFound from './pages/NotFound'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -82,6 +82,7 @@ export default function App() {
                 }
               />
             </Route>
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

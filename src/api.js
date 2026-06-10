@@ -34,8 +34,8 @@ export const api = {
   pedidos: (params) =>
     request(`/api/pedidos?${new URLSearchParams(params)}`),
 
-  pedido: (id) =>
-    request(`/api/pedidos/${id}`),
+  pedido: (id, params = {}) =>
+    request(`/api/pedidos/${id}?${new URLSearchParams(params)}`),
 
   financeiro: (params) =>
     request(`/api/financeiro?${new URLSearchParams(params)}`),
