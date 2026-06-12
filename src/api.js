@@ -170,7 +170,10 @@ export const api = {
     get: (id) => request(`/api/estudio/${id}`),
     gerarConteudo: (data) =>
       request('/api/estudio/conteudo', { method: 'POST', body: JSON.stringify(data) }),
-    salvarConteudo: (id, conteudo) =>
-      request(`/api/estudio/${id}/conteudo`, { method: 'PATCH', body: JSON.stringify({ conteudo }) }),
+    salvarConteudo: (id, conteudo, bloco) =>
+      request(`/api/estudio/${id}/conteudo`, {
+        method: 'PATCH',
+        body: JSON.stringify(bloco ? { bloco, conteudo } : { conteudo }),
+      }),
   },
 }

@@ -4,11 +4,11 @@ import {
   Search, Sparkles, Copy, Check, RefreshCw, Loader2,
   ExternalLink, Download, Package, SlidersHorizontal, Zap, Clock,
   TrendingUp, Trophy, CheckCircle2, ChevronRight, FileSearch,
-  Wand2, X, Save, FileText, Info,
+  Wand2, X, Save,
 } from 'lucide-react'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
@@ -20,20 +20,74 @@ const TIPOS = [
   { id: 'video',    label: '🎬 Prompts de Vídeo',    desc: 'Kling AI + roteiro Reels/TikTok' },
 ]
 
-// Tabs do painel de Geração de Conteúdo (limites do Mercado Livre)
-const TABS_CONTEUDO = [
-  { id: 'titulo_curto',    label: 'Título Curto (60 caracteres)',     limite: 60 },
-  { id: 'titulo_completo', label: 'Título Completo (120 caracteres)', limite: 120 },
-  { id: 'descricao',       label: 'Descrição Completa' },
-  { id: 'prompts_imagem',  label: 'Prompts de Imagem' },
+// Ferramentas de IA — blocos da oferta direcionada (metodologia de persona).
+// Cada bloco gera UMA coisa por vez; 'persona' é o bloco principal e guia os demais.
+const BLOCOS_IA = [
+  { id: 'persona',        icone: '🧑', nome: 'Persona (método Cazonato)', desc: 'Quem é o público majoritário que compra — com evidências, dores e quebras de objeção.', principal: true },
+  { id: 'palavras_chave', icone: '🔑', nome: 'Palavras-chave',            desc: 'Termos de busca e título na linguagem real do público, do genérico ao nichado.' },
+  { id: 'titulos',        icone: '✍️', nome: 'Títulos que filtram',       desc: '3 opções de até 60 caracteres + 1 título completo de até 120.', editavel: true },
+  { id: 'descricao',      icone: '💬', nome: 'Descrição que conversa',    desc: '2 versões: dor → solução no mundo da persona → quebra de objeção.', editavel: true },
+  { id: 'fotos',          icone: '🖼️', nome: 'Fotos que espelham',        desc: 'Briefing de capa ambientada + 3 prompts de imagem prontos.' },
+  { id: 'kits',           icone: '📦', nome: 'Kits direcionados',         desc: 'Kits que resolvem o problema completo da persona.' },
 ]
 
-function normalizarConteudoLocal(c) {
-  return {
-    titulo_curto:    c?.titulo_curto    || '',
-    titulo_completo: c?.titulo_completo || '',
-    descricao:       c?.descricao       || '',
-    prompts_imagem:  Array.isArray(c?.prompts_imagem) ? c.prompts_imagem.map(String) : [],
+const LIMITE_TITULO_CURTO = 60
+const LIMITE_TITULO_COMPLETO = 120
+
+function normalizarBlocoLocal(id, c) {
+  const o = c && typeof c === 'object' ? c : {}
+  switch (id) {
+    case 'persona': return {
+      resumo: o.resumo || '',
+      justificativa: o.justificativa || '',
+      secundarias: Array.isArray(o.secundarias) ? o.secundarias.map(String) : [],
+      dores_objecoes: Array.isArray(o.dores_objecoes)
+        ? o.dores_objecoes.filter(d => d && typeof d === 'object') : [],
+    }
+    case 'palavras_chave': return { termos: Array.isArray(o.termos) ? o.termos.map(String) : [] }
+    case 'titulos': return {
+      opcoes: Array.isArray(o.opcoes) ? o.opcoes.map(String) : [],
+      completo: o.completo || '',
+    }
+    case 'descricao': return { versoes: Array.isArray(o.versoes) ? o.versoes.map(String) : [] }
+    case 'fotos': return {
+      briefing_capa: o.briefing_capa || '',
+      variacoes_cenario: Array.isArray(o.variacoes_cenario) ? o.variacoes_cenario.map(String) : [],
+      prompts: Array.isArray(o.prompts) ? o.prompts.map(String) : [],
+    }
+    case 'kits': return {
+      kits: Array.isArray(o.kits) ? o.kits.filter(k => k && typeof k === 'object') : [],
+    }
+    default: return o
+  }
+}
+
+// Texto plano de um bloco (para o botão Copiar)
+function blocoParaTexto(id, c) {
+  if (!c) return ''
+  switch (id) {
+    case 'persona': {
+      const linhas = []
+      if (c.resumo) linhas.push(`Persona majoritária: ${c.resumo}`)
+      if (c.justificativa) linhas.push(`Justificativa: ${c.justificativa}`)
+      if (c.secundarias?.length) linhas.push(`Personas secundárias:\n${c.secundarias.map(s => `- ${s}`).join('\n')}`)
+      if (c.dores_objecoes?.length) linhas.push(`Dores e quebras de objeção:\n${c.dores_objecoes.map(d => `- ${d.dor} → ${d.quebra || ''}`).join('\n')}`)
+      return linhas.join('\n\n')
+    }
+    case 'palavras_chave': return (c.termos || []).join(', ')
+    case 'titulos': return [...(c.opcoes || []), c.completo].filter(Boolean).join('\n')
+    case 'descricao': return (c.versoes || []).join('\n\n---\n\n')
+    case 'fotos': {
+      const linhas = []
+      if (c.briefing_capa) linhas.push(`Briefing da capa: ${c.briefing_capa}`)
+      if (c.variacoes_cenario?.length) linhas.push(`Variações de cenário:\n${c.variacoes_cenario.map(v => `- ${v}`).join('\n')}`)
+      if (c.prompts?.length) linhas.push(c.prompts.map((p, i) => `Prompt ${i + 1}:\n${p}`).join('\n\n'))
+      return linhas.join('\n\n')
+    }
+    case 'kits': return (c.kits || []).map(k =>
+      `${k.nome}\n- Produtos: ${(k.produtos || []).join(', ')}${k.porque ? `\n- Por quê: ${k.porque}` : ''}`
+    ).join('\n\n')
+    default: return JSON.stringify(c, null, 2)
   }
 }
 
@@ -235,42 +289,20 @@ export default function EstudioIA() {
   const [buscaHist, setBuscaHist]   = useState('')
   const [carregandoHist, setCarregandoHist] = useState(false)
 
-  // ── Geração de Conteúdo ───────────────────────────────────────────
-  const [painelConteudo, setPainelConteudo] = useState(null)
-  // painelConteudo: { estudoId, termo, criadoEm, produtos, mercado, carregando, erro }
-  const [conteudo, setConteudo] = useState(null)
-  const [conteudoOriginal, setConteudoOriginal] = useState(null)
-  const [tabConteudoAtiva, setTabConteudoAtiva] = useState('titulo_curto')
-  const [salvoConteudo, setSalvoConteudo] = useState(false)
-  const painelConteudoRef = useRef(null)
+  // ── Ferramentas de IA (blocos da oferta direcionada) ──────────────
+  const [painelFerramentas, setPainelFerramentas] = useState(null)
+  // painelFerramentas: { estudoId, termo, criadoEm, produtos, mercado, carregando, erro }
+  const [blocos, setBlocos] = useState({})                 // { [blocoId]: conteudo }
+  const [blocosOriginais, setBlocosOriginais] = useState({})
+  const [blocosAbertos, setBlocosAbertos] = useState(new Set())
+  const [gerandoBloco, setGerandoBloco] = useState(null)   // UM gerador por vez
+  const [errosBloco, setErrosBloco] = useState({})
+  const [salvandoBloco, setSalvandoBloco] = useState(null)
+  const [salvoBloco, setSalvoBloco] = useState('')
+  const painelFerramentasRef = useRef(null)
 
   const abortRef  = useRef(null)
   const retryTimer = useRef(null)
-
-  const gerarConteudoMut = useMutation({
-    mutationFn: (payload) => api.estudio.gerarConteudo(payload),
-    onSuccess: (data) => {
-      const c = normalizarConteudoLocal(data.conteudo)
-      setConteudo(c)
-      setConteudoOriginal(JSON.parse(JSON.stringify(c)))
-      setTabConteudoAtiva('titulo_curto')
-      if (data.estudo_id) {
-        setPainelConteudo(p => (p ? { ...p, estudoId: data.estudo_id } : p))
-      }
-      carregarHistorico()
-    },
-  })
-
-  const salvarConteudoMut = useMutation({
-    mutationFn: ({ id, conteudo: c }) => api.estudio.salvarConteudo(id, c),
-    onSuccess: (data) => {
-      const c = normalizarConteudoLocal(data.conteudo)
-      setConteudo(c)
-      setConteudoOriginal(JSON.parse(JSON.stringify(c)))
-      setSalvoConteudo(true)
-      setTimeout(() => setSalvoConteudo(false), 2500)
-    },
-  })
 
   // Cleanup ao desmontar: cancela fetch e timer de retry
   useEffect(() => {
@@ -329,22 +361,38 @@ export default function EstudioIA() {
     }
   }
 
-  // ── Geração de Conteúdo: handlers ─────────────────────────────────
-  function scrollParaPainelConteudo() {
-    setTimeout(() => painelConteudoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  // ── Ferramentas de IA: handlers ───────────────────────────────────
+  function scrollParaFerramentas() {
+    setTimeout(() => painelFerramentasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
   }
 
-  function resetConteudo() {
-    setConteudo(null)
-    setConteudoOriginal(null)
-    setSalvoConteudo(false)
-    gerarConteudoMut.reset()
-    salvarConteudoMut.reset()
+  function resetBlocos() {
+    setBlocos({})
+    setBlocosOriginais({})
+    setBlocosAbertos(new Set())
+    setGerandoBloco(null)
+    setErrosBloco({})
+    setSalvandoBloco(null)
+    setSalvoBloco('')
   }
 
-  async function abrirConteudoDoHistorico(h) {
-    resetConteudo()
-    setPainelConteudo({
+  function carregarBlocosDoConteudo(conteudoGerado) {
+    if (!conteudoGerado || typeof conteudoGerado !== 'object') return
+    const novos = {}
+    const abertos = new Set()
+    for (const b of BLOCOS_IA) {
+      if (conteudoGerado[b.id] && typeof conteudoGerado[b.id] === 'object') {
+        novos[b.id] = normalizarBlocoLocal(b.id, conteudoGerado[b.id])
+      }
+    }
+    setBlocos(novos)
+    setBlocosOriginais(JSON.parse(JSON.stringify(novos)))
+    setBlocosAbertos(abertos)
+  }
+
+  async function abrirFerramentasDoHistorico(h) {
+    resetBlocos()
+    setPainelFerramentas({
       estudoId: h.id,
       termo: h.termo || h.link || 'Estudo',
       criadoEm: h.created_at,
@@ -352,10 +400,10 @@ export default function EstudioIA() {
       mercado: null,
       carregando: true,
     })
-    scrollParaPainelConteudo()
+    scrollParaFerramentas()
     try {
       const { estudo } = await api.estudio.get(h.id)
-      setPainelConteudo({
+      setPainelFerramentas({
         estudoId: estudo.id,
         termo: estudo.termo || estudo.link || 'Estudo',
         criadoEm: estudo.created_at,
@@ -363,21 +411,17 @@ export default function EstudioIA() {
         mercado: null,
         carregando: false,
       })
-      if (estudo.conteudo_gerado && typeof estudo.conteudo_gerado === 'object') {
-        const c = normalizarConteudoLocal(estudo.conteudo_gerado)
-        setConteudo(c)
-        setConteudoOriginal(JSON.parse(JSON.stringify(c)))
-      }
+      carregarBlocosDoConteudo(estudo.conteudo_gerado)
     } catch (err) {
-      setPainelConteudo(p => (p ? { ...p, carregando: false, erro: err.message } : p))
+      setPainelFerramentas(p => (p ? { ...p, carregando: false, erro: err.message } : p))
     }
   }
 
-  function abrirConteudoDaBusca() {
+  function abrirFerramentasDaBusca() {
     const prods = produtos.filter(p => selecionados.has(p.id))
     if (!prods.length) return
-    resetConteudo()
-    setPainelConteudo({
+    resetBlocos()
+    setPainelFerramentas({
       estudoId: null,
       termo: termo.trim() || 'Busca',
       criadoEm: new Date().toISOString(),
@@ -385,41 +429,83 @@ export default function EstudioIA() {
       mercado,
       carregando: false,
     })
-    scrollParaPainelConteudo()
+    scrollParaFerramentas()
   }
 
-  function dispararGeracaoConteudo() {
-    if (!painelConteudo || painelConteudo.carregando) return
-    const payload = {}
-    if (painelConteudo.estudoId) payload.estudo_id = painelConteudo.estudoId
-    if (painelConteudo.termo) payload.termo = painelConteudo.termo
-    if (painelConteudo.produtos?.length) payload.produtos = painelConteudo.produtos
-    if (painelConteudo.mercado) payload.mercado = painelConteudo.mercado
-    gerarConteudoMut.mutate(payload)
+  async function gerarBloco(blocoId) {
+    if (!painelFerramentas || painelFerramentas.carregando || gerandoBloco) return
+    setGerandoBloco(blocoId)
+    setErrosBloco(prev => ({ ...prev, [blocoId]: '' }))
+    try {
+      const payload = { bloco: blocoId }
+      if (painelFerramentas.estudoId) payload.estudo_id = painelFerramentas.estudoId
+      if (painelFerramentas.termo) payload.termo = painelFerramentas.termo
+      if (painelFerramentas.produtos?.length) payload.produtos = painelFerramentas.produtos
+      if (painelFerramentas.mercado) payload.mercado = painelFerramentas.mercado
+      const data = await api.estudio.gerarConteudo(payload)
+      const c = normalizarBlocoLocal(blocoId, data.conteudo)
+      setBlocos(prev => ({ ...prev, [blocoId]: c }))
+      setBlocosOriginais(prev => ({ ...prev, [blocoId]: JSON.parse(JSON.stringify(c)) }))
+      setBlocosAbertos(prev => new Set(prev).add(blocoId))
+      if (data.estudo_id) {
+        setPainelFerramentas(p => (p ? { ...p, estudoId: data.estudo_id } : p))
+      }
+      carregarHistorico()
+    } catch (err) {
+      setErrosBloco(prev => ({ ...prev, [blocoId]: err.message }))
+    } finally {
+      setGerandoBloco(null)
+    }
   }
 
-  function salvarEdicoesConteudo() {
-    if (!painelConteudo?.estudoId || !conteudo) return
-    salvarConteudoMut.mutate({ id: painelConteudo.estudoId, conteudo })
+  async function salvarBloco(blocoId) {
+    if (!painelFerramentas?.estudoId || !blocos[blocoId] || salvandoBloco) return
+    setSalvandoBloco(blocoId)
+    setErrosBloco(prev => ({ ...prev, [blocoId]: '' }))
+    try {
+      const data = await api.estudio.salvarConteudo(painelFerramentas.estudoId, blocos[blocoId], blocoId)
+      const c = normalizarBlocoLocal(blocoId, data.conteudo)
+      setBlocos(prev => ({ ...prev, [blocoId]: c }))
+      setBlocosOriginais(prev => ({ ...prev, [blocoId]: JSON.parse(JSON.stringify(c)) }))
+      setSalvoBloco(blocoId)
+      setTimeout(() => setSalvoBloco(''), 2500)
+    } catch (err) {
+      setErrosBloco(prev => ({ ...prev, [blocoId]: `Erro ao salvar: ${err.message}` }))
+    } finally {
+      setSalvandoBloco(null)
+    }
   }
 
-  function fecharPainelConteudo() {
-    setPainelConteudo(null)
-    resetConteudo()
+  function fecharFerramentas() {
+    setPainelFerramentas(null)
+    resetBlocos()
   }
 
-  function setCampoConteudo(campo, valor) {
-    setConteudo(prev => (prev ? { ...prev, [campo]: valor } : prev))
+  function toggleBlocoAberto(blocoId) {
+    setBlocosAbertos(prev => {
+      const n = new Set(prev)
+      n.has(blocoId) ? n.delete(blocoId) : n.add(blocoId)
+      return n
+    })
   }
 
-  function setPromptImagem(i, valor) {
-    setConteudo(prev => {
-      if (!prev) return prev
-      const arr = [...(prev.prompts_imagem || [])]
+  function setCampoBloco(blocoId, campo, valor) {
+    setBlocos(prev => ({ ...prev, [blocoId]: { ...(prev[blocoId] || {}), [campo]: valor } }))
+  }
+
+  function setItemListaBloco(blocoId, campo, i, valor) {
+    setBlocos(prev => {
+      const c = prev[blocoId] || {}
+      const arr = [...(c[campo] || [])]
       while (arr.length <= i) arr.push('')
       arr[i] = valor
-      return { ...prev, prompts_imagem: arr }
+      return { ...prev, [blocoId]: { ...c, [campo]: arr } }
     })
+  }
+
+  function blocoAlterado(blocoId) {
+    return !!blocos[blocoId]
+      && JSON.stringify(blocos[blocoId]) !== JSON.stringify(blocosOriginais[blocoId])
   }
 
   // ── Helpers ───────────────────────────────────────────────────────
@@ -743,17 +829,349 @@ ${corpo}
   }).length
   const ultimaAnalise = historico[0]?.created_at ? fmtDataHist(historico[0].created_at) : null
 
-  // ── Dados derivados da Geração de Conteúdo ────────────────────────
-  const conteudoAlterado = !!conteudo && JSON.stringify(conteudo) !== JSON.stringify(conteudoOriginal)
-  const produtosPainel = painelConteudo?.produtos || []
-  const precosPainel = produtosPainel.map(p => p.price).filter(v => v !== null && v !== undefined)
-  const statsConteudo = {
-    total: produtosPainel.length,
-    min:   precosPainel.length ? Math.min(...precosPainel) : null,
-    max:   precosPainel.length ? Math.max(...precosPainel) : null,
-    media: precosPainel.length ? precosPainel.reduce((a, b) => a + b, 0) / precosPainel.length : null,
+  // ── Dados derivados das Ferramentas de IA ─────────────────────────
+  const produtosPainel = painelFerramentas?.produtos || []
+  const temPersona = !!blocos.persona
+
+  // ── Ferramentas de IA: render helpers ─────────────────────────────
+  function botaoCopiar(chave, texto, rotulo = 'Copiar') {
+    return (
+      <button
+        onClick={() => copiar(chave, texto)}
+        disabled={!texto}
+        title="Copiar"
+        className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-2.5 py-1.5 rounded-lg transition-colors shrink-0"
+      >
+        {copiado === chave
+          ? <><Check size={12} className="text-emerald-400" /> {rotulo ? 'Copiado!' : ''}</>
+          : <><Copy size={12} /> {rotulo}</>}
+      </button>
+    )
   }
-  const tabConteudoDef = TABS_CONTEUDO.find(t => t.id === tabConteudoAtiva) || TABS_CONTEUDO[0]
+
+  function botaoSalvarBloco(blocoId) {
+    const salvando = salvandoBloco === blocoId
+    const salvo = salvoBloco === blocoId
+    return (
+      <button
+        onClick={() => salvarBloco(blocoId)}
+        disabled={!painelFerramentas?.estudoId || !blocoAlterado(blocoId) || !!salvandoBloco}
+        title={!painelFerramentas?.estudoId ? 'Gere o conteúdo primeiro para poder salvar' : undefined}
+        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${
+          salvo
+            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+            : 'bg-stone-800 border-stone-700 text-stone-300 hover:text-stone-100 hover:border-stone-600'
+        }`}
+      >
+        {salvando
+          ? <><Loader2 size={12} className="animate-spin" /> Salvando...</>
+          : salvo
+            ? <><Check size={12} /> Salvo!</>
+            : <><Save size={12} /> Salvar</>}
+      </button>
+    )
+  }
+
+  function renderResultadoBloco(b) {
+    const c = blocos[b.id]
+    if (!c) return null
+    switch (b.id) {
+      case 'persona': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">
+            {botaoCopiar('bloco_persona', blocoParaTexto('persona', c))}
+          </div>
+          {c.resumo && (
+            <div className="bg-violet-500/10 border border-violet-500/25 rounded-xl p-3.5">
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Persona majoritária (~70%)</p>
+              <p className="text-stone-100 text-sm font-medium leading-relaxed">{c.resumo}</p>
+            </div>
+          )}
+          {c.justificativa && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Evidências</p>
+              <p className="text-stone-300 text-xs leading-relaxed">{c.justificativa}</p>
+            </div>
+          )}
+          {c.secundarias?.length > 0 && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Personas secundárias</p>
+              <ul className="space-y-1">
+                {c.secundarias.map((s, i) => (
+                  <li key={i} className="text-stone-400 text-xs leading-relaxed">• {s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {c.dores_objecoes?.length > 0 && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1.5">Dores e quebras de objeção</p>
+              <div className="space-y-2">
+                {c.dores_objecoes.map((d, i) => (
+                  <div key={i} className="bg-stone-900 border border-stone-700/60 rounded-lg p-2.5">
+                    <p className="text-stone-200 text-xs font-medium">{d.dor}</p>
+                    {d.quebra && <p className="text-emerald-400/90 text-xs mt-1">↳ {d.quebra}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+
+      case 'palavras_chave': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-stone-500 text-xs">
+              {c.termos?.length || 0} termos · do genérico ao nichado
+            </span>
+            {botaoCopiar('bloco_palavras', blocoParaTexto('palavras_chave', c), 'Copiar todas')}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(c.termos || []).map((t, i) => (
+              <button
+                key={i}
+                onClick={() => copiar(`termo_${i}`, t)}
+                title="Copiar termo"
+                className="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 hover:bg-sky-500/25 rounded-full px-2.5 py-1 transition-colors"
+              >
+                {copiado === `termo_${i}` ? '✓ copiado' : t}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
+
+      case 'titulos': {
+        const opcoes = [...(c.opcoes || [])]
+        while (opcoes.length < 3) opcoes.push('')
+        const completo = c.completo || ''
+        const estourouCompleto = completo.length > LIMITE_TITULO_COMPLETO
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center justify-end gap-2">
+              {botaoCopiar('bloco_titulos', blocoParaTexto('titulos', c), 'Copiar todos')}
+              {botaoSalvarBloco('titulos')}
+            </div>
+            {opcoes.map((t, i) => {
+              const estourou = t.length > LIMITE_TITULO_CURTO
+              return (
+                <div key={i} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-500 text-xs font-medium">Opção {i + 1}</span>
+                    <span className={`text-xs tabular-nums ${estourou ? 'text-red-400 font-semibold' : 'text-stone-500'}`}>
+                      {t.length}/{LIMITE_TITULO_CURTO}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={t}
+                      onChange={e => setItemListaBloco('titulos', 'opcoes', i, e.target.value)}
+                      className={`flex-1 min-w-0 bg-stone-900 border rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none transition-colors ${
+                        estourou ? 'border-red-500/60 focus:border-red-500' : 'border-stone-700 focus:border-violet-500'
+                      }`}
+                    />
+                    {botaoCopiar(`titulo_op_${i}`, t, '')}
+                  </div>
+                </div>
+              )
+            })}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500 text-xs font-medium">Título completo</span>
+                <span className={`text-xs tabular-nums ${estourouCompleto ? 'text-red-400 font-semibold' : 'text-stone-500'}`}>
+                  {completo.length}/{LIMITE_TITULO_COMPLETO}
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <textarea
+                  value={completo}
+                  onChange={e => setCampoBloco('titulos', 'completo', e.target.value)}
+                  rows={2}
+                  className={`flex-1 min-w-0 bg-stone-900 border rounded-lg px-3 py-2 text-sm text-stone-200 leading-relaxed resize-y focus:outline-none transition-colors ${
+                    estourouCompleto ? 'border-red-500/60 focus:border-red-500' : 'border-stone-700 focus:border-violet-500'
+                  }`}
+                />
+                {botaoCopiar('titulo_completo', completo, '')}
+              </div>
+            </div>
+            {(opcoes.some(t => t.length > LIMITE_TITULO_CURTO) || estourouCompleto) && (
+              <p className="text-red-400 text-xs">
+                Acima do limite — o Mercado Livre corta títulos maiores que o permitido.
+              </p>
+            )}
+          </div>
+        )
+      }
+
+      case 'descricao': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">{botaoSalvarBloco('descricao')}</div>
+          {(c.versoes?.length ? c.versoes : ['', '']).map((v, i) => (
+            <div key={i} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500 text-xs font-medium">Versão {i + 1}</span>
+                {botaoCopiar(`descricao_v_${i}`, v)}
+              </div>
+              <textarea
+                value={v}
+                onChange={e => setItemListaBloco('descricao', 'versoes', i, e.target.value)}
+                rows={10}
+                className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3.5 py-3 text-sm text-stone-200 leading-relaxed resize-y focus:outline-none focus:border-violet-500 transition-colors"
+              />
+            </div>
+          ))}
+        </div>
+      )
+
+      case 'fotos': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">
+            {botaoCopiar('bloco_fotos', blocoParaTexto('fotos', c), 'Copiar tudo')}
+          </div>
+          {c.briefing_capa && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Briefing da capa (ambientada)</p>
+              <p className="text-stone-300 text-xs leading-relaxed bg-stone-900 border border-stone-700/60 rounded-lg p-3">
+                {c.briefing_capa}
+              </p>
+            </div>
+          )}
+          {c.variacoes_cenario?.length > 0 && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Variações de cenário</p>
+              <ul className="space-y-1">
+                {c.variacoes_cenario.map((v, i) => (
+                  <li key={i} className="text-stone-400 text-xs leading-relaxed">• {v}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {(c.prompts || []).map((p, i) => (
+            <div key={i} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500 text-xs font-medium">Prompt de imagem {i + 1}</span>
+                {botaoCopiar(`foto_prompt_${i}`, p)}
+              </div>
+              <p className="text-stone-300 text-xs leading-relaxed bg-stone-900 border border-stone-700/60 rounded-lg p-3">
+                {p}
+              </p>
+            </div>
+          ))}
+        </div>
+      )
+
+      case 'kits': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">
+            {botaoCopiar('bloco_kits', blocoParaTexto('kits', c), 'Copiar tudo')}
+          </div>
+          {(c.kits || []).map((k, i) => (
+            <div key={i} className="bg-stone-900 border border-stone-700/60 rounded-lg p-3 space-y-1.5">
+              <p className="text-stone-100 text-sm font-medium">{k.nome}</p>
+              {k.produtos?.length > 0 && (
+                <p className="text-stone-400 text-xs">Composição: {k.produtos.join(' + ')}</p>
+              )}
+              {k.porque && <p className="text-stone-500 text-xs leading-relaxed">{k.porque}</p>}
+            </div>
+          ))}
+        </div>
+      )
+
+      default: return null
+    }
+  }
+
+  function renderBlocoCard(b) {
+    const c = blocos[b.id]
+    const gerandoEste = gerandoBloco === b.id
+    const aberto = blocosAbertos.has(b.id)
+    const erro = errosBloco[b.id]
+    return (
+      <div
+        key={b.id}
+        className={`rounded-2xl border p-4 md:p-5 space-y-3 ${
+          b.principal
+            ? 'bg-violet-500/[0.06] border-violet-500/30'
+            : 'bg-stone-800/60 border-stone-700/50'
+        }`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <span className="text-xl leading-none mt-0.5 shrink-0">{b.icone}</span>
+            <div className="min-w-0">
+              <h3 className="text-stone-100 text-sm font-semibold leading-tight flex items-center gap-2 flex-wrap">
+                {b.nome}
+                {b.principal && (
+                  <span className="text-[10px] uppercase tracking-widest bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-full px-2 py-0.5">
+                    Comece aqui
+                  </span>
+                )}
+              </h3>
+              <p className="text-stone-500 text-xs mt-0.5 leading-relaxed">{b.desc}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => gerarBloco(b.id)}
+            disabled={!!gerandoBloco || painelFerramentas?.carregando}
+            className="px-4 py-2 rounded-lg text-xs font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shrink-0"
+            style={{ background: gerandoEste ? 'var(--surface-3)' : 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}
+          >
+            {gerandoEste
+              ? <><Loader2 size={12} className="animate-spin" /> Gerando...</>
+              : <><Sparkles size={12} /> {c ? 'Regenerar' : 'Gerar'}</>}
+          </button>
+        </div>
+
+        {!b.principal && !temPersona && (
+          <p className="text-amber-400/90 text-xs bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+            💡 Gere a Persona primeiro para resultados direcionados
+          </p>
+        )}
+
+        {erro && (
+          <div className="bg-red-950/40 border border-red-900/50 rounded-lg p-3 flex items-start gap-2">
+            <X size={13} className="text-red-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-red-300 text-xs">{erro}</p>
+              <button
+                onClick={() => gerarBloco(b.id)}
+                disabled={!!gerandoBloco}
+                className="text-xs text-red-300 underline mt-1 hover:text-red-200 transition-colors disabled:opacity-50"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        )}
+
+        {gerandoEste && (
+          <div className="flex items-center gap-2 py-2">
+            <Loader2 size={14} className="animate-spin text-violet-400" />
+            <p className="text-stone-400 text-xs">Gerando com Gemini...</p>
+          </div>
+        )}
+
+        {!gerandoEste && !c && !erro && (
+          <p className="text-stone-600 text-xs">Nada gerado ainda — clique em Gerar.</p>
+        )}
+
+        {!gerandoEste && c && (
+          <div className="space-y-3">
+            <button
+              onClick={() => toggleBlocoAberto(b.id)}
+              className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 transition-colors"
+            >
+              <ChevronRight size={13} className={`transition-transform ${aberto ? 'rotate-90' : ''}`} />
+              {aberto ? 'Ocultar resultado' : 'Ver resultado'}
+            </button>
+            {aberto && renderResultadoBloco(b)}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-stone-950">
@@ -1240,11 +1658,11 @@ ${corpo}
 
             {modoEntrada === 'pesquisa' && selecionados.size > 0 && (
               <button
-                onClick={abrirConteudoDaBusca}
+                onClick={abrirFerramentasDaBusca}
                 className="w-full py-2.5 rounded-xl text-sm font-medium border border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 transition-colors flex items-center justify-center gap-2"
               >
                 <Wand2 size={14} />
-                Gerar conteúdo de anúncio ({selecionados.size} produto{selecionados.size !== 1 ? 's' : ''})
+                Ferramentas de IA ({selecionados.size} produto{selecionados.size !== 1 ? 's' : ''})
               </button>
             )}
           </div>
@@ -1431,11 +1849,11 @@ ${corpo}
                         </div>
                       </div>
                       <button
-                        onClick={e => { e.stopPropagation(); abrirConteudoDoHistorico(h) }}
-                        title="Gerar conteúdo de anúncio a partir desta análise"
-                        className="shrink-0 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-300 hover:bg-violet-500/25 transition-colors"
+                        onClick={e => { e.stopPropagation(); abrirFerramentasDoHistorico(h) }}
+                        title="Abrir as Ferramentas de IA com esta análise"
+                        className="shrink-0 flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-300 hover:bg-violet-500/25 transition-colors"
                       >
-                        <Wand2 size={11} /> Gerar conteúdo
+                        Ferramentas →
                       </button>
                       <ChevronRight size={14} className="text-stone-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </div>
@@ -1550,303 +1968,71 @@ ${corpo}
           </div>
         </div>
 
-        {/* ══ Geração de Conteúdo (full-width) ══ */}
-        <div ref={painelConteudoRef} className="mt-6 scroll-mt-4">
-          {!painelConteudo ? (
+        {/* ══ Ferramentas de IA (full-width) ══ */}
+        <div ref={painelFerramentasRef} className="mt-6 scroll-mt-4">
+          {!painelFerramentas ? (
             <div className="bg-stone-900 border border-dashed border-stone-800 rounded-2xl p-5 flex items-center gap-3.5">
               <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
                 <Wand2 size={16} className="text-violet-400" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-stone-100 text-base font-semibold leading-tight">Geração de Conteúdo</h2>
+                <h2 className="text-stone-100 text-base font-semibold leading-tight">Ferramentas de IA</h2>
                 <p className="text-stone-500 text-xs mt-0.5 leading-relaxed">
-                  Crie títulos otimizados, descrição completa e prompts de imagem para o seu anúncio.
-                  Use o botão <span className="text-violet-300">Gerar conteúdo</span> em uma análise do histórico,
+                  Persona, palavras-chave, títulos, descrição, fotos e kits — uma ferramenta por vez,
+                  tudo direcionado ao público majoritário que mais compra. Use o botão{' '}
+                  <span className="text-violet-300">Ferramentas →</span> em uma análise do histórico,
                   ou selecione produtos de uma busca acima.
                 </p>
               </div>
             </div>
           ) : (
-            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 md:p-6 space-y-5">
+            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 md:p-6 space-y-4">
 
               {/* ── Header do painel ── */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
                     <Wand2 size={16} className="text-violet-400" />
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-stone-100 text-base font-semibold leading-tight truncate">
-                      Geração de Conteúdo — {painelConteudo.termo}
+                      Ferramentas de IA — {painelFerramentas.termo}
                     </h2>
                     <p className="text-stone-500 text-xs mt-0.5">
-                      {painelConteudo.criadoEm ? fmtDataHist(painelConteudo.criadoEm) : ''}
-                      {painelConteudo.estudoId ? ' · salvo no histórico' : ' · nova análise (será salva ao gerar)'}
+                      {painelFerramentas.criadoEm ? fmtDataHist(painelFerramentas.criadoEm) : ''}
+                      {produtosPainel.length > 0 && ` · ${produtosPainel.length} produto${produtosPainel.length !== 1 ? 's' : ''} analisado${produtosPainel.length !== 1 ? 's' : ''}`}
+                      {painelFerramentas.estudoId ? ' · salvo no histórico' : ' · nova análise (será salva ao gerar)'}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={dispararGeracaoConteudo}
-                    disabled={gerarConteudoMut.isPending || painelConteudo.carregando
-                      || !(painelConteudo.estudoId || painelConteudo.produtos?.length)}
-                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
-                    style={{ background: gerarConteudoMut.isPending ? 'var(--surface-3)' : 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}
-                  >
-                    {gerarConteudoMut.isPending
-                      ? <><Loader2 size={14} className="animate-spin" /> Gerando...</>
-                      : <><Wand2 size={14} /> {conteudo ? 'Gerar Novamente' : 'Gerar Conteúdo'}</>
-                    }
-                  </button>
-                  <button
-                    onClick={fecharPainelConteudo}
-                    title="Fechar painel"
-                    className="p-2.5 rounded-xl bg-stone-800 border border-stone-700 text-stone-400 hover:text-stone-200 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
+                <button
+                  onClick={fecharFerramentas}
+                  title="Fechar painel"
+                  className="p-2.5 rounded-xl bg-stone-800 border border-stone-700 text-stone-400 hover:text-stone-200 transition-colors shrink-0"
+                >
+                  <X size={14} />
+                </button>
               </div>
 
-              {/* ── Erros ── */}
-              {painelConteudo.erro && (
-                <p className="text-red-400 text-xs">Erro ao carregar a análise: {painelConteudo.erro}</p>
-              )}
-              {gerarConteudoMut.isError && (
-                <div className="bg-red-950/40 border border-red-900/50 rounded-xl p-3.5 flex items-start gap-2.5">
-                  <X size={14} className="text-red-400 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-red-300 text-sm font-medium">Falha ao gerar conteúdo</p>
-                    <p className="text-red-400/80 text-xs mt-0.5">{gerarConteudoMut.error?.message}</p>
-                    <button
-                      onClick={dispararGeracaoConteudo}
-                      className="text-xs text-red-300 underline mt-1.5 hover:text-red-200 transition-colors"
-                    >
-                      Tentar novamente
-                    </button>
-                  </div>
-                </div>
+              {painelFerramentas.erro && (
+                <p className="text-red-400 text-xs">Erro ao carregar a análise: {painelFerramentas.erro}</p>
               )}
 
-              {painelConteudo.carregando ? (
+              {painelFerramentas.carregando ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-2">
                   <Loader2 size={22} className="animate-spin text-stone-600" />
                   <p className="text-stone-500 text-xs">Carregando análise...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+                <>
+                  {/* Bloco principal: Persona (método Cazonato) */}
+                  {renderBlocoCard(BLOCOS_IA[0])}
 
-                  {/* ── Coluna esquerda: infos + produtos ── */}
-                  <div className="space-y-5">
-
-                    {/* Informações Gerais */}
-                    <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Info size={14} className="text-sky-400" />
-                        <h3 className="text-stone-100 text-sm font-semibold">Informações Gerais</h3>
-                      </div>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-stone-500 text-xs">Anúncios analisados</span>
-                          <span className="text-stone-200 text-sm font-semibold tabular-nums">{statsConteudo.total}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-stone-500 text-xs">Faixa de preço</span>
-                          <span className="text-stone-200 text-sm font-semibold tabular-nums">
-                            {statsConteudo.min !== null
-                              ? (statsConteudo.min === statsConteudo.max
-                                  ? fmtBRL(statsConteudo.min)
-                                  : `${fmtBRL(statsConteudo.min)} – ${fmtBRL(statsConteudo.max)}`)
-                              : '—'}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-stone-500 text-xs">Preço médio</span>
-                          <span className="text-sky-400 text-sm font-semibold tabular-nums">{fmtBRL(statsConteudo.media)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Produtos Selecionados */}
-                    <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Package size={14} className="text-sky-400" />
-                        <h3 className="text-stone-100 text-sm font-semibold">Produtos Selecionados</h3>
-                      </div>
-                      {produtosPainel.length > 0 ? (
-                        <ul className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                          {produtosPainel.map((p, i) => (
-                            <li key={p.id || i} className="flex items-center gap-2.5 min-w-0">
-                              {p.thumbnail ? (
-                                <img src={p.thumbnail} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-700 shrink-0" />
-                              ) : (
-                                <div className="w-9 h-9 rounded-lg bg-stone-700 flex items-center justify-center shrink-0">
-                                  <Package size={13} className="text-stone-500" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-stone-300 text-xs truncate" title={p.title}>{p.title}</p>
-                                <p className="text-stone-500 text-xs mt-0.5">{fmtBRL(p.price)}</p>
-                              </div>
-                              {p.permalink && (
-                                <a
-                                  href={p.permalink} target="_blank" rel="noreferrer"
-                                  className="text-stone-600 hover:text-sky-400 transition-colors shrink-0"
-                                  title="Abrir anúncio no Mercado Livre"
-                                >
-                                  <ExternalLink size={12} />
-                                </a>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-stone-500 text-xs leading-relaxed">
-                          Esta análise não tem produtos salvos. O conteúdo será gerado a partir do termo do estudo.
-                        </p>
-                      )}
-                    </div>
+                  {/* Demais ferramentas — habilitadas sempre; persona direciona */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                    {BLOCOS_IA.slice(1).map(b => renderBlocoCard(b))}
                   </div>
-
-                  {/* ── Coluna direita: Conteúdos ── */}
-                  <div className="lg:col-span-2 bg-stone-800/60 border border-stone-700/50 rounded-xl p-4 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <FileText size={14} className="text-violet-400" />
-                        <h3 className="text-stone-100 text-sm font-semibold">Conteúdos</h3>
-                      </div>
-                      <button
-                        onClick={salvarEdicoesConteudo}
-                        disabled={!painelConteudo.estudoId || !conteudo || !conteudoAlterado || salvarConteudoMut.isPending}
-                        title={!painelConteudo.estudoId ? 'Gere o conteúdo primeiro para poder salvar' : undefined}
-                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                          salvoConteudo
-                            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                            : 'bg-stone-800 border-stone-700 text-stone-300 hover:text-stone-100 hover:border-stone-600'
-                        }`}
-                      >
-                        {salvarConteudoMut.isPending
-                          ? <><Loader2 size={12} className="animate-spin" /> Salvando...</>
-                          : salvoConteudo
-                            ? <><Check size={12} /> Salvo!</>
-                            : <><Save size={12} /> Salvar Alterações</>
-                        }
-                      </button>
-                    </div>
-
-                    {salvarConteudoMut.isError && (
-                      <p className="text-red-400 text-xs">
-                        Erro ao salvar: {salvarConteudoMut.error?.message}
-                      </p>
-                    )}
-
-                    {gerarConteudoMut.isPending && !conteudo ? (
-                      <div className="flex flex-col items-center justify-center py-14 gap-2.5">
-                        <Loader2 size={24} className="animate-spin text-violet-400" />
-                        <p className="text-stone-400 text-sm font-medium">Gerando conteúdo com Gemini...</p>
-                        <p className="text-stone-500 text-xs">Títulos, descrição e prompts de imagem para "{painelConteudo.termo}"</p>
-                      </div>
-                    ) : !conteudo ? (
-                      <div className="flex flex-col items-center justify-center text-center py-14 gap-2">
-                        <Wand2 size={26} className="text-stone-600" />
-                        <p className="text-stone-400 text-sm font-medium">Nenhum conteúdo gerado ainda</p>
-                        <p className="text-stone-500 text-xs max-w-sm leading-relaxed">
-                          Clique em <span className="text-violet-300">Gerar Conteúdo</span> para criar título curto,
-                          título completo, descrição e prompts de imagem com base nos produtos analisados.
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Tabs */}
-                        <div className="flex gap-0 border-b border-stone-700/60 overflow-x-auto">
-                          {TABS_CONTEUDO.map(t => (
-                            <button
-                              key={t.id}
-                              onClick={() => setTabConteudoAtiva(t.id)}
-                              className={`text-xs px-3.5 py-2.5 whitespace-nowrap transition-colors border-b-2 ${
-                                tabConteudoAtiva === t.id
-                                  ? 'text-stone-100 border-violet-500 font-medium'
-                                  : 'text-stone-500 border-transparent hover:text-stone-300'
-                              }`}
-                            >
-                              {t.label}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Conteúdo da tab */}
-                        {tabConteudoAtiva !== 'prompts_imagem' ? (() => {
-                          const valor = conteudo[tabConteudoDef.id] || ''
-                          const estourou = tabConteudoDef.limite && valor.length > tabConteudoDef.limite
-                          return (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className={`text-xs tabular-nums ${estourou ? 'text-red-400 font-semibold' : 'text-stone-500'}`}>
-                                  {valor.length}{tabConteudoDef.limite ? `/${tabConteudoDef.limite}` : ' caracteres'}
-                                </span>
-                                <button
-                                  onClick={() => copiar(`conteudo_${tabConteudoDef.id}`, valor)}
-                                  disabled={!valor}
-                                  className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
-                                >
-                                  {copiado === `conteudo_${tabConteudoDef.id}`
-                                    ? <><Check size={12} className="text-emerald-400" /> Copiado!</>
-                                    : <><Copy size={12} /> Copiar</>
-                                  }
-                                </button>
-                              </div>
-                              <textarea
-                                value={valor}
-                                onChange={e => setCampoConteudo(tabConteudoDef.id, e.target.value)}
-                                rows={tabConteudoDef.id === 'descricao' ? 14 : 3}
-                                className={`w-full bg-stone-900 border rounded-xl px-3.5 py-3 text-sm text-stone-200 leading-relaxed resize-y focus:outline-none transition-colors ${
-                                  estourou
-                                    ? 'border-red-500/60 focus:border-red-500'
-                                    : 'border-stone-700 focus:border-violet-500'
-                                }`}
-                              />
-                              {estourou && (
-                                <p className="text-red-400 text-xs">
-                                  Acima do limite — o Mercado Livre corta títulos com mais de {tabConteudoDef.limite} caracteres.
-                                </p>
-                              )}
-                            </div>
-                          )
-                        })() : (
-                          <div className="space-y-3">
-                            {Array.from({ length: Math.max(3, conteudo.prompts_imagem?.length || 0) }).map((_, i) => {
-                              const p = conteudo.prompts_imagem?.[i] || ''
-                              return (
-                                <div key={i} className="space-y-1.5">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-stone-500 text-xs font-medium">Prompt {i + 1}</span>
-                                    <button
-                                      onClick={() => copiar(`conteudo_prompt_${i}`, p)}
-                                      disabled={!p}
-                                      className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
-                                    >
-                                      {copiado === `conteudo_prompt_${i}`
-                                        ? <><Check size={12} className="text-emerald-400" /> Copiado!</>
-                                        : <><Copy size={12} /> Copiar</>
-                                      }
-                                    </button>
-                                  </div>
-                                  <textarea
-                                    value={p}
-                                    onChange={e => setPromptImagem(i, e.target.value)}
-                                    rows={4}
-                                    placeholder={`Prompt de imagem ${i + 1}...`}
-                                    className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3.5 py-3 text-sm text-stone-200 leading-relaxed resize-y placeholder-stone-600 focus:outline-none focus:border-violet-500 transition-colors"
-                                  />
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
+                </>
               )}
             </div>
           )}
