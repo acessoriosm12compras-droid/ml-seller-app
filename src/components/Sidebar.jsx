@@ -25,17 +25,14 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop sidebar — expande no hover ── */}
+      {/* ── Desktop sidebar — fixa e sempre expandida ── */}
       <aside
         className="group hidden md:flex flex-col shrink-0 overflow-hidden z-40 md:sticky md:top-0 md:h-screen"
         style={{
-          width: '56px',
+          width: '200px',
           backgroundColor: '#0d0d0f',
           borderRight: '1px solid rgba(255,255,255,0.06)',
-          transition: 'width 220ms cubic-bezier(0.4,0,0.2,1)',
         }}
-        onMouseEnter={e => { e.currentTarget.style.width = '200px' }}
-        onMouseLeave={e => { e.currentTarget.style.width = '56px' }}
       >
         {/* Logo */}
         <div
@@ -48,7 +45,7 @@ export default function Sidebar() {
           >
             <span className="text-white font-black" style={{ fontSize: '9px' }}>SM</span>
           </div>
-          <span className="text-sky-400 font-bold text-sm whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75">
+          <span className="text-sky-400 font-bold text-sm whitespace-nowrap overflow-hidden opacity-100">
             Seller ML
           </span>
         </div>
@@ -69,7 +66,7 @@ export default function Sidebar() {
               }
             >
               <Icon size={16} strokeWidth={1.75} className="shrink-0" />
-              <span className="text-sm font-medium whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75">
+              <span className="text-sm font-medium whitespace-nowrap overflow-hidden opacity-100">
                 {label}
               </span>
             </NavLink>
@@ -87,7 +84,7 @@ export default function Sidebar() {
             className="flex items-center gap-3 w-full h-9 px-2 rounded-lg text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.05] transition-colors"
           >
             <LogOut size={15} strokeWidth={1.75} className="shrink-0" />
-            <span className="text-sm whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-75">
+            <span className="text-sm whitespace-nowrap overflow-hidden opacity-100">
               Sair
             </span>
           </button>
