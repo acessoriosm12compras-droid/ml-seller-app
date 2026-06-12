@@ -10,7 +10,7 @@ import { api } from '../api'
 // Ferramentas de IA — blocos da oferta direcionada (metodologia de persona).
 // Cada bloco gera UMA coisa por vez; 'persona' é o bloco principal e guia os demais.
 const BLOCOS_IA = [
-  { id: 'persona',        icone: '🧑', nome: 'Persona (método Cazonato)', desc: 'Quem é o público majoritário que compra — com evidências, dores e quebras de objeção.', principal: true },
+  { id: 'persona',        icone: '🧑', nome: 'Persona do Produto', desc: 'Descubra quem é o público que mais compra este produto — com evidências, dores e quebras de objeção.', principal: true },
   { id: 'palavras_chave', icone: '🔑', nome: 'Palavras-chave',            desc: 'Termos de busca e título na linguagem real do público, do genérico ao nichado.' },
   { id: 'titulos',        icone: '✍️', nome: 'Títulos que filtram',       desc: '3 opções de até 60 caracteres + 1 título completo de até 120.', editavel: true },
   { id: 'descricao',      icone: '💬', nome: 'Descrição que conversa',    desc: '2 versões: dor → solução no mundo da persona → quebra de objeção.', editavel: true },
@@ -116,6 +116,11 @@ function fmtHoje() {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+// Chave estável de um produto no grid (id do anúncio; índice como fallback)
+function chaveProduto(p, i) {
+  return String(p?.id ?? `idx_${i}`)
+}
+
 // Estatísticas de preço dos produtos de uma análise
 function statsPreco(produtos) {
   const precos = (produtos || []).map(p => p.price).filter(v => v !== null && v !== undefined)
@@ -142,6 +147,7 @@ export default function EstudioIA() {
   // ── Workspace da análise (substitui a lista quando aberto) ────────
   const [workspace, setWorkspace] = useState(null)
   // workspace: { estudoId, termo, criadoEm, produtos, mercado, carregando, erro }
+  const [selecionados, setSelecionados] = useState(new Set())  // chaves dos anúncios de referência
   const [blocos, setBlocos] = useState({})                 // { [blocoId]: conteudo }
   const [blocosOriginais, setBlocosOriginais] = useState({})
   const [blocosAbertos, setBlocosAbertos] = useState(new Set())
@@ -225,6 +231,7 @@ export default function EstudioIA() {
   async function abrirEstudo(id, infoFallback = {}) {
     if (!id) return
     resetBlocos()
+    setSelecionados(new Set())
     setWorkspace({
       estudoId: id,
       termo: infoFallback.termo || 'Análise',
@@ -245,6 +252,8 @@ export default function EstudioIA() {
         mercado: estudo.mercado || null,
         carregando: false,
       })
+      // Todos os anúncios começam selecionados como referência
+      setSelecionados(new Set(produtos.map((p, i) => chaveProduto(p, i))))
       if (estudo.mercado) setMercadoAtual(estudo.mercado)
       carregarBlocosDoConteudo(estudo.conteudo_gerado)
     } catch (err) {
@@ -254,19 +263,51 @@ export default function EstudioIA() {
 
   function fecharWorkspace() {
     setWorkspace(null)
+    setSelecionados(new Set())
     resetBlocos()
+  }
+
+  // ── Seleção de anúncios de referência (mínimo 1 marcado) ──────────
+  function toggleSelecionado(chave) {
+    setSelecionados(prev => {
+      const n = new Set(prev)
+      if (n.has(chave)) {
+        if (n.size <= 1) return prev   // mínimo 1 selecionado
+        n.delete(chave)
+      } else {
+        n.add(chave)
+      }
+      return n
+    })
+  }
+
+  function selecionarTodos() {
+    setSelecionados(new Set((workspace?.produtos || []).map((p, i) => chaveProduto(p, i))))
+  }
+
+  function limparSelecao() {
+    // "Limpar" mantém o 1º anúncio — a seleção nunca fica vazia (mínimo 1)
+    const prods = workspace?.produtos || []
+    if (!prods.length) return
+    setSelecionados(new Set([chaveProduto(prods[0], 0)]))
   }
 
   // ── Ferramentas de IA: gerar/salvar bloco ─────────────────────────
   async function gerarBloco(blocoId) {
     if (!workspace || workspace.carregando || gerandoBloco) return
+    if (!produtosSelecionadosWs.length && produtosWs.length) return  // mínimo 1 anúncio de referência
     setGerandoBloco(blocoId)
     setErrosBloco(prev => ({ ...prev, [blocoId]: '' }))
     try {
       const payload = { bloco: blocoId }
       if (workspace.estudoId) payload.estudo_id = workspace.estudoId
       if (workspace.termo) payload.termo = workspace.termo
-      if (workspace.produtos?.length) payload.produtos = workspace.produtos
+      // Gera usando APENAS os anúncios selecionados como referência
+      const refs = produtosSelecionadosWs.length ? produtosSelecionadosWs : workspace.produtos
+      if (refs?.length) payload.produtos = refs
+      if (workspace.estudoId && refs?.length && refs.every(p => p?.id != null)) {
+        payload.produtos_ids = refs.map(p => String(p.id))
+      }
       if (workspace.mercado) payload.mercado = workspace.mercado
       const data = await api.estudio.gerarConteudo(payload)
       const c = normalizarBlocoLocal(blocoId, data.conteudo)
@@ -354,7 +395,9 @@ export default function EstudioIA() {
   }).length
 
   const produtosWs = workspace?.produtos || []
-  const precosWs = statsPreco(produtosWs)
+  const produtosSelecionadosWs = produtosWs.filter((p, i) => selecionados.has(chaveProduto(p, i)))
+  // Faixa de preço recalculada apenas pelos anúncios selecionados
+  const precosWs = statsPreco(produtosSelecionadosWs.length ? produtosSelecionadosWs : produtosWs)
   const temPersona = !!blocos.persona
 
   // ── Render helpers (Ferramentas de IA) ────────────────────────────
@@ -642,8 +685,8 @@ export default function EstudioIA() {
             style={{ background: gerandoEste ? 'var(--surface-3)' : 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}
           >
             {gerandoEste
-              ? <><Loader2 size={12} className="animate-spin" /> Gerando...</>
-              : <><Sparkles size={12} /> {c ? 'Regenerar' : 'Gerar'}</>}
+              ? <><Loader2 size={12} className="animate-spin" /> {b.principal ? 'Analisando...' : 'Gerando...'}</>
+              : <><Sparkles size={12} /> {b.principal ? (c ? 'Analisar novamente' : 'Analisar') : (c ? 'Regenerar' : 'Gerar')}</>}
           </button>
         </div>
 
@@ -677,7 +720,9 @@ export default function EstudioIA() {
         )}
 
         {!gerandoEste && !c && !erro && (
-          <p className="text-stone-600 text-xs">Nada gerado ainda — clique em Gerar.</p>
+          <p className="text-stone-600 text-xs">
+            {b.principal ? 'Nada analisado ainda — clique em Analisar.' : 'Nada gerado ainda — clique em Gerar.'}
+          </p>
         )}
 
         {!gerandoEste && c && (
@@ -988,24 +1033,69 @@ export default function EstudioIA() {
                   </div>
                 )}
 
-                {/* Produtos analisados */}
+                {/* Produtos analisados — seleção de anúncios de referência */}
                 {produtosWs.length > 0 && (
                   <div>
-                    <p className="text-stone-400 text-xs uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                      <Package size={12} /> Anúncios analisados ({produtosWs.length})
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                      <p className="text-stone-400 text-xs uppercase tracking-widest flex items-center gap-1.5 min-w-0">
+                        <Package size={12} className="shrink-0" />
+                        <span className="truncate">
+                          Anúncios analisados · {produtosSelecionadosWs.length} de {produtosWs.length} selecionado{produtosWs.length !== 1 ? 's' : ''}
+                        </span>
+                      </p>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={selecionarTodos}
+                          disabled={produtosSelecionadosWs.length === produtosWs.length}
+                          className="text-[11px] text-stone-400 hover:text-stone-200 bg-stone-800 border border-stone-700 hover:border-stone-600 rounded-lg px-2.5 py-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Selecionar todos
+                        </button>
+                        <button
+                          onClick={limparSelecao}
+                          disabled={produtosSelecionadosWs.length <= 1}
+                          title="Mantém o 1º anúncio — mínimo 1 selecionado"
+                          className="text-[11px] text-stone-400 hover:text-stone-200 bg-stone-800 border border-stone-700 hover:border-stone-600 rounded-lg px-2.5 py-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-stone-600 text-[11px] mb-2.5 -mt-1">
+                      Os blocos de IA e a faixa de preço usam apenas os anúncios selecionados como referência.
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                       {produtosWs.map((p, i) => {
                         const vpdLabel = fmtVpd(vendasPorDia(p))
+                        const chave = chaveProduto(p, i)
+                        const marcado = selecionados.has(chave)
                         return (
-                          <a
-                            key={p.id || i}
-                            href={p.permalink || undefined}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="bg-stone-800/60 border border-stone-700/50 hover:border-stone-600 rounded-xl p-2.5 transition-colors min-w-0 block"
+                          <div
+                            key={chave}
+                            role="checkbox"
+                            aria-checked={marcado}
+                            tabIndex={0}
+                            onClick={() => toggleSelecionado(chave)}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSelecionado(chave) } }}
+                            title={marcado ? 'Desmarcar como referência' : 'Usar como referência'}
+                            className={`relative rounded-xl p-2.5 min-w-0 cursor-pointer border transition-all ${
+                              marcado
+                                ? 'bg-stone-800/60 border-violet-500/40 hover:border-violet-400/60'
+                                : 'bg-stone-800/30 border-stone-700/50 hover:border-stone-600 opacity-55'
+                            }`}
                           >
-                            <div className="flex items-center gap-2 mb-1.5">
+                            {/* Checkbox (canto superior direito) */}
+                            <span
+                              aria-hidden="true"
+                              className={`absolute top-2 right-2 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                marcado
+                                  ? 'bg-violet-500 border-violet-400 text-white'
+                                  : 'bg-stone-900 border-stone-600'
+                              }`}
+                            >
+                              {marcado && <Check size={11} strokeWidth={3} />}
+                            </span>
+                            <div className="flex items-center gap-2 mb-1.5 pr-5">
                               {p.thumbnail
                                 ? <img src={p.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover bg-stone-700 shrink-0" />
                                 : <div className="w-10 h-10 rounded-lg bg-stone-700 shrink-0" />}
@@ -1027,8 +1117,20 @@ export default function EstudioIA() {
                                   <Zap size={8} className="shrink-0" />{vpdLabel}
                                 </span>
                               )}
+                              {p.permalink && (
+                                <a
+                                  href={p.permalink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  title="Abrir anúncio no Mercado Livre"
+                                  onClick={e => e.stopPropagation()}
+                                  className="ml-auto text-stone-600 hover:text-sky-400 transition-colors shrink-0"
+                                >
+                                  <ExternalLink size={11} />
+                                </a>
+                              )}
                             </div>
-                          </a>
+                          </div>
                         )
                       })}
                     </div>
@@ -1041,7 +1143,7 @@ export default function EstudioIA() {
                     <Wand2 size={12} className="text-violet-400" /> Ferramentas de IA
                   </p>
 
-                  {/* Bloco principal: Persona (método Cazonato) */}
+                  {/* Bloco principal: Persona do Produto */}
                   {renderBlocoCard(BLOCOS_IA[0])}
 
                   {/* Demais ferramentas — habilitadas sempre; persona direciona */}
