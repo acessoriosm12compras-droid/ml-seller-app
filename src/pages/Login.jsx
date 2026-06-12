@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Logo from '../components/Logo'
 
 export default function Login() {
   const { login, loginWithGoogle } = useAuth()
@@ -42,8 +43,8 @@ export default function Login() {
 
         {/* Logo e título */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-stone-900 border border-stone-800 mb-4">
-            <span className="text-sky-400 font-bold text-2xl">SM</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <Logo size={56} />
           </div>
           <h1 className="text-stone-800 font-bold text-2xl mb-1">Seller ML</h1>
           <p className="text-stone-500 text-sm">Gestão de Vendas — Mercado Livre</p>

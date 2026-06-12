@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Logo from './Logo'
 import {
   LayoutDashboard, PieChart, Banknote,
   ShoppingBag, Settings, Package, SlidersHorizontal, ClipboardList, Megaphone, Sparkles, LogOut,
@@ -39,12 +40,7 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div className="flex items-center h-14 shrink-0 px-3.5 gap-3">
-          <div
-            className="w-7 h-7 shrink-0 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #F6B73C, #E89B16)' }}
-          >
-            <span className="text-white font-black" style={{ fontSize: '9px' }}>SM</span>
-          </div>
+          <Logo size={28} />
           <span className="text-ink font-semibold text-sm tracking-tight whitespace-nowrap overflow-hidden">
             Seller ML
           </span>
