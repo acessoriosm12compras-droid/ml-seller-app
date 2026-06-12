@@ -488,7 +488,7 @@ export default function Fechamento() {
           </div>
 
           {hasFilter && (
-            <span className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-full px-2.5 py-0.5">
+            <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full px-2.5 py-0.5">
               Totais filtrados por data
             </span>
           )}

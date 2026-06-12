@@ -4,8 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Seller ML</title>
+    <script>
+      // Aplica o tema antes do primeiro paint (evita flash).
+      // Preferência salva > preferência do sistema.
+      ;(function () {
+        try {
+          var t = localStorage.getItem('theme') || localStorage.getItem('color-schema')
+          var dark = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
+          if (dark) document.documentElement.classList.add('dark')
+        } catch (e) {}
+      })()
+    </script>
   </head>
-  <body class="bg-stone-950 text-stone-100">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

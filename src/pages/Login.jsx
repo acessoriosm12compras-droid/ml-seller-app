@@ -56,7 +56,7 @@ export default function Login() {
             type="button"
             onClick={handleGoogle}
             disabled={googleLoading || loading}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-stone-100 disabled:opacity-60 text-stone-900 font-semibold py-2.5 rounded-lg text-sm transition-colors"
+            className="w-full flex items-center justify-center gap-3 bg-[#ffffff] hover:bg-[#f1f1ef] disabled:opacity-60 text-[#26211a] font-semibold py-2.5 rounded-lg text-sm border border-line transition-colors"
           >
             {googleLoading ? (
               <span>Redirecionando...</span>
