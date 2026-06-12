@@ -166,6 +166,7 @@ export const api = {
   },
 
   estudio: {
+    buscar: (params) => request(`/api/estudio/buscar?${new URLSearchParams(params)}`),
     historico: (limit = 20) => request(`/api/estudio/historico?limit=${limit}`),
     get: (id) => request(`/api/estudio/${id}`),
     gerarConteudo: (data) =>
