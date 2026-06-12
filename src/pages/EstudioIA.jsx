@@ -4,10 +4,11 @@ import {
   Search, Sparkles, Copy, Check, RefreshCw, Loader2,
   ExternalLink, Download, Package, SlidersHorizontal, Zap, Clock,
   TrendingUp, Trophy, CheckCircle2, ChevronRight, FileSearch,
+  Wand2, X, Save, FileText, Info,
 } from 'lucide-react'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { api } from '../api'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
@@ -18,6 +19,23 @@ const TIPOS = [
   { id: 'imagem',   label: '🖼️ Prompts de Imagem',   desc: '6 prompts para IA (FLUX, Midjourney…)' },
   { id: 'video',    label: '🎬 Prompts de Vídeo',    desc: 'Kling AI + roteiro Reels/TikTok' },
 ]
+
+// Tabs do painel de Geração de Conteúdo (limites do Mercado Livre)
+const TABS_CONTEUDO = [
+  { id: 'titulo_curto',    label: 'Título Curto (60 caracteres)',     limite: 60 },
+  { id: 'titulo_completo', label: 'Título Completo (120 caracteres)', limite: 120 },
+  { id: 'descricao',       label: 'Descrição Completa' },
+  { id: 'prompts_imagem',  label: 'Prompts de Imagem' },
+]
+
+function normalizarConteudoLocal(c) {
+  return {
+    titulo_curto:    c?.titulo_curto    || '',
+    titulo_completo: c?.titulo_completo || '',
+    descricao:       c?.descricao       || '',
+    prompts_imagem:  Array.isArray(c?.prompts_imagem) ? c.prompts_imagem.map(String) : [],
+  }
+}
 
 function vendasPorDia(p) {
   if (!p.sold_quantity || !p.date_created) return null
@@ -217,8 +235,42 @@ export default function EstudioIA() {
   const [buscaHist, setBuscaHist]   = useState('')
   const [carregandoHist, setCarregandoHist] = useState(false)
 
+  // ── Geração de Conteúdo ───────────────────────────────────────────
+  const [painelConteudo, setPainelConteudo] = useState(null)
+  // painelConteudo: { estudoId, termo, criadoEm, produtos, mercado, carregando, erro }
+  const [conteudo, setConteudo] = useState(null)
+  const [conteudoOriginal, setConteudoOriginal] = useState(null)
+  const [tabConteudoAtiva, setTabConteudoAtiva] = useState('titulo_curto')
+  const [salvoConteudo, setSalvoConteudo] = useState(false)
+  const painelConteudoRef = useRef(null)
+
   const abortRef  = useRef(null)
   const retryTimer = useRef(null)
+
+  const gerarConteudoMut = useMutation({
+    mutationFn: (payload) => api.estudio.gerarConteudo(payload),
+    onSuccess: (data) => {
+      const c = normalizarConteudoLocal(data.conteudo)
+      setConteudo(c)
+      setConteudoOriginal(JSON.parse(JSON.stringify(c)))
+      setTabConteudoAtiva('titulo_curto')
+      if (data.estudo_id) {
+        setPainelConteudo(p => (p ? { ...p, estudoId: data.estudo_id } : p))
+      }
+      carregarHistorico()
+    },
+  })
+
+  const salvarConteudoMut = useMutation({
+    mutationFn: ({ id, conteudo: c }) => api.estudio.salvarConteudo(id, c),
+    onSuccess: (data) => {
+      const c = normalizarConteudoLocal(data.conteudo)
+      setConteudo(c)
+      setConteudoOriginal(JSON.parse(JSON.stringify(c)))
+      setSalvoConteudo(true)
+      setTimeout(() => setSalvoConteudo(false), 2500)
+    },
+  })
 
   // Cleanup ao desmontar: cancela fetch e timer de retry
   useEffect(() => {
@@ -275,6 +327,99 @@ export default function EstudioIA() {
     } catch {
       /* silencioso */
     }
+  }
+
+  // ── Geração de Conteúdo: handlers ─────────────────────────────────
+  function scrollParaPainelConteudo() {
+    setTimeout(() => painelConteudoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  }
+
+  function resetConteudo() {
+    setConteudo(null)
+    setConteudoOriginal(null)
+    setSalvoConteudo(false)
+    gerarConteudoMut.reset()
+    salvarConteudoMut.reset()
+  }
+
+  async function abrirConteudoDoHistorico(h) {
+    resetConteudo()
+    setPainelConteudo({
+      estudoId: h.id,
+      termo: h.termo || h.link || 'Estudo',
+      criadoEm: h.created_at,
+      produtos: [],
+      mercado: null,
+      carregando: true,
+    })
+    scrollParaPainelConteudo()
+    try {
+      const { estudo } = await api.estudio.get(h.id)
+      setPainelConteudo({
+        estudoId: estudo.id,
+        termo: estudo.termo || estudo.link || 'Estudo',
+        criadoEm: estudo.created_at,
+        produtos: Array.isArray(estudo.produtos_analisados) ? estudo.produtos_analisados : [],
+        mercado: null,
+        carregando: false,
+      })
+      if (estudo.conteudo_gerado && typeof estudo.conteudo_gerado === 'object') {
+        const c = normalizarConteudoLocal(estudo.conteudo_gerado)
+        setConteudo(c)
+        setConteudoOriginal(JSON.parse(JSON.stringify(c)))
+      }
+    } catch (err) {
+      setPainelConteudo(p => (p ? { ...p, carregando: false, erro: err.message } : p))
+    }
+  }
+
+  function abrirConteudoDaBusca() {
+    const prods = produtos.filter(p => selecionados.has(p.id))
+    if (!prods.length) return
+    resetConteudo()
+    setPainelConteudo({
+      estudoId: null,
+      termo: termo.trim() || 'Busca',
+      criadoEm: new Date().toISOString(),
+      produtos: prods,
+      mercado,
+      carregando: false,
+    })
+    scrollParaPainelConteudo()
+  }
+
+  function dispararGeracaoConteudo() {
+    if (!painelConteudo || painelConteudo.carregando) return
+    const payload = {}
+    if (painelConteudo.estudoId) payload.estudo_id = painelConteudo.estudoId
+    if (painelConteudo.termo) payload.termo = painelConteudo.termo
+    if (painelConteudo.produtos?.length) payload.produtos = painelConteudo.produtos
+    if (painelConteudo.mercado) payload.mercado = painelConteudo.mercado
+    gerarConteudoMut.mutate(payload)
+  }
+
+  function salvarEdicoesConteudo() {
+    if (!painelConteudo?.estudoId || !conteudo) return
+    salvarConteudoMut.mutate({ id: painelConteudo.estudoId, conteudo })
+  }
+
+  function fecharPainelConteudo() {
+    setPainelConteudo(null)
+    resetConteudo()
+  }
+
+  function setCampoConteudo(campo, valor) {
+    setConteudo(prev => (prev ? { ...prev, [campo]: valor } : prev))
+  }
+
+  function setPromptImagem(i, valor) {
+    setConteudo(prev => {
+      if (!prev) return prev
+      const arr = [...(prev.prompts_imagem || [])]
+      while (arr.length <= i) arr.push('')
+      arr[i] = valor
+      return { ...prev, prompts_imagem: arr }
+    })
   }
 
   // ── Helpers ───────────────────────────────────────────────────────
@@ -597,6 +742,18 @@ ${corpo}
     return !isNaN(d) && d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear()
   }).length
   const ultimaAnalise = historico[0]?.created_at ? fmtDataHist(historico[0].created_at) : null
+
+  // ── Dados derivados da Geração de Conteúdo ────────────────────────
+  const conteudoAlterado = !!conteudo && JSON.stringify(conteudo) !== JSON.stringify(conteudoOriginal)
+  const produtosPainel = painelConteudo?.produtos || []
+  const precosPainel = produtosPainel.map(p => p.price).filter(v => v !== null && v !== undefined)
+  const statsConteudo = {
+    total: produtosPainel.length,
+    min:   precosPainel.length ? Math.min(...precosPainel) : null,
+    max:   precosPainel.length ? Math.max(...precosPainel) : null,
+    media: precosPainel.length ? precosPainel.reduce((a, b) => a + b, 0) / precosPainel.length : null,
+  }
+  const tabConteudoDef = TABS_CONTEUDO.find(t => t.id === tabConteudoAtiva) || TABS_CONTEUDO[0]
 
   return (
     <div className="flex flex-col min-h-screen bg-stone-950">
@@ -1080,6 +1237,16 @@ ${corpo}
                 : <><Sparkles size={15} /> Gerar</>
               }
             </button>
+
+            {modoEntrada === 'pesquisa' && selecionados.size > 0 && (
+              <button
+                onClick={abrirConteudoDaBusca}
+                className="w-full py-2.5 rounded-xl text-sm font-medium border border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 transition-colors flex items-center justify-center gap-2"
+              >
+                <Wand2 size={14} />
+                Gerar conteúdo de anúncio ({selecionados.size} produto{selecionados.size !== 1 ? 's' : ''})
+              </button>
+            )}
           </div>
         )}
 
@@ -1236,10 +1403,13 @@ ${corpo}
               ) : (
                 <div className="space-y-1 max-h-[26rem] overflow-y-auto pr-1 -mx-2">
                   {historicoFiltrado.map(h => (
-                    <button
+                    <div
                       key={h.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => abrirEstudo(h.id)}
-                      className="group w-full text-left flex items-center gap-3 rounded-xl px-3 py-3 border border-transparent hover:bg-stone-800/60 hover:border-stone-700/60 transition-colors"
+                      onKeyDown={e => { if (e.key === 'Enter') abrirEstudo(h.id) }}
+                      className="group w-full text-left flex items-center gap-3 rounded-xl px-3 py-3 border border-transparent hover:bg-stone-800/60 hover:border-stone-700/60 transition-colors cursor-pointer"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-3">
@@ -1260,8 +1430,15 @@ ${corpo}
                           )}
                         </div>
                       </div>
+                      <button
+                        onClick={e => { e.stopPropagation(); abrirConteudoDoHistorico(h) }}
+                        title="Gerar conteúdo de anúncio a partir desta análise"
+                        className="shrink-0 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-300 hover:bg-violet-500/25 transition-colors"
+                      >
+                        <Wand2 size={11} /> Gerar conteúdo
+                      </button>
                       <ChevronRight size={14} className="text-stone-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1371,6 +1548,308 @@ ${corpo}
             </div>
 
           </div>
+        </div>
+
+        {/* ══ Geração de Conteúdo (full-width) ══ */}
+        <div ref={painelConteudoRef} className="mt-6 scroll-mt-4">
+          {!painelConteudo ? (
+            <div className="bg-stone-900 border border-dashed border-stone-800 rounded-2xl p-5 flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
+                <Wand2 size={16} className="text-violet-400" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-stone-100 text-base font-semibold leading-tight">Geração de Conteúdo</h2>
+                <p className="text-stone-500 text-xs mt-0.5 leading-relaxed">
+                  Crie títulos otimizados, descrição completa e prompts de imagem para o seu anúncio.
+                  Use o botão <span className="text-violet-300">Gerar conteúdo</span> em uma análise do histórico,
+                  ou selecione produtos de uma busca acima.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 md:p-6 space-y-5">
+
+              {/* ── Header do painel ── */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
+                    <Wand2 size={16} className="text-violet-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-stone-100 text-base font-semibold leading-tight truncate">
+                      Geração de Conteúdo — {painelConteudo.termo}
+                    </h2>
+                    <p className="text-stone-500 text-xs mt-0.5">
+                      {painelConteudo.criadoEm ? fmtDataHist(painelConteudo.criadoEm) : ''}
+                      {painelConteudo.estudoId ? ' · salvo no histórico' : ' · nova análise (será salva ao gerar)'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={dispararGeracaoConteudo}
+                    disabled={gerarConteudoMut.isPending || painelConteudo.carregando
+                      || !(painelConteudo.estudoId || painelConteudo.produtos?.length)}
+                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+                    style={{ background: gerarConteudoMut.isPending ? 'var(--surface-3)' : 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}
+                  >
+                    {gerarConteudoMut.isPending
+                      ? <><Loader2 size={14} className="animate-spin" /> Gerando...</>
+                      : <><Wand2 size={14} /> {conteudo ? 'Gerar Novamente' : 'Gerar Conteúdo'}</>
+                    }
+                  </button>
+                  <button
+                    onClick={fecharPainelConteudo}
+                    title="Fechar painel"
+                    className="p-2.5 rounded-xl bg-stone-800 border border-stone-700 text-stone-400 hover:text-stone-200 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Erros ── */}
+              {painelConteudo.erro && (
+                <p className="text-red-400 text-xs">Erro ao carregar a análise: {painelConteudo.erro}</p>
+              )}
+              {gerarConteudoMut.isError && (
+                <div className="bg-red-950/40 border border-red-900/50 rounded-xl p-3.5 flex items-start gap-2.5">
+                  <X size={14} className="text-red-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-red-300 text-sm font-medium">Falha ao gerar conteúdo</p>
+                    <p className="text-red-400/80 text-xs mt-0.5">{gerarConteudoMut.error?.message}</p>
+                    <button
+                      onClick={dispararGeracaoConteudo}
+                      className="text-xs text-red-300 underline mt-1.5 hover:text-red-200 transition-colors"
+                    >
+                      Tentar novamente
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {painelConteudo.carregando ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-2">
+                  <Loader2 size={22} className="animate-spin text-stone-600" />
+                  <p className="text-stone-500 text-xs">Carregando análise...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+
+                  {/* ── Coluna esquerda: infos + produtos ── */}
+                  <div className="space-y-5">
+
+                    {/* Informações Gerais */}
+                    <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Info size={14} className="text-sky-400" />
+                        <h3 className="text-stone-100 text-sm font-semibold">Informações Gerais</h3>
+                      </div>
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-stone-500 text-xs">Anúncios analisados</span>
+                          <span className="text-stone-200 text-sm font-semibold tabular-nums">{statsConteudo.total}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-stone-500 text-xs">Faixa de preço</span>
+                          <span className="text-stone-200 text-sm font-semibold tabular-nums">
+                            {statsConteudo.min !== null
+                              ? (statsConteudo.min === statsConteudo.max
+                                  ? fmtBRL(statsConteudo.min)
+                                  : `${fmtBRL(statsConteudo.min)} – ${fmtBRL(statsConteudo.max)}`)
+                              : '—'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-stone-500 text-xs">Preço médio</span>
+                          <span className="text-sky-400 text-sm font-semibold tabular-nums">{fmtBRL(statsConteudo.media)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Produtos Selecionados */}
+                    <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Package size={14} className="text-sky-400" />
+                        <h3 className="text-stone-100 text-sm font-semibold">Produtos Selecionados</h3>
+                      </div>
+                      {produtosPainel.length > 0 ? (
+                        <ul className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                          {produtosPainel.map((p, i) => (
+                            <li key={p.id || i} className="flex items-center gap-2.5 min-w-0">
+                              {p.thumbnail ? (
+                                <img src={p.thumbnail} alt="" className="w-9 h-9 rounded-lg object-cover bg-stone-700 shrink-0" />
+                              ) : (
+                                <div className="w-9 h-9 rounded-lg bg-stone-700 flex items-center justify-center shrink-0">
+                                  <Package size={13} className="text-stone-500" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-stone-300 text-xs truncate" title={p.title}>{p.title}</p>
+                                <p className="text-stone-500 text-xs mt-0.5">{fmtBRL(p.price)}</p>
+                              </div>
+                              {p.permalink && (
+                                <a
+                                  href={p.permalink} target="_blank" rel="noreferrer"
+                                  className="text-stone-600 hover:text-sky-400 transition-colors shrink-0"
+                                  title="Abrir anúncio no Mercado Livre"
+                                >
+                                  <ExternalLink size={12} />
+                                </a>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-stone-500 text-xs leading-relaxed">
+                          Esta análise não tem produtos salvos. O conteúdo será gerado a partir do termo do estudo.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── Coluna direita: Conteúdos ── */}
+                  <div className="lg:col-span-2 bg-stone-800/60 border border-stone-700/50 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <FileText size={14} className="text-violet-400" />
+                        <h3 className="text-stone-100 text-sm font-semibold">Conteúdos</h3>
+                      </div>
+                      <button
+                        onClick={salvarEdicoesConteudo}
+                        disabled={!painelConteudo.estudoId || !conteudo || !conteudoAlterado || salvarConteudoMut.isPending}
+                        title={!painelConteudo.estudoId ? 'Gere o conteúdo primeiro para poder salvar' : undefined}
+                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          salvoConteudo
+                            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                            : 'bg-stone-800 border-stone-700 text-stone-300 hover:text-stone-100 hover:border-stone-600'
+                        }`}
+                      >
+                        {salvarConteudoMut.isPending
+                          ? <><Loader2 size={12} className="animate-spin" /> Salvando...</>
+                          : salvoConteudo
+                            ? <><Check size={12} /> Salvo!</>
+                            : <><Save size={12} /> Salvar Alterações</>
+                        }
+                      </button>
+                    </div>
+
+                    {salvarConteudoMut.isError && (
+                      <p className="text-red-400 text-xs">
+                        Erro ao salvar: {salvarConteudoMut.error?.message}
+                      </p>
+                    )}
+
+                    {gerarConteudoMut.isPending && !conteudo ? (
+                      <div className="flex flex-col items-center justify-center py-14 gap-2.5">
+                        <Loader2 size={24} className="animate-spin text-violet-400" />
+                        <p className="text-stone-400 text-sm font-medium">Gerando conteúdo com Gemini...</p>
+                        <p className="text-stone-500 text-xs">Títulos, descrição e prompts de imagem para "{painelConteudo.termo}"</p>
+                      </div>
+                    ) : !conteudo ? (
+                      <div className="flex flex-col items-center justify-center text-center py-14 gap-2">
+                        <Wand2 size={26} className="text-stone-600" />
+                        <p className="text-stone-400 text-sm font-medium">Nenhum conteúdo gerado ainda</p>
+                        <p className="text-stone-500 text-xs max-w-sm leading-relaxed">
+                          Clique em <span className="text-violet-300">Gerar Conteúdo</span> para criar título curto,
+                          título completo, descrição e prompts de imagem com base nos produtos analisados.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Tabs */}
+                        <div className="flex gap-0 border-b border-stone-700/60 overflow-x-auto">
+                          {TABS_CONTEUDO.map(t => (
+                            <button
+                              key={t.id}
+                              onClick={() => setTabConteudoAtiva(t.id)}
+                              className={`text-xs px-3.5 py-2.5 whitespace-nowrap transition-colors border-b-2 ${
+                                tabConteudoAtiva === t.id
+                                  ? 'text-stone-100 border-violet-500 font-medium'
+                                  : 'text-stone-500 border-transparent hover:text-stone-300'
+                              }`}
+                            >
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Conteúdo da tab */}
+                        {tabConteudoAtiva !== 'prompts_imagem' ? (() => {
+                          const valor = conteudo[tabConteudoDef.id] || ''
+                          const estourou = tabConteudoDef.limite && valor.length > tabConteudoDef.limite
+                          return (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className={`text-xs tabular-nums ${estourou ? 'text-red-400 font-semibold' : 'text-stone-500'}`}>
+                                  {valor.length}{tabConteudoDef.limite ? `/${tabConteudoDef.limite}` : ' caracteres'}
+                                </span>
+                                <button
+                                  onClick={() => copiar(`conteudo_${tabConteudoDef.id}`, valor)}
+                                  disabled={!valor}
+                                  className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
+                                >
+                                  {copiado === `conteudo_${tabConteudoDef.id}`
+                                    ? <><Check size={12} className="text-emerald-400" /> Copiado!</>
+                                    : <><Copy size={12} /> Copiar</>
+                                  }
+                                </button>
+                              </div>
+                              <textarea
+                                value={valor}
+                                onChange={e => setCampoConteudo(tabConteudoDef.id, e.target.value)}
+                                rows={tabConteudoDef.id === 'descricao' ? 14 : 3}
+                                className={`w-full bg-stone-900 border rounded-xl px-3.5 py-3 text-sm text-stone-200 leading-relaxed resize-y focus:outline-none transition-colors ${
+                                  estourou
+                                    ? 'border-red-500/60 focus:border-red-500'
+                                    : 'border-stone-700 focus:border-violet-500'
+                                }`}
+                              />
+                              {estourou && (
+                                <p className="text-red-400 text-xs">
+                                  Acima do limite — o Mercado Livre corta títulos com mais de {tabConteudoDef.limite} caracteres.
+                                </p>
+                              )}
+                            </div>
+                          )
+                        })() : (
+                          <div className="space-y-3">
+                            {Array.from({ length: Math.max(3, conteudo.prompts_imagem?.length || 0) }).map((_, i) => {
+                              const p = conteudo.prompts_imagem?.[i] || ''
+                              return (
+                                <div key={i} className="space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-stone-500 text-xs font-medium">Prompt {i + 1}</span>
+                                    <button
+                                      onClick={() => copiar(`conteudo_prompt_${i}`, p)}
+                                      disabled={!p}
+                                      className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
+                                    >
+                                      {copiado === `conteudo_prompt_${i}`
+                                        ? <><Check size={12} className="text-emerald-400" /> Copiado!</>
+                                        : <><Copy size={12} /> Copiar</>
+                                      }
+                                    </button>
+                                  </div>
+                                  <textarea
+                                    value={p}
+                                    onChange={e => setPromptImagem(i, e.target.value)}
+                                    rows={4}
+                                    placeholder={`Prompt de imagem ${i + 1}...`}
+                                    className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3.5 py-3 text-sm text-stone-200 leading-relaxed resize-y placeholder-stone-600 focus:outline-none focus:border-violet-500 transition-colors"
+                                  />
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

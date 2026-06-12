@@ -168,5 +168,9 @@ export const api = {
   estudio: {
     historico: (limit = 20) => request(`/api/estudio/historico?limit=${limit}`),
     get: (id) => request(`/api/estudio/${id}`),
+    gerarConteudo: (data) =>
+      request('/api/estudio/conteudo', { method: 'POST', body: JSON.stringify(data) }),
+    salvarConteudo: (id, conteudo) =>
+      request(`/api/estudio/${id}/conteudo`, { method: 'PATCH', body: JSON.stringify({ conteudo }) }),
   },
 }
