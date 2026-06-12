@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import {
   Search, Sparkles, Copy, Check, RefreshCw, Loader2,
   ExternalLink, Download, Package, SlidersHorizontal, Zap, Clock,
+  TrendingUp, Trophy, CheckCircle2, ChevronRight, FileSearch,
 } from 'lucide-react'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
@@ -38,6 +39,22 @@ function fmtBRL(v) {
 function fmtNum(v) {
   if (!v && v !== 0) return '—'
   return Number(v).toLocaleString('pt-BR')
+}
+
+function fmtDataHist(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d)) return ''
+  const data = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\./g, '')
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return `${data} · ${hora}`
+}
+
+function fmtHoje() {
+  const s = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 function splitResultado(texto) {
@@ -197,7 +214,7 @@ export default function EstudioIA() {
 
   // ── Histórico de estudos ──────────────────────────────────────────
   const [historico, setHistorico]   = useState([])
-  const [histAberto, setHistAberto] = useState(false)
+  const [buscaHist, setBuscaHist]   = useState('')
   const [carregandoHist, setCarregandoHist] = useState(false)
 
   const abortRef  = useRef(null)
@@ -227,7 +244,7 @@ export default function EstudioIA() {
   async function carregarHistorico() {
     setCarregandoHist(true)
     try {
-      const res = await fetch(`${BASE}/api/estudio/historico?limit=20`, {
+      const res = await fetch(`${BASE}/api/estudio/historico?limit=100`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       })
       if (!res.ok) return
@@ -253,7 +270,6 @@ export default function EstudioIA() {
         setErroGerar('')
         const primeiroTipo = TIPOS.find(t => (estudo.tipos || []).includes(t.id))
         if (primeiroTipo) setTabAtiva(primeiroTipo.id)
-        setHistAberto(false)
         window.scrollTo({ top: 0, behavior: 'smooth' })
       }
     } catch {
@@ -564,69 +580,44 @@ ${corpo}
       : meusSel.size > 0
   )
 
+  // ── Dados derivados do hub (histórico + resumo) ───────────────────
+  const historicoFiltrado = historico.filter(h => {
+    const q = buscaHist.trim().toLowerCase()
+    if (!q) return true
+    return (h.termo || '').toLowerCase().includes(q)
+      || (h.link || '').toLowerCase().includes(q)
+      || (h.persona || '').toLowerCase().includes(q)
+      || (Array.isArray(h.tipos) ? h.tipos.join(' ') : '').toLowerCase().includes(q)
+  })
+
+  const agora = new Date()
+  const analisesMes = historico.filter(h => {
+    if (!h.created_at) return false
+    const d = new Date(h.created_at)
+    return !isNaN(d) && d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear()
+  }).length
+  const ultimaAnalise = historico[0]?.created_at ? fmtDataHist(historico[0].created_at) : null
+
   return (
     <div className="flex flex-col min-h-screen bg-stone-950">
       <Header title="Estúdio IA" />
 
       <div className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
 
-        {/* ── Cabeçalho ── */}
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-sky-400" />
-            <p className="text-stone-400 text-sm">
-              Selecione produtos e deixe a IA gerar persona, pesquisa de mercado, prompts de imagem e vídeo.
+        {/* ── Cabeçalho da página ── */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold text-stone-100 flex items-center gap-2.5">
+              <Sparkles size={26} className="text-sky-400 shrink-0" />
+              Estúdio IA
+            </h1>
+            <p className="text-stone-400 text-sm mt-2 max-w-2xl leading-relaxed">
+              Analise produtos com IA: persona, pesquisa de mercado, prompts de imagem e vídeo —
+              tudo a partir de dados reais do Mercado Livre.
             </p>
           </div>
-          <button
-            onClick={() => setHistAberto(v => !v)}
-            className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-stone-900 border border-stone-800 text-stone-300 hover:text-white hover:border-stone-700 transition-colors"
-          >
-            <Clock size={14} />
-            Histórico
-            {historico.length > 0 && (
-              <span className="text-xs bg-sky-500/20 text-sky-400 rounded-full px-2 py-0.5">{historico.length}</span>
-            )}
-          </button>
+          <p className="text-stone-500 text-sm shrink-0 sm:text-right sm:pb-1">{fmtHoje()}</p>
         </div>
-
-        {/* ── Histórico de estudos ── */}
-        {histAberto && (
-          <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-stone-200 text-sm font-semibold">Estudos recentes</h3>
-              {carregandoHist && <Loader2 size={14} className="animate-spin text-stone-500" />}
-            </div>
-            {historico.length === 0 ? (
-              <p className="text-stone-500 text-xs">Nenhum estudo salvo ainda. Gere o primeiro abaixo.</p>
-            ) : (
-              <div className="space-y-2 max-h-72 overflow-y-auto">
-                {historico.map(h => (
-                  <button
-                    key={h.id}
-                    onClick={() => abrirEstudo(h.id)}
-                    className="w-full text-left bg-stone-800/60 hover:bg-stone-800 border border-stone-700/60 rounded-lg px-3 py-2.5 transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-stone-200 text-sm font-medium truncate">{h.termo || h.link || 'Estudo'}</span>
-                      <span className="text-stone-500 text-xs shrink-0">
-                        {h.created_at ? new Date(h.created_at).toLocaleDateString('pt-BR') : ''}
-                      </span>
-                    </div>
-                    {h.persona && <p className="text-stone-400 text-xs mt-1 line-clamp-1">{h.persona}</p>}
-                    {Array.isArray(h.tipos) && h.tipos.length > 0 && (
-                      <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                        {h.tipos.map(t => (
-                          <span key={t} className="text-[10px] uppercase tracking-wide bg-stone-700/60 text-stone-400 rounded px-1.5 py-0.5">{t}</span>
-                        ))}
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* ── Layout: 1 col sem resultado / 2 cols com resultado ── */}
         <div className={temResultado ? 'grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-5 items-start' : 'space-y-4'}>
@@ -634,8 +625,20 @@ ${corpo}
         {/* ── Coluna esquerda: configuração ── */}
         <div className="space-y-4">
 
-        {/* ── Step 1: Modo de entrada + produtos ── */}
-        <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-4">
+        {/* ── Step 1: Pesquisar Produtos (modo de entrada + produtos) ── */}
+        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 md:p-6 space-y-4">
+
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-sky-500/15 flex items-center justify-center shrink-0">
+              <Search size={16} className="text-sky-400" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-stone-100 text-base font-semibold leading-tight">Pesquisar Produtos</h2>
+              <p className="text-stone-500 text-xs mt-0.5">
+                Encontre concorrentes no ML ou analise os produtos da sua loja
+              </p>
+            </div>
+          </div>
 
           {/* Tabs de modo */}
           <div className="flex gap-2">
@@ -664,24 +667,23 @@ ${corpo}
           {/* ── Pesquisar no ML ── */}
           {modoEntrada === 'pesquisa' && (
             <div className="space-y-3">
-              <p className="text-stone-500 text-xs">Digite um termo de busca ou cole um link de anúncio do ML</p>
-              <form onSubmit={buscarProdutos} className="flex gap-2">
+              <form onSubmit={buscarProdutos} className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
+                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500" />
                   <input
                     type="text"
                     value={termo}
                     onChange={e => setTermo(e.target.value)}
-                    placeholder='Termo de busca ou https://www.mercadolivre.com.br/...'
-                    className="w-full bg-stone-800 border border-stone-700 rounded-lg pl-9 pr-3 py-2.5 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-500"
+                    placeholder='Digite um termo de busca ou cole um link de anúncio do ML...'
+                    className="w-full bg-stone-800 border border-stone-700 rounded-xl pl-11 pr-4 py-3 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-500 transition-colors"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={buscando || !termo.trim()}
-                  className="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                  className="px-6 py-3 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shrink-0"
                 >
-                  {buscando ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+                  {buscando ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
                   Buscar
                 </button>
               </form>
@@ -730,41 +732,6 @@ ${corpo}
                       Buscar produtos colados
                     </button>
                   </div>
-                </div>
-              )}
-
-              {/* Painel de mercado real (tendências + mais vendidos do ML) */}
-              {mercado && ((mercado.tendencias && mercado.tendencias.length > 0) || (mercado.mais_vendidos && mercado.mais_vendidos.length > 0)) && (
-                <div className="bg-white border border-stone-200 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-stone-300 text-sm font-semibold">Mercado real — Mercado Livre</span>
-                    {mercado.categoria && (
-                      <span className="text-xs text-stone-500 bg-stone-800 px-2 py-0.5 rounded-full">{mercado.categoria}</span>
-                    )}
-                  </div>
-                  {mercado.tendencias && mercado.tendencias.length > 0 && (
-                    <div>
-                      <p className="text-xs text-stone-500 mb-1.5">Mais buscados (tendências reais)</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {mercado.tendencias.slice(0, 15).map((t, i) => (
-                          <span key={i} className="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full px-2 py-0.5">{t}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {mercado.mais_vendidos && mercado.mais_vendidos.length > 0 && (
-                    <div>
-                      <p className="text-xs text-stone-500 mb-1.5">Mais vendidos da categoria</p>
-                      <ul className="space-y-1">
-                        {mercado.mais_vendidos.slice(0, 5).map((m, i) => (
-                          <li key={i} className="text-xs text-stone-300 flex justify-between gap-2">
-                            <span className="truncate">{i + 1}. {m.title}</span>
-                            <span className="text-stone-500 shrink-0">{m.price ? `R$ ${m.price}` : ''}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -1216,6 +1183,195 @@ ${corpo}
         )}
 
         </div>{/* ── fim grid ── */}
+
+        {/* ══ Hub: histórico + cards informativos ══ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-6">
+
+          {/* ── Histórico de Análises ── */}
+          <div className="lg:col-span-2 bg-stone-900 border border-stone-800 rounded-2xl p-5 md:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-sky-500/15 flex items-center justify-center shrink-0">
+                  <Clock size={16} className="text-sky-400" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-stone-100 text-base font-semibold leading-tight">Histórico de Análises</h2>
+                  <p className="text-stone-500 text-xs mt-0.5">Clique em uma análise para reabri-la</p>
+                </div>
+              </div>
+              <span className="flex items-center gap-1.5 text-xs font-medium bg-sky-500/15 text-sky-400 rounded-full px-2.5 py-1 shrink-0">
+                Recentes · {historico.length}
+              </span>
+            </div>
+
+            {historico.length > 0 && (
+              <div className="relative mt-4">
+                <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-500" />
+                <input
+                  type="text"
+                  value={buscaHist}
+                  onChange={e => setBuscaHist(e.target.value)}
+                  placeholder="Pesquisar no histórico..."
+                  className="w-full bg-stone-800 border border-stone-700 rounded-lg pl-9 pr-3 py-2 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-500 transition-colors"
+                />
+              </div>
+            )}
+
+            <div className="mt-4">
+              {carregandoHist && historico.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-2">
+                  <Loader2 size={20} className="animate-spin text-stone-600" />
+                  <p className="text-stone-500 text-xs">Carregando histórico...</p>
+                </div>
+              ) : historico.length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-center py-10 gap-2">
+                  <FileSearch size={28} className="text-stone-600" />
+                  <p className="text-stone-400 text-sm font-medium">Nenhuma análise ainda</p>
+                  <p className="text-stone-500 text-xs">Busque um produto acima para começar.</p>
+                </div>
+              ) : historicoFiltrado.length === 0 ? (
+                <p className="text-stone-500 text-xs text-center py-8">
+                  Nada encontrado para "{buscaHist}".
+                </p>
+              ) : (
+                <div className="space-y-1 max-h-[26rem] overflow-y-auto pr-1 -mx-2">
+                  {historicoFiltrado.map(h => (
+                    <button
+                      key={h.id}
+                      onClick={() => abrirEstudo(h.id)}
+                      className="group w-full text-left flex items-center gap-3 rounded-xl px-3 py-3 border border-transparent hover:bg-stone-800/60 hover:border-stone-700/60 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-stone-200 text-sm font-medium truncate">
+                            {h.termo || h.link || 'Estudo'}
+                          </span>
+                          <span className="text-stone-500 text-xs shrink-0">{fmtDataHist(h.created_at)}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5 mt-1 min-w-0">
+                          <span className="text-emerald-400 text-xs flex items-center gap-1 shrink-0">
+                            <CheckCircle2 size={11} />
+                            Concluída
+                            {Array.isArray(h.tipos) && h.tipos.length > 0 &&
+                              ` · ${h.tipos.length} ${h.tipos.length === 1 ? 'seção' : 'seções'}`}
+                          </span>
+                          {h.persona && (
+                            <span className="text-stone-500 text-xs truncate">{h.persona}</span>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight size={14} className="text-stone-600 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Coluna lateral: resumo + mercado ── */}
+          <div className="space-y-5">
+
+            {/* Resumo */}
+            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles size={15} className="text-sky-400" />
+                <h3 className="text-stone-100 text-sm font-semibold">Resumo</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl p-3.5">
+                  <p className="text-stone-100 text-2xl font-bold tabular-nums">{historico.length}</p>
+                  <p className="text-stone-500 text-xs mt-1">
+                    {historico.length === 1 ? 'análise feita' : 'análises feitas'}
+                  </p>
+                </div>
+                <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl p-3.5">
+                  <p className="text-stone-100 text-2xl font-bold tabular-nums">{analisesMes}</p>
+                  <p className="text-stone-500 text-xs mt-1">neste mês</p>
+                </div>
+              </div>
+              {ultimaAnalise && (
+                <p className="text-stone-500 text-xs mt-3 flex items-center gap-1.5">
+                  <Clock size={11} className="shrink-0" />
+                  Última análise em {ultimaAnalise}
+                </p>
+              )}
+            </div>
+
+            {/* Tendências (dados reais do ML — vêm junto da busca) */}
+            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2 min-w-0">
+                  <TrendingUp size={15} className="text-sky-400 shrink-0" />
+                  <h3 className="text-stone-100 text-sm font-semibold">Tendências do ML</h3>
+                </div>
+                {mercado?.categoria && (
+                  <span className="text-[10px] text-stone-500 bg-stone-800 px-2 py-0.5 rounded-full truncate">
+                    {mercado.categoria}
+                  </span>
+                )}
+              </div>
+              {mercado?.tendencias?.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {mercado.tendencias.slice(0, 12).map((t, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setTermo(t); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                      title={`Usar "${t}" como termo de busca`}
+                      className="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 hover:bg-sky-500/25 rounded-full px-2.5 py-1 transition-colors"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-stone-500 text-xs leading-relaxed">
+                  Pesquise um produto acima para ver os termos mais buscados da categoria, direto do Mercado Livre.
+                </p>
+              )}
+            </div>
+
+            {/* Mais vendidos (dados reais do ML — vêm junto da busca) */}
+            <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Trophy size={15} className="text-amber-400" />
+                <h3 className="text-stone-100 text-sm font-semibold">Mais vendidos da categoria</h3>
+              </div>
+              {mercado?.mais_vendidos?.length > 0 ? (
+                <ul className="space-y-2.5">
+                  {mercado.mais_vendidos.slice(0, 5).map((m, i) => (
+                    <li key={m.id || i} className="flex items-center gap-2.5 min-w-0">
+                      <span className={`text-xs font-bold tabular-nums w-5 shrink-0 ${
+                        i === 0 ? 'text-amber-400' : i === 1 ? 'text-stone-400' : i === 2 ? 'text-amber-700' : 'text-stone-600'
+                      }`}>#{i + 1}</span>
+                      {m.thumbnail && (
+                        <img src={m.thumbnail} alt="" className="w-8 h-8 rounded-lg object-cover bg-stone-700 shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-stone-300 text-xs truncate">{m.title}</p>
+                        {m.price != null && (
+                          <p className="text-stone-500 text-xs mt-0.5">{fmtBRL(m.price)}</p>
+                        )}
+                      </div>
+                      {m.permalink && (
+                        <a
+                          href={m.permalink} target="_blank" rel="noreferrer"
+                          className="text-stone-600 hover:text-sky-400 transition-colors shrink-0"
+                        >
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-stone-500 text-xs leading-relaxed">
+                  Pesquise um produto acima para ver o ranking real de mais vendidos da categoria.
+                </p>
+              )}
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   )
