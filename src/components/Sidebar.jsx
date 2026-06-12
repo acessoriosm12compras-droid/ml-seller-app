@@ -27,10 +27,9 @@ export default function Sidebar() {
     <>
       {/* ── Desktop sidebar — expande no hover ── */}
       <aside
-        className="group hidden md:flex flex-col shrink-0 overflow-hidden z-40"
+        className="group hidden md:flex flex-col shrink-0 overflow-hidden z-40 md:sticky md:top-0 md:h-screen"
         style={{
           width: '56px',
-          minHeight: '100vh',
           backgroundColor: '#0d0d0f',
           borderRight: '1px solid rgba(255,255,255,0.06)',
           transition: 'width 220ms cubic-bezier(0.4,0,0.2,1)',
@@ -55,7 +54,7 @@ export default function Sidebar() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-3 flex flex-col gap-0.5 px-2">
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-3 flex flex-col gap-0.5 px-2">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
