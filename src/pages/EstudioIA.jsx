@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import {
   Search, Sparkles, Copy, Check, Loader2, ExternalLink, Zap, Clock,
   TrendingUp, Trophy, CheckCircle2, ChevronRight, ArrowLeft, FileSearch,
-  Wand2, X, Save, Package,
+  Wand2, X, Save, Package, Eye, Star,
 } from 'lucide-react'
 import Header from '../components/Header'
 import { api } from '../api'
@@ -79,9 +79,27 @@ function blocoParaTexto(id, c) {
 }
 
 function vendasPorDia(p) {
+  // Backend já calcula a média (vendas_dia_media); cálculo local é fallback
+  // para análises antigas sem o campo.
+  if (p.vendas_dia_media !== null && p.vendas_dia_media !== undefined) return p.vendas_dia_media
   if (!p.sold_quantity || !p.date_created) return null
   const dias = Math.max(1, (Date.now() - new Date(p.date_created)) / 86_400_000)
   return Math.round((p.sold_quantity / dias) * 10) / 10
+}
+
+function diasNoAr(p) {
+  if (p.dias_no_ar !== null && p.dias_no_ar !== undefined) return p.dias_no_ar
+  if (!p.date_created) return null
+  const d = new Date(p.date_created)
+  if (isNaN(d)) return null
+  return Math.max(0, Math.floor((Date.now() - d) / 86_400_000))
+}
+
+function fmtDiaMes(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d)) return ''
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
 function fmtVpd(v) {
@@ -1064,11 +1082,12 @@ export default function EstudioIA() {
                     <p className="text-stone-600 text-[11px] mb-2.5 -mt-1">
                       Os blocos de IA e a faixa de preço usam apenas os anúncios selecionados como referência.
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                    <div className="space-y-1.5">
                       {produtosWs.map((p, i) => {
-                        const vpdLabel = fmtVpd(vendasPorDia(p))
                         const chave = chaveProduto(p, i)
                         const marcado = selecionados.has(chave)
+                        const vpdLabel = fmtVpd(vendasPorDia(p))
+                        const dias = diasNoAr(p)
                         return (
                           <div
                             key={chave}
@@ -1078,16 +1097,16 @@ export default function EstudioIA() {
                             onClick={() => toggleSelecionado(chave)}
                             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSelecionado(chave) } }}
                             title={marcado ? 'Desmarcar como referência' : 'Usar como referência'}
-                            className={`relative rounded-xl p-2.5 min-w-0 cursor-pointer border transition-all ${
+                            className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 min-w-0 cursor-pointer transition-all ${
                               marcado
                                 ? 'bg-stone-800/60 border-violet-500/40 hover:border-violet-400/60'
                                 : 'bg-stone-800/30 border-stone-700/50 hover:border-stone-600 opacity-55'
                             }`}
                           >
-                            {/* Checkbox (canto superior direito) */}
+                            {/* Checkbox de seleção (esquerda) */}
                             <span
                               aria-hidden="true"
-                              className={`absolute top-2 right-2 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                              className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
                                 marcado
                                   ? 'bg-violet-500 border-violet-400 text-white'
                                   : 'bg-stone-900 border-stone-600'
@@ -1095,41 +1114,77 @@ export default function EstudioIA() {
                             >
                               {marcado && <Check size={11} strokeWidth={3} />}
                             </span>
-                            <div className="flex items-center gap-2 mb-1.5 pr-5">
-                              {p.thumbnail
-                                ? <img src={p.thumbnail} alt="" className="w-10 h-10 rounded-lg object-cover bg-stone-700 shrink-0" />
-                                : <div className="w-10 h-10 rounded-lg bg-stone-700 shrink-0" />}
-                              <span className={`text-[11px] font-bold tabular-nums ${
-                                i === 0 ? 'text-amber-400' : i === 1 ? 'text-stone-400' : i === 2 ? 'text-amber-700' : 'text-stone-600'
-                              }`}>#{i + 1}</span>
-                              {p.meu && (
-                                <span className="text-[9px] uppercase tracking-wider bg-sky-500/15 text-sky-400 border border-sky-500/25 rounded-full px-1.5 py-0.5">minha loja</span>
-                              )}
-                            </div>
-                            <p className="text-stone-300 text-[11px] leading-snug line-clamp-2">{p.title}</p>
-                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                              <span className="text-sky-400 text-xs font-semibold">{fmtBRL(p.price)}</span>
-                              {p.sold_quantity > 0 && (
-                                <span className="text-[10px] text-emerald-500">{fmtNum(p.sold_quantity)} vendas</span>
-                              )}
-                              {vpdLabel && (
-                                <span className="text-[10px] text-amber-400 flex items-center gap-0.5">
-                                  <Zap size={8} className="shrink-0" />{vpdLabel}
+
+                            {/* Ranking */}
+                            <span className={`text-[11px] font-bold tabular-nums w-6 text-right shrink-0 ${
+                              i === 0 ? 'text-amber-400' : i === 1 ? 'text-stone-400' : i === 2 ? 'text-amber-700' : 'text-stone-600'
+                            }`}>#{i + 1}</span>
+
+                            {/* Thumbnail */}
+                            {p.thumbnail
+                              ? <img src={p.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover bg-stone-700 shrink-0" />
+                              : <div className="w-12 h-12 rounded-lg bg-stone-700 shrink-0" />}
+
+                            {/* Título + faixa de metadados */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <p className="text-stone-200 text-xs font-medium leading-snug line-clamp-2 min-w-0">{p.title}</p>
+                                {p.meu && (
+                                  <span className="text-[9px] uppercase tracking-wider bg-sky-500/15 text-sky-400 border border-sky-500/25 rounded-full px-1.5 py-0.5 shrink-0">minha loja</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 flex-wrap text-[11px]">
+                                <span className="text-sky-400 font-semibold">{fmtBRL(p.price)}</span>
+                                <span className="text-stone-400 flex items-center gap-1" title="Visitas nos últimos 30 dias">
+                                  <Eye size={11} className="text-stone-500 shrink-0" />
+                                  {p.visitas_30d !== null && p.visitas_30d !== undefined
+                                    ? `${fmtNum(p.visitas_30d)} visitas (30d)` : '— visitas (30d)'}
                                 </span>
-                              )}
-                              {p.permalink && (
-                                <a
-                                  href={p.permalink}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  title="Abrir anúncio no Mercado Livre"
-                                  onClick={e => e.stopPropagation()}
-                                  className="ml-auto text-stone-600 hover:text-sky-400 transition-colors shrink-0"
-                                >
-                                  <ExternalLink size={11} />
-                                </a>
-                              )}
+                                <span className="text-stone-400 flex items-center gap-1" title="Dias desde a publicação do anúncio">
+                                  <Clock size={11} className="text-stone-500 shrink-0" />
+                                  {dias !== null && dias !== undefined
+                                    ? `${fmtNum(dias)} dias no ar` : '— dias no ar'}
+                                </span>
+                                <span className="text-amber-400 flex items-center gap-1" title="média: total de vendas ÷ dias no ar">
+                                  <Zap size={11} className="shrink-0" />
+                                  {vpdLabel ? `${vpdLabel} (média)` : '— vendas/dia (média)'}
+                                </span>
+                                {p.full && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 rounded-full px-2 py-0.5" title="Logística Full (fulfillment do Mercado Livre)">
+                                    Full
+                                  </span>
+                                )}
+                                <span className="text-stone-300 flex items-center gap-1" title="Nota média (nº de avaliações)">
+                                  <Star size={11} className="text-amber-400 shrink-0" fill="currentColor" />
+                                  {p.nota !== null && p.nota !== undefined
+                                    ? <>{Number(p.nota).toFixed(1)}{p.num_avaliacoes !== null && p.num_avaliacoes !== undefined ? ` (${fmtNum(p.num_avaliacoes)})` : ''}</>
+                                    : '—'}
+                                </span>
+                                {p.vendas_reais !== null && p.vendas_reais !== undefined && (
+                                  <span
+                                    className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full px-2 py-0.5"
+                                    title="Vendas reais observadas pelo monitoramento: diferença de vendas do anúncio entre duas buscas — dado real, não média"
+                                  >
+                                    ✚{fmtNum(p.vendas_reais)} {p.vendas_reais === 1 ? 'venda real' : 'vendas reais'}
+                                    {p.vendas_reais_desde ? ` desde ${fmtDiaMes(p.vendas_reais_desde)}` : ''}
+                                  </span>
+                                )}
+                              </div>
                             </div>
+
+                            {/* Link externo */}
+                            {p.permalink && (
+                              <a
+                                href={p.permalink}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Abrir anúncio no Mercado Livre"
+                                onClick={e => e.stopPropagation()}
+                                className="text-stone-600 hover:text-sky-400 transition-colors shrink-0 p-1"
+                              >
+                                <ExternalLink size={13} />
+                              </a>
+                            )}
                           </div>
                         )
                       })}
