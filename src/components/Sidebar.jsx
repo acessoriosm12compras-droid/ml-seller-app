@@ -10,7 +10,7 @@ import {
 const NAV = [
   { to: '/dashboard',       label: 'Dashboard',     icon: LayoutDashboard },
   { to: '/curva-abc',       label: 'Curva ABC',      icon: PieChart },
-  { to: '/financeiro',      label: 'Financeiro',     icon: Banknote },
+  { to: '/fluxo-caixa',     label: 'Fluxo de Caixa', icon: Banknote },
   { to: '/pedidos',         label: 'Pedidos',        icon: ShoppingBag },
   { to: '/ads',             label: 'Mercado Ads',    icon: Megaphone },
   { to: '/estudio-ia',      label: 'Estúdio IA',     icon: Sparkles },
