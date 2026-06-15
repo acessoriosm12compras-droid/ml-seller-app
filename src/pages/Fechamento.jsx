@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
 import { Plus, Trash2, Check, X, Pencil, CalendarRange, XCircle } from 'lucide-react'
 
@@ -67,18 +68,23 @@ function StatusBadge({ value }) {
 }
 
 // ── Generic section component ─────────────────────────────────────────────────
-function Section({ title, columns, rows, isLoading, onAdd, onSave, onDelete, newRow, setNewRow, editMap, setEdit }) {
+function Section({ title, columns, rows, isLoading, onAdd, onSave, onDelete, newRow, setNewRow, editMap, setEdit, headerExtra, banner }) {
   return (
     <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-800">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-stone-800">
         <h2 className="text-sm font-semibold text-stone-300">{title}</h2>
-        <button
-          onClick={onAdd}
-          className="flex items-center gap-1.5 text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg transition-colors"
-        >
-          <Plus size={13} /> Adicionar
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {headerExtra}
+          <button
+            onClick={onAdd}
+            className="flex items-center gap-1.5 text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <Plus size={13} /> Adicionar
+          </button>
+        </div>
       </div>
+
+      {banner}
 
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
@@ -274,6 +280,7 @@ function CostChart({ totalCompras, totalFretes, totalMontagem, totalDespesas }) 
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Fechamento() {
+  const { activeAccount } = useAuth()
   const now = new Date()
   const [mesAno, setMesAno] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -286,11 +293,14 @@ export default function Fechamento() {
 
   const qc = useQueryClient()
 
+  // Query params com a conta ativa (multi-conta)
+  const accountParams = activeAccount ? { conta_ml: activeAccount } : {}
+
   // Queries
-  const comprasQ  = useQuery({ queryKey: ['fechamento-compras',  mesAno], queryFn: () => api.fechamento.compras.list(mesAno) })
-  const fretesQ   = useQuery({ queryKey: ['fechamento-fretes',   mesAno], queryFn: () => api.fechamento.fretes.list(mesAno) })
-  const montagemQ = useQuery({ queryKey: ['fechamento-montagem', mesAno], queryFn: () => api.fechamento.montagem.list(mesAno) })
-  const despesasQ = useQuery({ queryKey: ['fechamento-despesas', mesAno], queryFn: () => api.fechamento.despesas.list(mesAno) })
+  const comprasQ  = useQuery({ queryKey: ['fechamento-compras',  mesAno, activeAccount], queryFn: () => api.fechamento.compras.list({ mes_ano: mesAno, ...accountParams }) })
+  const fretesQ   = useQuery({ queryKey: ['fechamento-fretes',   mesAno, activeAccount], queryFn: () => api.fechamento.fretes.list({ mes_ano: mesAno, ...accountParams }) })
+  const montagemQ = useQuery({ queryKey: ['fechamento-montagem', mesAno, activeAccount], queryFn: () => api.fechamento.montagem.list({ mes_ano: mesAno, ...accountParams }) })
+  const despesasQ = useQuery({ queryKey: ['fechamento-despesas', mesAno, activeAccount], queryFn: () => api.fechamento.despesas.list({ mes_ano: mesAno, ...accountParams }) })
 
   // Edit maps
   const [comprasEdit,  setComprasEditMap]  = useState({})
@@ -314,19 +324,27 @@ export default function Fechamento() {
   const setDespesasEdit = makeSetEdit(setDespesasEditMap)
 
   // Mutations — top-level (Rules of Hooks)
-  const invCompras  = () => qc.invalidateQueries({ queryKey: ['fechamento-compras',  mesAno] })
-  const invFretes   = () => qc.invalidateQueries({ queryKey: ['fechamento-fretes',   mesAno] })
-  const invMontagem = () => qc.invalidateQueries({ queryKey: ['fechamento-montagem', mesAno] })
-  const invDespesas = () => qc.invalidateQueries({ queryKey: ['fechamento-despesas', mesAno] })
+  const invCompras  = () => qc.invalidateQueries({ queryKey: ['fechamento-compras',  mesAno, activeAccount] })
+  const invFretes   = () => qc.invalidateQueries({ queryKey: ['fechamento-fretes',   mesAno, activeAccount] })
+  const invMontagem = () => qc.invalidateQueries({ queryKey: ['fechamento-montagem', mesAno, activeAccount] })
+  const invDespesas = () => qc.invalidateQueries({ queryKey: ['fechamento-despesas', mesAno, activeAccount] })
 
-  const saveCompra = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.compras.update(id, data)  : api.fechamento.compras.create({ ...data, mes_ano: mesAno }),  onSuccess: invCompras })
-  const delCompra  = useMutation({ mutationFn: (id) => api.fechamento.compras.delete(id),  onSuccess: invCompras })
-  const saveFrete  = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.fretes.update(id, data)   : api.fechamento.fretes.create({ ...data, mes_ano: mesAno }),   onSuccess: invFretes })
-  const delFrete   = useMutation({ mutationFn: (id) => api.fechamento.fretes.delete(id),   onSuccess: invFretes })
-  const saveMontag = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.montagem.update(id, data) : api.fechamento.montagem.create({ ...data, mes_ano: mesAno }), onSuccess: invMontagem })
-  const delMontag  = useMutation({ mutationFn: (id) => api.fechamento.montagem.delete(id), onSuccess: invMontagem })
-  const saveDesp   = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.despesas.update(id, data) : api.fechamento.despesas.create({ ...data, mes_ano: mesAno }), onSuccess: invDespesas })
-  const delDesp    = useMutation({ mutationFn: (id) => api.fechamento.despesas.delete(id), onSuccess: invDespesas })
+  const saveCompra = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.compras.update(id, data, accountParams)  : api.fechamento.compras.create({ ...data, mes_ano: mesAno }, accountParams),  onSuccess: invCompras })
+  const delCompra  = useMutation({ mutationFn: (id) => api.fechamento.compras.delete(id, accountParams),  onSuccess: invCompras })
+  const saveFrete  = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.fretes.update(id, data, accountParams)   : api.fechamento.fretes.create({ ...data, mes_ano: mesAno }, accountParams),   onSuccess: invFretes })
+  const delFrete   = useMutation({ mutationFn: (id) => api.fechamento.fretes.delete(id, accountParams),   onSuccess: invFretes })
+  const saveMontag = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.montagem.update(id, data, accountParams) : api.fechamento.montagem.create({ ...data, mes_ano: mesAno }, accountParams), onSuccess: invMontagem })
+  const delMontag  = useMutation({ mutationFn: (id) => api.fechamento.montagem.delete(id, accountParams), onSuccess: invMontagem })
+  const saveDesp   = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.despesas.update(id, data, accountParams) : api.fechamento.despesas.create({ ...data, mes_ano: mesAno }, accountParams), onSuccess: invDespesas })
+  const delDesp    = useMutation({ mutationFn: (id) => api.fechamento.despesas.delete(id, accountParams), onSuccess: invDespesas })
+
+  // Conta Simples sync (Despesas)
+  const csStatusQ = useQuery({ queryKey: ['contasimples-status'], queryFn: () => api.fechamento.contaSimples.status() })
+  const csConfigurado = csStatusQ.data?.configurado === true
+  const syncCS = useMutation({
+    mutationFn: () => api.fechamento.contaSimples.sync(mesAno, activeAccount),
+    onSuccess: invDespesas,
+  })
 
   function handleSave(saveMut, setEditFn, setNew) {
     return (id, data) => {
@@ -436,7 +454,7 @@ export default function Fechamento() {
             <input
               type="month"
               value={mesAno}
-              onChange={e => { setMesAno(e.target.value); clearFilter() }}
+              onChange={e => { setMesAno(e.target.value); clearFilter(); syncCS.reset() }}
               className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
           </div>
@@ -470,7 +488,7 @@ export default function Fechamento() {
           </div>
 
           {hasFilter && (
-            <span className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-full px-2.5 py-0.5">
+            <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full px-2.5 py-0.5">
               Totais filtrados por data
             </span>
           )}
@@ -585,6 +603,34 @@ export default function Fechamento() {
           onAdd={() => setNewDespesa({ data: '', descricao: '', valor: '', status: 'PENDENTE' })}
           onSave={handleSave(saveDesp, setDespesasEdit, setNewDespesa)}
           onDelete={handleDelete(delDesp)}
+          headerExtra={
+            <div className="flex items-center gap-2">
+              {csStatusQ.data && !csConfigurado && (
+                <span className="text-[10px] text-stone-500">Configure CS_API_KEY e CS_API_SECRET no backend</span>
+              )}
+              <button
+                onClick={() => syncCS.mutate()}
+                disabled={!csConfigurado || syncCS.isPending}
+                className="flex items-center gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 disabled:bg-stone-800 disabled:text-stone-500 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-lg transition-colors"
+              >
+                {syncCS.isPending ? 'Sincronizando...' : '⬇️ Sincronizar Conta Simples'}
+              </button>
+            </div>
+          }
+          banner={
+            syncCS.isError ? (
+              <div className="px-4 py-2 text-xs text-red-400 bg-red-500/10 border-b border-stone-800">
+                Erro ao sincronizar: {syncCS.error.message}
+              </div>
+            ) : syncCS.isSuccess ? (
+              <div className="px-4 py-2 text-xs text-emerald-400 bg-emerald-500/10 border-b border-stone-800">
+                {syncCS.data.importados ?? 0} despesas importadas · {syncCS.data.duplicados ?? 0} já existiam
+                {syncCS.data.avisos?.length > 0 && (
+                  <span className="text-amber-400"> · {syncCS.data.avisos.join(' · ')}</span>
+                )}
+              </div>
+            ) : null
+          }
         />
 
       </main>

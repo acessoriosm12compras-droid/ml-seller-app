@@ -2,128 +2,320 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: #3f3f46 #18181b;
-  }
-  *::-webkit-scrollbar { width: 6px; height: 6px; }
-  *::-webkit-scrollbar-track { background: #18181b; }
-  *::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
-  *::-webkit-scrollbar-thumb:hover { background: #52525b; }
-  ::selection { background: rgb(14 165 233 / 0.25); color: #f5f5f7; }
+/* ════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — visual "Notion-like"
+   Tema claro em :root, tema escuro em .dark (alternável pelo usuário).
+   Todo o app consome estes tokens — direto (componentes novos) ou via
+   remapeamento das utilities legadas mais abaixo.
+   ════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+
+  /* superfícies */
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-2: #f3f3f1;
+  --surface-3: #e9e9e6;
+  --sidebar: #f7f7f5;
+
+  /* linhas */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+
+  /* estados */
+  --hover: rgba(0, 0, 0, 0.04);
+  --active: rgba(0, 0, 0, 0.06);
+
+  /* texto (cinzas quentes, estilo Notion) */
+  --text: #37352f;
+  --text-secondary: #504e48;
+  --text-muted: #787774;
+  --text-faint: #9b9a97;
+  --text-disabled: #b9b8b4;
+
+  /* acento — âmbar da marca (único acento do app) */
+  --accent: #d98a0c;
+  --accent-hover: #c47c08;
+  --accent-text: #9c6606;
+  --on-accent: #2b2009;
+
+  /* semânticas */
+  --success: #1a7f4e;
+  --danger: #d4382c;
+  --warning: #b45309;
+  --info: #2563eb;
+
+  /* gráficos */
+  --chart-grid: rgba(0, 0, 0, 0.07);
+  --chart-text: #87867f;
+
+  --scrollbar-thumb: #d6d4ce;
+  --shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
-/* ── Dark mode — cooler neutrals ── */
-html.dark { color-scheme: dark; }
-html.dark body { background-color: #0f0f11; color: #f5f5f7; }
+.dark {
+  color-scheme: dark;
 
-html.dark .bg-stone-950 { background-color: #0a0a0c; }
-html.dark .bg-stone-900 { background-color: #111113; }
-html.dark .bg-stone-800 { background-color: #1c1c1f; }
+  --bg: #191919;
+  --surface: #202020;
+  --surface-2: #282826;
+  --surface-3: #34332f;
+  --sidebar: #202020;
 
-html.dark .dark\:bg-stone-950 { background-color: #0a0a0c; }
-html.dark .dark\:bg-stone-900 { background-color: #111113; }
-html.dark .dark\:bg-stone-800\/60 { background-color: rgba(28,28,31,0.6); }
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
 
-html.dark .border-stone-800,
-html.dark .dark\:border-stone-800 { border-color: rgba(255,255,255,0.07); }
-html.dark .border-stone-700      { border-color: rgba(255,255,255,0.10); }
-html.dark .border-stone-700\/50  { border-color: rgba(255,255,255,0.06); }
-html.dark .border-stone-800\/50  { border-color: rgba(255,255,255,0.05); }
+  --hover: rgba(255, 255, 255, 0.055);
+  --active: rgba(255, 255, 255, 0.09);
 
-html.dark .text-stone-500,
-html.dark .dark\:text-stone-500 { color: #636366; }
-html.dark .text-stone-600,
-html.dark .dark\:text-stone-600 { color: #48484a; }
-html.dark .text-stone-700       { color: #3a3a3c; }
+  --text: #e8e8e6;
+  --text-secondary: #c6c6c2;
+  --text-muted: #9b9b98;
+  --text-faint: #757572;
+  --text-disabled: #565653;
 
-/* Scrollbar dark */
-html.dark * { scrollbar-color: #3f3f46 #111113; }
-html.dark *::-webkit-scrollbar-track { background: #111113; }
-html.dark *::-webkit-scrollbar-thumb { background: #3f3f46; }
-html.dark *::-webkit-scrollbar-thumb:hover { background: #52525b; }
+  --accent: #df9a31;
+  --accent-hover: #eaa94e;
+  --accent-text: #e2a44d;
+  --on-accent: #2b2009;
 
-/* ══════════════════════════════════════════════════════════════════
-   Tema claro — visual ML Seller (creme + âmbar, cantos macios)
-   Todas as telas usam as mesmas classes utilitárias; o remapeamento
-   abaixo dá o visual novo ao app inteiro de uma vez.
-   ══════════════════════════════════════════════════════════════════ */
-html:not(.dark) { color-scheme: light; }
-html:not(.dark) body { background-color: #FBF5EB; color: #3A352E; }
+  --success: #34d399;
+  --danger: #f87171;
+  --warning: #e7b04a;
+  --info: #6aa5f8;
 
-/* Fundo da página e superfícies */
-html:not(.dark) .bg-stone-950 { background-color: #FBF5EB; }
-html:not(.dark) .bg-stone-900,
-html:not(.dark) .dark\:bg-stone-950,
-html:not(.dark) .dark\:bg-stone-900 { background-color: #FFFFFF; }
-html:not(.dark) .bg-stone-800,
-html:not(.dark) .dark\:bg-stone-800\/60 { background-color: #F6EEDF; }
-html:not(.dark) .bg-white { background-color: #FFFFFF; }
+  --chart-grid: rgba(255, 255, 255, 0.08);
+  --chart-text: #8f8f8c;
 
-/* Bordas suaves e quentes */
-html:not(.dark) .border-stone-200 { border-color: #EFE7D7; }
-html:not(.dark) .border-stone-800,
-html:not(.dark) .dark\:border-stone-800 { border-color: #EFE7D7; }
-html:not(.dark) .border-stone-700,
-html:not(.dark) .border-stone-700\/50,
-html:not(.dark) .border-stone-800\/50 { border-color: #E7DCC8; }
+  --scrollbar-thumb: #3c3c3a;
+  --shadow-pop: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
 
-/* Texto (o app mistura stone e zinc) */
-html:not(.dark) .text-stone-100,
-html:not(.dark) .text-stone-200,
-html:not(.dark) .text-stone-300,
-html:not(.dark) .text-zinc-100,
-html:not(.dark) .text-zinc-200,
-html:not(.dark) .text-zinc-300 { color: #3A352E; }
-html:not(.dark) .text-stone-400,
-html:not(.dark) .text-zinc-400 { color: #6B645A; }
-html:not(.dark) .text-stone-500,
-html:not(.dark) .text-stone-600,
-html:not(.dark) .text-zinc-500,
-html:not(.dark) .text-zinc-600 { color: #8A8378; }
+/* ── Base ───────────────────────────────────────────────────────────── */
+@layer base {
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
 
-/* Acento âmbar (substitui o azul sky no tema claro) */
-html:not(.dark) .text-sky-400,
-html:not(.dark) .text-sky-500,
-html:not(.dark) .text-sky-600,
-html:not(.dark) .text-blue-400 { color: #B5740A; }
-html:not(.dark) .bg-sky-400,
-html:not(.dark) .bg-sky-500,
-html:not(.dark) .bg-sky-600 { background-color: #E89B16; }
-html:not(.dark) .bg-sky-500\/5  { background-color: rgba(232,155,22,0.06); }
-html:not(.dark) .bg-sky-500\/10 { background-color: rgba(232,155,22,0.10); }
-html:not(.dark) .bg-sky-500\/15,
-html:not(.dark) .bg-sky-500\/\[0\.15\] { background-color: rgba(232,155,22,0.15); }
-html:not(.dark) .bg-sky-500\/20 { background-color: rgba(232,155,22,0.20); }
-html:not(.dark) .bg-sky-500\/60 { background-color: rgba(232,155,22,0.55); }
-html:not(.dark) .bg-blue-500\/10 { background-color: rgba(232,155,22,0.10); }
-html:not(.dark) .bg-blue-500\/20 { background-color: rgba(232,155,22,0.20); }
-html:not(.dark) .border-sky-400,
-html:not(.dark) .border-sky-500 { border-color: #E89B16; }
-html:not(.dark) .border-sky-500\/20 { border-color: rgba(232,155,22,0.20); }
-html:not(.dark) .border-sky-500\/25 { border-color: rgba(232,155,22,0.25); }
-html:not(.dark) .border-sky-500\/30 { border-color: rgba(232,155,22,0.30); }
-html:not(.dark) .border-sky-500\/40 { border-color: rgba(232,155,22,0.40); }
-html:not(.dark) .ring-sky-500 { --tw-ring-color: #E89B16; }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+  *::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
-/* Bordas-laterais coloridas (categorias) — sky vira âmbar, demais preservadas */
-html:not(.dark) .border-l-sky-500     { border-left-color: #E89B16; }
-html:not(.dark) .border-l-blue-500    { border-left-color: #3b82f6; }
-html:not(.dark) .border-l-violet-500  { border-left-color: #8b5cf6; }
-html:not(.dark) .border-l-emerald-500 { border-left-color: #10b981; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--text); }
+}
 
-/* Hover sutil sobre superfície clara (sidebar usa bg-white/[0.05]) */
-html:not(.dark) .hover\:bg-white\/\[0\.05\]:hover,
-html:not(.dark) .hover\:bg-white\/5:hover { background-color: rgba(58,53,46,0.05); }
+/* ── Classes base de componente (para código novo) ──────────────────── */
+@layer components {
+  .card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+  }
+  .btn-accent {
+    background-color: var(--accent);
+    color: var(--on-accent);
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: background-color 150ms ease;
+  }
+  .btn-accent:hover { background-color: var(--accent-hover); }
+  .btn-ghost {
+    color: var(--text-muted);
+    border-radius: 0.5rem;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+  .btn-ghost:hover { color: var(--text); background-color: var(--hover); }
+  .input-base {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    color: var(--text);
+    transition: border-color 150ms ease;
+  }
+  .input-base:focus { outline: none; border-color: var(--accent); }
+  .banner {
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background-color: var(--surface-2);
+  }
+}
 
-/* Cantos mais arredondados — o toque "macio" do visual */
-html:not(.dark) .rounded-lg { border-radius: 14px; }
-html:not(.dark) .rounded-xl { border-radius: 18px; }
+/* ════════════════════════════════════════════════════════════════════
+   REMAPEAMENTO DAS UTILITIES LEGADAS → TOKENS
+   As páginas foram escritas com a paleta stone/zinc/sky (dark-first).
+   Aqui cada família vira um token, então TODAS as telas funcionam nos
+   dois temas sem reescrever classe por classe.
+   O prefixo :root dá especificidade (0,2,0) e, vindo depois das
+   utilities do Tailwind, vence empates de cascata.
+   ════════════════════════════════════════════════════════════════════ */
 
-/* Seleção e scrollbar quentes */
-html:not(.dark) ::selection { background: rgba(232,155,22,0.22); color: #3A352E; }
-html:not(.dark) * { scrollbar-color: #E7DCC8 #FBF5EB; }
-html:not(.dark) *::-webkit-scrollbar-track { background: #FBF5EB; }
-html:not(.dark) *::-webkit-scrollbar-thumb { background: #E7DCC8; }
-html:not(.dark) *::-webkit-scrollbar-thumb:hover { background: #D9CBB0; }
+/* ── Superfícies ── */
+:root .bg-stone-950 { background-color: var(--bg); }
+:root .bg-stone-900,
+:root .bg-white { background-color: var(--surface); }
+:root .bg-stone-800,
+:root .bg-stone-800\/60,
+:root .bg-stone-800\/50,
+:root .bg-stone-800\/40,
+:root .bg-stone-100,
+:root .bg-stone-50 { background-color: var(--surface-2); }
+:root .bg-stone-700,
+:root .bg-stone-700\/30,
+:root .bg-stone-200 { background-color: var(--surface-3); }
+
+/* ── Bordas hairline ── */
+:root .border-stone-800,
+:root .border-stone-800\/50,
+:root .border-stone-700,
+:root .border-stone-700\/50,
+:root .border-stone-700\/60,
+:root .border-stone-600,
+:root .border-stone-200,
+:root .border-stone-100,
+:root .border-white\/\[0\.08\],
+:root .border-white\/\[0\.04\] { border-color: var(--border); }
+:root .divide-stone-800 > :not([hidden]) ~ :not([hidden]) { border-color: var(--border); }
+
+/* ── Texto ── */
+:root .text-stone-100,
+:root .text-stone-200,
+:root .text-stone-800,
+:root .text-zinc-100,
+:root .text-zinc-200 { color: var(--text); }
+:root .text-stone-300,
+:root .text-zinc-300 { color: var(--text-secondary); }
+:root .text-stone-400,
+:root .text-stone-500,
+:root .text-zinc-400,
+:root .text-zinc-500 { color: var(--text-muted); }
+:root .text-stone-600,
+:root .text-zinc-600 { color: var(--text-faint); }
+:root .text-stone-700,
+:root .text-zinc-700 { color: var(--text-disabled); }
+/* tons quase-pretos: usados como texto sobre o acento/branco — fixos nos 2 temas */
+:root .text-stone-900,
+:root .text-stone-950 { color: #26211a; }
+:root .placeholder-stone-500::placeholder,
+:root .placeholder-stone-600::placeholder { color: var(--text-faint); }
+
+/* ── Acento (a família sky inteira vira o âmbar da marca) ── */
+:root .text-sky-300,
+:root .text-sky-400,
+:root .text-sky-500,
+:root .text-sky-600,
+:root .text-brand-400,
+:root .text-brand-500 { color: var(--accent-text); }
+
+:root .bg-sky-300,
+:root .bg-sky-400,
+:root .bg-sky-500,
+:root .bg-sky-600 { background-color: var(--accent); color: var(--on-accent); }
+
+:root .bg-sky-500\/5  { background-color: color-mix(in srgb, var(--accent) 6%, transparent); }
+:root .bg-sky-500\/\[0\.07\] { background-color: color-mix(in srgb, var(--accent) 7%, transparent); }
+:root .bg-sky-500\/10,
+:root .bg-blue-500\/10 { background-color: color-mix(in srgb, var(--accent) 10%, transparent); }
+:root .bg-sky-500\/15,
+:root .bg-sky-500\/\[0\.15\] { background-color: color-mix(in srgb, var(--accent) 14%, transparent); }
+:root .bg-sky-500\/20,
+:root .bg-blue-500\/20 { background-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+:root .bg-sky-500\/60 { background-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+
+:root .border-sky-400,
+:root .border-sky-500 { border-color: var(--accent); }
+:root .border-sky-500\/20 { border-color: color-mix(in srgb, var(--accent) 25%, transparent); }
+:root .border-sky-500\/25,
+:root .border-sky-500\/30 { border-color: color-mix(in srgb, var(--accent) 32%, transparent); }
+:root .border-sky-500\/40 { border-color: color-mix(in srgb, var(--accent) 42%, transparent); }
+:root .border-l-sky-500 { border-left-color: var(--accent); }
+
+:root .ring-sky-500 { --tw-ring-color: var(--accent); }
+:root .accent-sky-500 { accent-color: var(--accent); }
+
+/* ── Cores semânticas (legíveis nos 2 temas) ── */
+:root .text-red-300,
+:root .text-red-400,
+:root .text-red-500,
+:root .text-red-600,
+:root .text-rose-400 { color: var(--danger); }
+:root .text-emerald-300,
+:root .text-emerald-400,
+:root .text-emerald-500,
+:root .text-emerald-600,
+:root .text-green-400,
+:root .text-teal-400 { color: var(--success); }
+:root .text-amber-300,
+:root .text-amber-400,
+:root .text-amber-500,
+:root .text-amber-700,
+:root .text-yellow-400,
+:root .text-orange-400 { color: var(--warning); }
+:root .text-blue-400 { color: var(--info); }
+
+/* roxos/violetas um tom mais escuro no claro para leitura */
+html:not(.dark) .text-violet-400 { color: #7c3aed; }
+html:not(.dark) .text-purple-400 { color: #7e22ce; }
+
+/* ── Hover / focus (depois das bases para vencer empates) ── */
+:root .hover\:bg-stone-800\/30:hover,
+:root .hover\:bg-stone-800\/40:hover,
+:root .hover\:bg-stone-800:hover,
+:root .hover\:bg-stone-700:hover,
+:root .hover\:bg-stone-100:hover,
+:root .hover\:bg-stone-50:hover,
+:root .hover\:bg-white\/5:hover,
+:root .hover\:bg-white\/\[0\.05\]:hover { background-color: var(--hover); }
+
+:root .hover\:text-stone-100:hover,
+:root .hover\:text-stone-200:hover,
+:root .hover\:text-stone-300:hover,
+:root .hover\:text-stone-900:hover,
+:root .hover\:text-zinc-200:hover,
+:root .hover\:text-zinc-300:hover,
+:root .hover\:text-white:hover { color: var(--text); }
+:root .hover\:text-stone-400:hover,
+:root .hover\:text-stone-700:hover { color: var(--text-secondary); }
+:root .hover\:border-stone-600:hover,
+:root .hover\:border-stone-700:hover { border-color: var(--border-strong); }
+
+:root .hover\:text-sky-300:hover,
+:root .hover\:text-sky-400:hover { color: var(--accent-text); }
+:root .hover\:bg-sky-300:hover,
+:root .hover\:bg-sky-400:hover,
+:root .hover\:bg-sky-500:hover { background-color: var(--accent-hover); color: var(--on-accent); }
+:root .hover\:bg-sky-500\/10:hover { background-color: color-mix(in srgb, var(--accent) 10%, transparent); }
+:root .hover\:bg-sky-500\/25:hover { background-color: color-mix(in srgb, var(--accent) 25%, transparent); }
+
+:root .hover\:text-red-300:hover,
+:root .hover\:text-red-400:hover { color: var(--danger); }
+:root .hover\:text-emerald-300:hover,
+:root .hover\:text-emerald-400:hover,
+:root .hover\:text-emerald-600:hover { color: var(--success); }
+:root .hover\:text-amber-300:hover { color: var(--warning); }
+
+:root .focus\:ring-sky-500:focus { --tw-ring-color: var(--accent); }
+:root .focus\:border-sky-500:focus { border-color: var(--accent); }
+
+/* botões desabilitados que usavam cinza-escuro chumbado */
+:root .disabled\:bg-stone-800:disabled { background-color: var(--surface-2); }
+:root .disabled\:text-stone-500:disabled { color: var(--text-faint); }
+
+/* ── Sombras suaves (no máximo "pop" discreto em dropdown/tooltip) ── */
+:root .shadow-lg,
+:root .shadow-xl,
+:root .shadow-2xl { box-shadow: var(--shadow-pop); }
+
+/* ── Gráficos (recharts) — grid, eixos e cursor seguem o tema ── */
+.recharts-cartesian-grid line { stroke: var(--chart-grid); }
+.recharts-cartesian-axis line { stroke: var(--chart-grid); }
+.recharts-cartesian-axis-tick text { fill: var(--chart-text); }
+.recharts-tooltip-cursor { fill: var(--hover); stroke: var(--border); }
+.recharts-legend-item-text { color: var(--text-muted); }

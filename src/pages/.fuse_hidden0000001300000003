@@ -12,7 +12,6 @@ import {
 import { api } from '../api'
 import Header from '../components/Header'
 import ProdutosTable from '../components/resultado/ProdutosTable'
-import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 import { useAuth } from '../context/AuthContext'
 
 function formatBRL(v) {
@@ -25,12 +24,12 @@ function formatPct(v) {
   return `${v.toFixed(2)}%`
 }
 
-// Tons translúcidos para o "chip" do ícone de cada KPI — funcionam nos 2 temas
+// Tons pastel para o "chip" do ícone de cada KPI (visual creme/âmbar)
 const TINTS = {
-  amber:  { bg: 'rgba(232,155,22,0.14)', fg: '#E89B16' },
-  mint:   { bg: 'rgba(63,174,126,0.14)', fg: '#3FAE7E' },
-  lilac:  { bg: 'rgba(139,92,246,0.14)', fg: '#8b5cf6' },
-  sky:    { bg: 'rgba(59,130,246,0.14)', fg: '#3b82f6' },
+  amber:  { bg: '#FDEFD2', fg: '#B5740A' },
+  mint:   { bg: '#D6EFE2', fg: '#1f7a59' },
+  lilac:  { bg: '#E7E1FB', fg: '#5b4bbd' },
+  sky:    { bg: '#DCEBFB', fg: '#2f72c4' },
 }
 
 function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Icon, tint }) {
@@ -41,14 +40,14 @@ function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Ico
   return (
     <div
       className={`rounded-2xl p-5 flex flex-col gap-2 border ${filled ? 'border-transparent' : 'bg-white border-stone-200'}`}
-      style={filled ? { backgroundColor: '#F6B73C', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : undefined}
+      style={filled ? { backgroundColor: '#F6B73C', boxShadow: '0 14px 30px rgba(232,155,22,0.25)' } : undefined}
     >
       {Icon && (
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center mb-1"
-          style={filled ? { backgroundColor: 'rgba(255,255,255,0.3)' } : { backgroundColor: t?.bg || 'rgba(232,155,22,0.14)' }}
+          style={filled ? { backgroundColor: 'rgba(255,255,255,0.3)' } : { backgroundColor: t?.bg || '#F6EEDF' }}
         >
-          <Icon size={18} color={filled ? '#fff' : (t?.fg || '#E89B16')} strokeWidth={2.2} />
+          <Icon size={18} color={filled ? '#fff' : (t?.fg || '#B5740A')} strokeWidth={2.2} />
         </div>
       )}
       <div className="flex items-center gap-1.5">
@@ -110,12 +109,12 @@ function DonutABC({ abc }) {
   return (
     <div className="flex items-center gap-5">
       <svg width="120" height="120" viewBox="0 0 42 42" className="shrink-0">
-        <circle cx="21" cy="21" r="15.9" fill="none" style={{ stroke: 'var(--surface-3)' }} strokeWidth="5.5" />
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#F0E7D6" strokeWidth="5.5" />
         <circle cx="21" cy="21" r="15.9" fill="none" stroke="#3FAE7E" strokeWidth="5.5" strokeLinecap="round" strokeDasharray={a.dasharray} strokeDashoffset={a.dashoffset} />
         <circle cx="21" cy="21" r="15.9" fill="none" stroke="#F6B73C" strokeWidth="5.5" strokeLinecap="round" strokeDasharray={b.dasharray} strokeDashoffset={b.dashoffset} />
         <circle cx="21" cy="21" r="15.9" fill="none" stroke="#E89B6B" strokeWidth="5.5" strokeLinecap="round" strokeDasharray={d.dasharray} strokeDashoffset={d.dashoffset} />
-        <text x="21" y="20.5" textAnchor="middle" fontSize="6.5" fontWeight="700" style={{ fill: 'var(--text)' }}>{abc.n}</text>
-        <text x="21" y="26" textAnchor="middle" fontSize="3.2" fontWeight="700" style={{ fill: 'var(--text-muted)' }}>SKUs</text>
+        <text x="21" y="20.5" textAnchor="middle" fontSize="6.5" fontWeight="700" fill="#3A352E">{abc.n}</text>
+        <text x="21" y="26" textAnchor="middle" fontSize="3.2" fontWeight="700" fill="#8A8378">SKUs</text>
       </svg>
       <div className="flex flex-col gap-2.5 flex-1 text-sm">
         <div className="flex items-center gap-2 font-semibold"><i className="w-2.5 h-2.5 rounded" style={{ background: '#3FAE7E' }} />Classe A<span className="ml-auto text-stone-500">{abc.A.pct}%</span></div>
@@ -130,8 +129,8 @@ function DonutABC({ abc }) {
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-stone-900 border border-stone-700 rounded-xl p-3 text-xs shadow-xl">
-      <p className="text-stone-500 mb-2 font-medium">{label}</p>
+    <div className="bg-[#111113] border border-white/[0.08] rounded-xl p-3 text-xs shadow-2xl">
+      <p className="text-zinc-500 mb-2 font-medium">{label}</p>
       {payload.map(entry => (
         <p key={entry.name} style={{ color: entry.color }} className="flex justify-between gap-4">
           <span>{entry.name}</span>
@@ -196,8 +195,6 @@ export default function Dashboard() {
             {error.status === 401 ? 'Sessão expirada — faça login novamente.' : error.message}
           </div>
         )}
-
-        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
 
         {/* ── Alert: products without cost ── */}
         {semCusto.length > 0 && (
@@ -308,9 +305,9 @@ export default function Dashboard() {
         {/* ── Gráfico de receitas + Curva ABC lado a lado ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 items-start">
 
-        <div className="bg-white border border-stone-200 rounded-xl p-5">
+        <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm font-semibold text-stone-800">Resumo de Receitas</h2>
+            <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Resumo de Receitas</h2>
             {data?.periodo && (
               <span className="text-xs text-stone-500">
                 {data.periodo.inicio} — {data.periodo.fim}
@@ -381,9 +378,9 @@ export default function Dashboard() {
 
         {/* ── Coluna lateral: Curva ABC + Estúdio IA ── */}
         <div className="flex flex-col gap-4">
-          <div className="bg-white border border-stone-200 rounded-xl p-5">
+          <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-stone-800">Curva ABC</h2>
+              <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Curva ABC</h2>
               <Link to="/curva-abc" className="text-xs text-stone-500 hover:text-sky-400 transition-colors">Detalhes →</Link>
             </div>
             {abc.total > 0 ? (
@@ -397,7 +394,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">ROI</p>
-                    <p className="text-lg font-bold" style={{ color: 'var(--success)' }}>{k ? formatPct(k.roi) : '…'}</p>
+                    <p className="text-lg font-bold" style={{ color: '#1f7a59' }}>{k ? formatPct(k.roi) : '…'}</p>
                   </div>
                 </div>
               </>
@@ -418,7 +415,7 @@ export default function Dashboard() {
             <p className="text-sm" style={{ color: '#ece8ff' }}>
               Gere persona, pesquisa de mercado e capas a partir dos produtos mais vendidos.
             </p>
-            <span className="mt-1 inline-flex items-center gap-2 bg-[#ffffff] text-violet-700 font-semibold text-sm rounded-xl px-4 py-2 w-fit">
+            <span className="mt-1 inline-flex items-center gap-2 bg-white text-violet-700 font-semibold text-sm rounded-xl px-4 py-2 w-fit">
               ✨ Analisar um produto
             </span>
           </Link>
@@ -429,7 +426,7 @@ export default function Dashboard() {
         {/* ── Top 15 produtos vendidos ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-stone-800">Top 15 produtos vendidos</h2>
+            <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Top 15 produtos vendidos</h2>
             <Link
               to="/custos-produtos"
               className="text-xs text-stone-500 hover:text-sky-400 transition-colors"
@@ -439,14 +436,14 @@ export default function Dashboard() {
           </div>
           {data?.top_produtos && <ProdutosTable produtos={data.top_produtos} />}
           {isLoading && (
-            <div className="bg-white border border-stone-100 rounded-2xl p-8 text-center text-stone-400 text-sm">
+            <div className="bg-white dark:bg-[#161618] border border-stone-100 dark:border-white/[0.04] rounded-2xl p-8 text-center text-stone-400 dark:text-zinc-600 text-sm">
               Carregando produtos…
             </div>
           )}
         </div>
 
         {data?.atualizado_em && (
-          <p className="text-xs text-stone-400 pb-2">Atualizado: {data.atualizado_em}</p>
+          <p className="text-xs text-stone-400 dark:text-zinc-700 pb-2">Atualizado: {data.atualizado_em}</p>
         )}
       </main>
     </div>

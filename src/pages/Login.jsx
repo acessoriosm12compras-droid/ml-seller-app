@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Logo from '../components/Logo'
 
 export default function Login() {
   const { login, loginWithGoogle } = useAuth()
@@ -42,8 +43,8 @@ export default function Login() {
 
         {/* Logo e título */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-stone-900 border border-stone-800 mb-4">
-            <span className="text-sky-400 font-bold text-2xl">SM</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <Logo size={56} />
           </div>
           <h1 className="text-stone-800 font-bold text-2xl mb-1">Seller ML</h1>
           <p className="text-stone-500 text-sm">Gestão de Vendas — Mercado Livre</p>
@@ -56,7 +57,7 @@ export default function Login() {
             type="button"
             onClick={handleGoogle}
             disabled={googleLoading || loading}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-stone-100 disabled:opacity-60 text-stone-900 font-semibold py-2.5 rounded-lg text-sm transition-colors"
+            className="w-full flex items-center justify-center gap-3 bg-[#ffffff] hover:bg-[#f1f1ef] disabled:opacity-60 text-[#26211a] font-semibold py-2.5 rounded-lg text-sm border border-line transition-colors"
           >
             {googleLoading ? (
               <span>Redirecionando...</span>

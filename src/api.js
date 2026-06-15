@@ -123,28 +123,36 @@ export const api = {
 
   fechamento: {
     compras: {
-      list: (mes_ano) => request(`/api/fechamento/compras?mes_ano=${mes_ano}`),
-      create: (data) => request('/api/fechamento/compras', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id, data) => request(`/api/fechamento/compras/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-      delete: (id) => request(`/api/fechamento/compras/${id}`, { method: 'DELETE' }),
+      list: (params) => request(`/api/fechamento/compras?${new URLSearchParams(params)}`),
+      create: (data, params = {}) => request(`/api/fechamento/compras?${new URLSearchParams(params)}`, { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data, params = {}) => request(`/api/fechamento/compras/${id}?${new URLSearchParams(params)}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id, params = {}) => request(`/api/fechamento/compras/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
     },
     fretes: {
-      list: (mes_ano) => request(`/api/fechamento/fretes?mes_ano=${mes_ano}`),
-      create: (data) => request('/api/fechamento/fretes', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id, data) => request(`/api/fechamento/fretes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-      delete: (id) => request(`/api/fechamento/fretes/${id}`, { method: 'DELETE' }),
+      list: (params) => request(`/api/fechamento/fretes?${new URLSearchParams(params)}`),
+      create: (data, params = {}) => request(`/api/fechamento/fretes?${new URLSearchParams(params)}`, { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data, params = {}) => request(`/api/fechamento/fretes/${id}?${new URLSearchParams(params)}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id, params = {}) => request(`/api/fechamento/fretes/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
     },
     montagem: {
-      list: (mes_ano) => request(`/api/fechamento/montagem?mes_ano=${mes_ano}`),
-      create: (data) => request('/api/fechamento/montagem', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id, data) => request(`/api/fechamento/montagem/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-      delete: (id) => request(`/api/fechamento/montagem/${id}`, { method: 'DELETE' }),
+      list: (params) => request(`/api/fechamento/montagem?${new URLSearchParams(params)}`),
+      create: (data, params = {}) => request(`/api/fechamento/montagem?${new URLSearchParams(params)}`, { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data, params = {}) => request(`/api/fechamento/montagem/${id}?${new URLSearchParams(params)}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id, params = {}) => request(`/api/fechamento/montagem/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
     },
     despesas: {
-      list: (mes_ano) => request(`/api/fechamento/despesas?mes_ano=${mes_ano}`),
-      create: (data) => request('/api/fechamento/despesas', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id, data) => request(`/api/fechamento/despesas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-      delete: (id) => request(`/api/fechamento/despesas/${id}`, { method: 'DELETE' }),
+      list: (params) => request(`/api/fechamento/despesas?${new URLSearchParams(params)}`),
+      create: (data, params = {}) => request(`/api/fechamento/despesas?${new URLSearchParams(params)}`, { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data, params = {}) => request(`/api/fechamento/despesas/${id}?${new URLSearchParams(params)}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id, params = {}) => request(`/api/fechamento/despesas/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
+    },
+    contaSimples: {
+      status: () => request('/api/fechamento/contasimples/status'),
+      sync: (mes_ano, conta_ml) =>
+        request(`/api/fechamento/contasimples/sync${conta_ml ? `?conta_ml=${encodeURIComponent(conta_ml)}` : ''}`, {
+          method: 'POST',
+          body: JSON.stringify({ mes_ano }),
+        }),
     },
   },
 
@@ -158,7 +166,15 @@ export const api = {
   },
 
   estudio: {
+    buscar: (params) => request(`/api/estudio/buscar?${new URLSearchParams(params)}`),
     historico: (limit = 20) => request(`/api/estudio/historico?limit=${limit}`),
     get: (id) => request(`/api/estudio/${id}`),
+    gerarConteudo: (data) =>
+      request('/api/estudio/conteudo', { method: 'POST', body: JSON.stringify(data) }),
+    salvarConteudo: (id, conteudo, bloco) =>
+      request(`/api/estudio/${id}/conteudo`, {
+        method: 'PATCH',
+        body: JSON.stringify(bloco ? { bloco, conteudo } : { conteudo }),
+      }),
   },
 }

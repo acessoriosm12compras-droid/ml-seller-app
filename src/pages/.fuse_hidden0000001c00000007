@@ -6,7 +6,6 @@ import {
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
-import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
@@ -43,7 +42,6 @@ export default function ProjecaoVendas() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Projeção de Vendas" onRefresh={refetch} isLoading={isLoading} />
-      <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-6">
         {/* Controls row */}
@@ -144,8 +142,8 @@ export default function ProjecaoVendas() {
             </div>
 
             {/* Bar chart */}
-            <div className="bg-white border border-stone-200 rounded-xl p-5">
-              <h2 className="text-sm font-medium text-stone-600 mb-4">Histórico Mensal</h2>
+            <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
+              <h2 className="text-sm font-medium text-stone-600 dark:text-stone-400 mb-4">Histórico Mensal</h2>
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={data.historico_mensal} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
@@ -157,8 +155,8 @@ export default function ProjecaoVendas() {
                   />
                   <Tooltip
                     formatter={(v) => [formatBRL(v)]}
-                    contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, boxShadow: 'var(--shadow-pop)' }}
-                    labelStyle={{ color: 'var(--text-muted)' }}
+                    contentStyle={{ background: '#1c1917', border: '1px solid #44403c', borderRadius: 8 }}
+                    labelStyle={{ color: '#a8a29e' }}
                   />
                   <Legend />
                   <Bar dataKey="valor" name="Realizado" fill="#10b981" />

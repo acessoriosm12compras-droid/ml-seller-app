@@ -8,7 +8,6 @@ import {
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
-import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   if (v === null || v === undefined) return '—'
@@ -37,9 +36,9 @@ function CustomTooltip({ active, payload, label, isMoney = true }) {
   )
 }
 
-function GsKpiCard({ label, value, borderColor = 'border-stone-700', valueColor = 'text-stone-800' }) {
+function GsKpiCard({ label, value, borderColor = 'border-stone-700', valueColor = 'text-stone-800 dark:text-stone-100' }) {
   return (
-    <div className={`bg-white border border-stone-200 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
+    <div className={`bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5 border-l-4 ${borderColor} flex flex-col gap-1`}>
       <p className="text-xs text-stone-500 font-medium">{label}</p>
       <p className={`text-2xl font-bold ${valueColor}`}>{value}</p>
     </div>
@@ -88,7 +87,6 @@ export default function Graficos() {
       <Header title="Gráficos" onRefresh={refetch} isLoading={isLoading} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-6 overflow-auto">
-        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
         {error && (
           <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4">
             {error.message}
@@ -103,13 +101,13 @@ export default function Graficos() {
             label="Lucro Bruto"
             value={t ? formatBRL(t.lucro_bruto) : '…'}
             borderColor="border-violet-500"
-            valueColor={t ? (t.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500') : 'text-stone-800'}
+            valueColor={t ? (t.lucro_bruto >= 0 ? 'text-emerald-500' : 'text-red-500') : 'text-stone-800 dark:text-stone-100'}
           />
           <GsKpiCard label="Unidades Vendidas" value={t ? t.unidades.toLocaleString('pt-BR') : '…'} borderColor="border-emerald-500" />
         </div>
 
         {/* Chart tabs */}
-        <div className="bg-white border border-stone-200 rounded-xl p-5">
+        <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-5">
           <div className="flex items-center justify-between mb-5">
             <div className="flex gap-1">
               {TABS.map(tab => (
@@ -119,7 +117,7 @@ export default function Graficos() {
                   className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                     activeTab === tab.key
                       ? 'bg-sky-500/20 text-sky-500 font-medium'
-                      : 'text-stone-500 hover:text-stone-700'
+                      : 'text-stone-500 hover:text-stone-700 dark:hover:text-stone-300'
                   }`}
                 >
                   {tab.label}
@@ -225,14 +223,14 @@ export default function Graficos() {
         {t && (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
             {[
-              { label: 'Custo Produtos', value: formatBRL(t.custo_produtos), color: 'text-stone-700' },
-              { label: 'Valor ADS', value: formatBRL(t.valor_ads), color: 'text-stone-700' },
+              { label: 'Custo Produtos', value: formatBRL(t.custo_produtos), color: 'text-stone-700 dark:text-stone-300' },
+              { label: 'Valor ADS', value: formatBRL(t.valor_ads), color: 'text-stone-700 dark:text-stone-300' },
               { label: 'Lucro pós ADS', value: formatBRL(t.lucro_pos_ads), color: t.lucro_pos_ads >= 0 ? 'text-emerald-500' : 'text-red-500' },
-              { label: 'Nº de Vendas', value: t.n_vendas.toLocaleString('pt-BR'), color: 'text-stone-700' },
-              { label: 'Unidades', value: t.unidades.toLocaleString('pt-BR'), color: 'text-stone-700' },
+              { label: 'Nº de Vendas', value: t.n_vendas.toLocaleString('pt-BR'), color: 'text-stone-700 dark:text-stone-300' },
+              { label: 'Unidades', value: t.unidades.toLocaleString('pt-BR'), color: 'text-stone-700 dark:text-stone-300' },
               { label: 'ROI Médio', value: formatPct(t.roi_medio), color: t.roi_medio >= 0 ? 'text-emerald-500' : 'text-red-500' },
             ].map(k => (
-              <div key={k.label} className="bg-white border border-stone-200 rounded-xl px-4 py-3 flex flex-col gap-0.5">
+              <div key={k.label} className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
                 <p className="text-xs text-stone-500">{k.label}</p>
                 <p className={`text-base font-semibold ${k.color}`}>{k.value}</p>
               </div>

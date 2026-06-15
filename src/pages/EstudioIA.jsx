@@ -1,27 +1,105 @@
 import { useState, useRef, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown'
 import {
-  Search, Sparkles, Copy, Check, RefreshCw, Loader2,
-  ExternalLink, Download, Package, SlidersHorizontal, Zap, Clock,
+  Search, Sparkles, Copy, Check, Loader2, ExternalLink, Zap, Clock,
+  TrendingUp, Trophy, CheckCircle2, ChevronRight, ArrowLeft, FileSearch,
+  Wand2, X, Save, Package, Eye, Star,
 } from 'lucide-react'
 import Header from '../components/Header'
-import { useAuth } from '../context/AuthContext'
-import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-
-const TIPOS = [
-  { id: 'persona',  label: '🧠 Persona Cazonato',   desc: 'Quem compra + oferta direcionada' },
-  { id: 'mercado',  label: '🔍 Pesquisa de Mercado', desc: 'Concorrência, SEO e copy' },
-  { id: 'imagem',   label: '🖼️ Prompts de Imagem',   desc: '6 prompts para IA (FLUX, Midjourney…)' },
-  { id: 'video',    label: '🎬 Prompts de Vídeo',    desc: 'Kling AI + roteiro Reels/TikTok' },
+// Ferramentas de IA — blocos da oferta direcionada (metodologia de persona).
+// Cada bloco gera UMA coisa por vez; 'persona' é o bloco principal e guia os demais.
+const BLOCOS_IA = [
+  { id: 'persona',        icone: '🧑', nome: 'Persona do Produto', desc: 'Descubra quem é o público que mais compra este produto — com evidências, dores e quebras de objeção.', principal: true },
+  { id: 'palavras_chave', icone: '🔑', nome: 'Palavras-chave',            desc: 'Termos de busca e título na linguagem real do público, do genérico ao nichado.' },
+  { id: 'titulos',        icone: '✍️', nome: 'Títulos que filtram',       desc: '3 opções de até 60 caracteres + 1 título completo de até 120.', editavel: true },
+  { id: 'descricao',      icone: '💬', nome: 'Descrição que conversa',    desc: '2 versões: dor → solução no mundo da persona → quebra de objeção.', editavel: true },
+  { id: 'fotos',          icone: '🖼️', nome: 'Fotos que espelham',        desc: 'Briefing de capa ambientada + 3 prompts de imagem prontos.' },
+  { id: 'kits',           icone: '📦', nome: 'Kits direcionados',         desc: 'Kits que resolvem o problema completo da persona.' },
 ]
 
+const LIMITE_TITULO_CURTO = 60
+const LIMITE_TITULO_COMPLETO = 120
+
+function normalizarBlocoLocal(id, c) {
+  const o = c && typeof c === 'object' ? c : {}
+  switch (id) {
+    case 'persona': return {
+      resumo: o.resumo || '',
+      justificativa: o.justificativa || '',
+      secundarias: Array.isArray(o.secundarias) ? o.secundarias.map(String) : [],
+      dores_objecoes: Array.isArray(o.dores_objecoes)
+        ? o.dores_objecoes.filter(d => d && typeof d === 'object') : [],
+    }
+    case 'palavras_chave': return { termos: Array.isArray(o.termos) ? o.termos.map(String) : [] }
+    case 'titulos': return {
+      opcoes: Array.isArray(o.opcoes) ? o.opcoes.map(String) : [],
+      completo: o.completo || '',
+    }
+    case 'descricao': return { versoes: Array.isArray(o.versoes) ? o.versoes.map(String) : [] }
+    case 'fotos': return {
+      briefing_capa: o.briefing_capa || '',
+      variacoes_cenario: Array.isArray(o.variacoes_cenario) ? o.variacoes_cenario.map(String) : [],
+      prompts: Array.isArray(o.prompts) ? o.prompts.map(String) : [],
+    }
+    case 'kits': return {
+      kits: Array.isArray(o.kits) ? o.kits.filter(k => k && typeof k === 'object') : [],
+    }
+    default: return o
+  }
+}
+
+// Texto plano de um bloco (para o botão Copiar)
+function blocoParaTexto(id, c) {
+  if (!c) return ''
+  switch (id) {
+    case 'persona': {
+      const linhas = []
+      if (c.resumo) linhas.push(`Persona majoritária: ${c.resumo}`)
+      if (c.justificativa) linhas.push(`Justificativa: ${c.justificativa}`)
+      if (c.secundarias?.length) linhas.push(`Personas secundárias:\n${c.secundarias.map(s => `- ${s}`).join('\n')}`)
+      if (c.dores_objecoes?.length) linhas.push(`Dores e quebras de objeção:\n${c.dores_objecoes.map(d => `- ${d.dor} → ${d.quebra || ''}`).join('\n')}`)
+      return linhas.join('\n\n')
+    }
+    case 'palavras_chave': return (c.termos || []).join(', ')
+    case 'titulos': return [...(c.opcoes || []), c.completo].filter(Boolean).join('\n')
+    case 'descricao': return (c.versoes || []).join('\n\n---\n\n')
+    case 'fotos': {
+      const linhas = []
+      if (c.briefing_capa) linhas.push(`Briefing da capa: ${c.briefing_capa}`)
+      if (c.variacoes_cenario?.length) linhas.push(`Variações de cenário:\n${c.variacoes_cenario.map(v => `- ${v}`).join('\n')}`)
+      if (c.prompts?.length) linhas.push(c.prompts.map((p, i) => `Prompt ${i + 1}:\n${p}`).join('\n\n'))
+      return linhas.join('\n\n')
+    }
+    case 'kits': return (c.kits || []).map(k =>
+      `${k.nome}\n- Produtos: ${(k.produtos || []).join(', ')}${k.porque ? `\n- Por quê: ${k.porque}` : ''}`
+    ).join('\n\n')
+    default: return JSON.stringify(c, null, 2)
+  }
+}
+
 function vendasPorDia(p) {
+  // Backend já calcula a média (vendas_dia_media); cálculo local é fallback
+  // para análises antigas sem o campo.
+  if (p.vendas_dia_media !== null && p.vendas_dia_media !== undefined) return p.vendas_dia_media
   if (!p.sold_quantity || !p.date_created) return null
   const dias = Math.max(1, (Date.now() - new Date(p.date_created)) / 86_400_000)
   return Math.round((p.sold_quantity / dias) * 10) / 10
+}
+
+function diasNoAr(p) {
+  if (p.dias_no_ar !== null && p.dias_no_ar !== undefined) return p.dias_no_ar
+  if (!p.date_created) return null
+  const d = new Date(p.date_created)
+  if (isNaN(d)) return null
+  return Math.max(0, Math.floor((Date.now() - d) / 86_400_000))
+}
+
+function fmtDiaMes(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d)) return ''
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
 function fmtVpd(v) {
@@ -40,183 +118,63 @@ function fmtNum(v) {
   return Number(v).toLocaleString('pt-BR')
 }
 
-function splitResultado(texto) {
-  if (!texto) return { persona: '', mercado: '', imagem: '', video: '' }
-
-  const HEADERS = {
-    persona: '# 🧠 PERSONA CAZONATO',
-    mercado: '# 🔍 PESQUISA DE MERCADO',
-    imagem:  '# 🖼️ PROMPTS DE IMAGEM',
-    video:   '# 🎬 PROMPTS DE VÍDEO',
-  }
-
-  const cortes = Object.entries(HEADERS)
-    .map(([chave, header]) => ({ chave, idx: texto.indexOf(header) }))
-    .filter(c => c.idx !== -1)
-    .sort((a, b) => a.idx - b.idx)
-
-  if (cortes.length === 0) {
-    return { persona: texto, mercado: '', imagem: '', video: '' }
-  }
-
-  const partes = {}
-  cortes.forEach(({ chave, idx }, i) => {
-    const fim = cortes[i + 1]?.idx ?? texto.length
-    partes[chave] = texto.slice(idx, fim).trim()
-  })
-
-  return {
-    persona: partes.persona || '',
-    mercado: partes.mercado || '',
-    imagem:  partes.imagem  || '',
-    video:   partes.video   || '',
-  }
+function fmtDataHist(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d)) return ''
+  const data = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/\./g, '')
+  const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return `${data} · ${hora}`
 }
 
-function mdParaHtml(md) {
-  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const inline = s =>
-    esc(s)
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g,   '<em>$1</em>')
-      .replace(/`(.+?)`/g,     '<code>$1</code>')
+function fmtHoje() {
+  const s = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
-  const lines = md.split('\n')
-  const out = []
-  let inUl = false, inOl = false, inPre = false
-  let paraBuffer = []
+// Chave estável de um produto no grid (id do anúncio; índice como fallback)
+function chaveProduto(p, i) {
+  return String(p?.id ?? `idx_${i}`)
+}
 
-  const flushPara = () => {
-    if (paraBuffer.length) { out.push(`<p>${paraBuffer.join('<br>')}</p>`); paraBuffer = [] }
-  }
-
-  for (const raw of lines) {
-    const line = raw.trimEnd()
-    if (line.startsWith('```')) {
-      flushPara()
-      if (inUl) { out.push('</ul>'); inUl = false }
-      if (inOl) { out.push('</ol>'); inOl = false }
-      inPre ? (out.push('</code></pre>'), inPre = false) : (out.push('<pre><code>'), inPre = true)
-      continue
-    }
-    if (inPre) { out.push(esc(line)); continue }
-    if (/^#{1,6} /.test(line)) {
-      flushPara()
-      if (inUl) { out.push('</ul>'); inUl = false }
-      if (inOl) { out.push('</ol>'); inOl = false }
-      const lvl = Math.min(line.match(/^(#+)/)[1].length, 6)
-      out.push(`<h${lvl}>${inline(line.replace(/^#+\s/, ''))}</h${lvl}>`)
-      continue
-    }
-    if (/^[-*] /.test(line)) {
-      flushPara()
-      if (inOl) { out.push('</ol>'); inOl = false }
-      if (!inUl) { out.push('<ul>'); inUl = true }
-      out.push(`<li>${inline(line.slice(2))}</li>`)
-      continue
-    }
-    if (/^\d+\. /.test(line)) {
-      flushPara()
-      if (inUl) { out.push('</ul>'); inUl = false }
-      if (!inOl) { out.push('<ol>'); inOl = true }
-      out.push(`<li>${inline(line.replace(/^\d+\.\s/, ''))}</li>`)
-      continue
-    }
-    if (/^---+$/.test(line)) {
-      flushPara()
-      if (inUl) { out.push('</ul>'); inUl = false }
-      if (inOl) { out.push('</ol>'); inOl = false }
-      out.push('<hr>'); continue
-    }
-    if (line === '') {
-      flushPara()
-      if (inUl) { out.push('</ul>'); inUl = false }
-      if (inOl) { out.push('</ol>'); inOl = false }
-      continue
-    }
-    if (inUl) { out.push('</ul>'); inUl = false }
-    if (inOl) { out.push('</ol>'); inOl = false }
-    paraBuffer.push(inline(line))
-  }
-  flushPara()
-  if (inUl) out.push('</ul>')
-  if (inOl) out.push('</ol>')
-  if (inPre) out.push('</code></pre>')
-  return out.join('\n')
+// Estatísticas de preço dos produtos de uma análise
+function statsPreco(produtos) {
+  const precos = (produtos || []).map(p => p.price).filter(v => v !== null && v !== undefined)
+  if (!precos.length) return null
+  const min = Math.min(...precos)
+  const max = Math.max(...precos)
+  const media = precos.reduce((a, b) => a + b, 0) / precos.length
+  return { min, max, media }
 }
 
 export default function EstudioIA() {
-  const { getToken, activeAccount } = useAuth()
-
-  // ── Modo de entrada ───────────────────────────────────────────────
-  const [modoEntrada, setModoEntrada] = useState('pesquisa') // 'pesquisa' | 'meus-produtos'
-
-  // ── Pesquisa ML ───────────────────────────────────────────────────
+  // ── Busca (termo OU link de anúncio, mesmo input) ─────────────────
   const [termo, setTermo]         = useState('')
   const [buscando, setBuscando]   = useState(false)
-  const [produtos, setProdutos]   = useState([])
-  const [mercado, setMercado]     = useState(null)
   const [erroBusca, setErroBusca] = useState('')
-  const [selecionados, setSelecionados] = useState(new Set())
+  const [feedback, setFeedback]   = useState(null)   // { termo, n, estudoId }
+  const [mercadoAtual, setMercadoAtual] = useState(null)
 
-  // ── Modo manual (colar links) ─────────────────────────────────────
-  const [modoManual, setModoManual] = useState(false)
-  const [linksTexto, setLinksTexto] = useState('')
-  const [buscandoLinks, setBuscandoLinks] = useState(false)
-
-  // ── Filtros ───────────────────────────────────────────────────────
-  const [filtroAberto, setFiltroAberto] = useState(false)
-  const [filtros, setFiltros] = useState({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '', dataDe: '', dataAte: '' })
-
-  const setFiltro = (key, val) => setFiltros(prev => ({ ...prev, [key]: val }))
-
-  // ── Meus Produtos ─────────────────────────────────────────────────
-  const [buscaMeus, setBuscaMeus] = useState('')
-  const [meusSel, setMeusSel]     = useState(new Set())
-
-  const { data: dadosCustos, isLoading: carregandoMeus } = useQuery({
-    queryKey: ['custos', activeAccount],
-    queryFn: () => api.custos.list({ conta_ml: activeAccount }),
-    enabled: !!activeAccount && modoEntrada === 'meus-produtos',
-  })
-  const meusProdutos = (dadosCustos?.produtos ?? []).filter(p =>
-    p.titulo?.toLowerCase().includes(buscaMeus.toLowerCase())
-  )
-
-  // ── Tipos de geração (multi-select) ──────────────────────────────
-  const [tiposSel, setTiposSel] = useState(new Set(['persona']))
-
-  // ── Resultado ─────────────────────────────────────────────────────
-  const [gerando, setGerando]     = useState(false)
-  const [resultado, setResultado] = useState('')
-  const [erroGerar, setErroGerar] = useState('')
-  const [tabAtiva, setTabAtiva]   = useState('persona')
-  const [copiado, setCopiado]     = useState('')
-  const [retryIn, setRetryIn]     = useState(0)
-  const [estudoId, setEstudoId]   = useState(null)
-
-  // ── Histórico de estudos ──────────────────────────────────────────
+  // ── Histórico (lista principal da página) ─────────────────────────
   const [historico, setHistorico]   = useState([])
-  const [histAberto, setHistAberto] = useState(false)
+  const [buscaHist, setBuscaHist]   = useState('')
   const [carregandoHist, setCarregandoHist] = useState(false)
 
-  const abortRef  = useRef(null)
-  const retryTimer = useRef(null)
-
-  // Cleanup ao desmontar: cancela fetch e timer de retry
-  useEffect(() => {
-    return () => {
-      if (abortRef.current) abortRef.current.abort()
-      if (retryTimer.current) clearInterval(retryTimer.current)
-    }
-  }, [])
-
-  // Seleciona todos ao carregar produtos
-  useEffect(() => {
-    if (produtos.length > 0) {
-      setSelecionados(new Set(produtos.map(p => p.id)))
-    }
-  }, [produtos])
+  // ── Workspace da análise (substitui a lista quando aberto) ────────
+  const [workspace, setWorkspace] = useState(null)
+  // workspace: { estudoId, termo, criadoEm, produtos, mercado, carregando, erro }
+  const [selecionados, setSelecionados] = useState(new Set())  // chaves dos anúncios de referência
+  const [blocos, setBlocos] = useState({})                 // { [blocoId]: conteudo }
+  const [blocosOriginais, setBlocosOriginais] = useState({})
+  const [blocosAbertos, setBlocosAbertos] = useState(new Set())
+  const [gerandoBloco, setGerandoBloco] = useState(null)   // UM gerador por vez
+  const [errosBloco, setErrosBloco] = useState({})
+  const [salvandoBloco, setSalvandoBloco] = useState(null)
+  const [salvoBloco, setSalvoBloco] = useState('')
+  const [copiado, setCopiado] = useState('')
+  const workspaceRef = useRef(null)
 
   // Carrega o histórico de estudos ao montar
   useEffect(() => {
@@ -227,11 +185,7 @@ export default function EstudioIA() {
   async function carregarHistorico() {
     setCarregandoHist(true)
     try {
-      const res = await fetch(`${BASE}/api/estudio/historico?limit=20`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      })
-      if (!res.ok) return
-      const data = await res.json()
+      const data = await api.estudio.historico(100)
       setHistorico(data.estudos || [])
     } catch {
       /* histórico é best-effort — silencioso */
@@ -240,95 +194,27 @@ export default function EstudioIA() {
     }
   }
 
-  async function abrirEstudo(id) {
-    try {
-      const res = await fetch(`${BASE}/api/estudio/${id}`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      })
-      if (!res.ok) return
-      const { estudo } = await res.json()
-      if (estudo?.conteudo_md) {
-        setResultado(estudo.conteudo_md)
-        setEstudoId(estudo.id)
-        setErroGerar('')
-        const primeiroTipo = TIPOS.find(t => (estudo.tipos || []).includes(t.id))
-        if (primeiroTipo) setTabAtiva(primeiroTipo.id)
-        setHistAberto(false)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }
-    } catch {
-      /* silencioso */
-    }
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────
-  function toggleProduto(id) {
-    setSelecionados(prev => {
-      const n = new Set(prev)
-      n.has(id) ? n.delete(id) : n.add(id)
-      return n
-    })
-  }
-
-  function toggleTipo(id) {
-    setTiposSel(prev => {
-      const n = new Set(prev)
-      n.has(id) ? n.delete(id) : n.add(id)
-      return n
-    })
-  }
-
-  function marcarTodosTipos() {
-    setTiposSel(prev =>
-      prev.size === TIPOS.length ? new Set() : new Set(TIPOS.map(t => t.id))
-    )
-  }
-
-  function toggleMeuProduto(id) {
-    setMeusSel(prev => {
-      const n = new Set(prev)
-      n.has(id) ? n.delete(id) : n.add(id)
-      return n
-    })
-  }
-
-  // ── Busca produtos via backend ────────────────────────────────────
-  async function buscarProdutos(e, opcoesExtras = {}) {
+  // ── Buscar: o backend retorna os produtos e JÁ SALVA a análise ────
+  async function buscar(e) {
     e?.preventDefault()
     const t = termo.trim()
-    if (!t) return
-
-    const dataDe  = opcoesExtras.dataDe  ?? ''
-    const dataAte = opcoesExtras.dataAte ?? ''
-    const isRefiltro = opcoesExtras.refiltro ?? false
+    if (!t || buscando) return
 
     setBuscando(true)
     setErroBusca('')
-    setProdutos([])
-    setMercado(null)
-    setResultado('')
-    setModoManual(false)
-    if (!isRefiltro) {
-      setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '', dataDe: '', dataAte: '' })
-      setFiltroAberto(false)
-    }
+    setFeedback(null)
 
     const isLink = t.startsWith('http')
-    let params = isLink ? `link=${encodeURIComponent(t)}` : `termo=${encodeURIComponent(t)}`
-    if (dataDe)  params += `&data_de=${dataDe}`
-    if (dataAte) params += `&data_ate=${dataAte}`
-
     try {
-      const res = await fetch(`${BASE}/api/estudio/buscar?${params}`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`)
+      const data = await api.estudio.buscar(isLink ? { link: t } : { termo: t })
       const lista = data.produtos || []
-      setProdutos(lista)
-      setMercado(data.mercado || null)
-      // Se 0 resultados em busca por termo, ativa modo manual
-      if (lista.length === 0 && !isLink) setModoManual(true)
+      if (!lista.length) {
+        setErroBusca('Nenhum anúncio encontrado para essa busca. Tente outro termo ou cole o link de um anúncio do ML.')
+        return
+      }
+      if (data.mercado) setMercadoAtual(data.mercado)
+      setFeedback({ termo: data.termo || t, n: lista.length, estudoId: data.estudo_id })
+      await carregarHistorico()   // a análise aparece no topo do histórico
     } catch (err) {
       setErroBusca(err.message)
     } finally {
@@ -336,134 +222,170 @@ export default function EstudioIA() {
     }
   }
 
-  // ── Busca por links colados manualmente ──────────────────────────
-  async function buscarPorLinks(e) {
-    e?.preventDefault()
-    const linhas = linksTexto.split(/[\n,]+/).map(l => l.trim()).filter(Boolean)
-    if (!linhas.length) return
+  // ── Workspace: abrir/fechar ───────────────────────────────────────
+  function resetBlocos() {
+    setBlocos({})
+    setBlocosOriginais({})
+    setBlocosAbertos(new Set())
+    setGerandoBloco(null)
+    setErrosBloco({})
+    setSalvandoBloco(null)
+    setSalvoBloco('')
+  }
 
-    setBuscandoLinks(true)
-    setErroBusca('')
-    setProdutos([])
-    setResultado('')
+  function carregarBlocosDoConteudo(conteudoGerado) {
+    if (!conteudoGerado || typeof conteudoGerado !== 'object') return
+    const novos = {}
+    for (const b of BLOCOS_IA) {
+      if (conteudoGerado[b.id] && typeof conteudoGerado[b.id] === 'object') {
+        novos[b.id] = normalizarBlocoLocal(b.id, conteudoGerado[b.id])
+      }
+    }
+    setBlocos(novos)
+    setBlocosOriginais(JSON.parse(JSON.stringify(novos)))
+    setBlocosAbertos(new Set(Object.keys(novos)))   // blocos já gerados abrem preenchidos
+  }
 
+  async function abrirEstudo(id, infoFallback = {}) {
+    if (!id) return
+    resetBlocos()
+    setSelecionados(new Set())
+    setWorkspace({
+      estudoId: id,
+      termo: infoFallback.termo || 'Análise',
+      criadoEm: infoFallback.criadoEm || null,
+      produtos: [],
+      mercado: null,
+      carregando: true,
+    })
+    setTimeout(() => workspaceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
     try {
-      const params = `links=${encodeURIComponent(linhas.join(','))}`
-      const res = await fetch(`${BASE}/api/estudio/buscar-itens?${params}`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
+      const { estudo } = await api.estudio.get(id)
+      const produtos = Array.isArray(estudo.produtos_analisados) ? estudo.produtos_analisados : []
+      setWorkspace({
+        estudoId: estudo.id,
+        termo: estudo.termo || estudo.link || 'Análise',
+        criadoEm: estudo.created_at,
+        produtos,
+        mercado: estudo.mercado || null,
+        carregando: false,
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.erro || `HTTP ${res.status}`)
-      const lista = data.produtos || []
-      if (lista.length === 0) {
-        setErroBusca('Nenhum produto encontrado. Verifique se os links são de anúncios do Mercado Livre.')
+      // Todos os anúncios começam selecionados como referência
+      setSelecionados(new Set(produtos.map((p, i) => chaveProduto(p, i))))
+      if (estudo.mercado) setMercadoAtual(estudo.mercado)
+      carregarBlocosDoConteudo(estudo.conteudo_gerado)
+    } catch (err) {
+      setWorkspace(w => (w ? { ...w, carregando: false, erro: err.message } : w))
+    }
+  }
+
+  function fecharWorkspace() {
+    setWorkspace(null)
+    setSelecionados(new Set())
+    resetBlocos()
+  }
+
+  // ── Seleção de anúncios de referência (mínimo 1 marcado) ──────────
+  function toggleSelecionado(chave) {
+    setSelecionados(prev => {
+      const n = new Set(prev)
+      if (n.has(chave)) {
+        if (n.size <= 1) return prev   // mínimo 1 selecionado
+        n.delete(chave)
       } else {
-        setProdutos(lista)
-        setModoManual(false)
+        n.add(chave)
       }
-    } catch (err) {
-      setErroBusca(err.message)
-    } finally {
-      setBuscandoLinks(false)
-    }
+      return n
+    })
   }
 
-  function aplicarFiltroData() {
-    if (!termo.trim()) return
-    buscarProdutos(null, { dataDe: filtros.dataDe, dataAte: filtros.dataAte, refiltro: true })
+  function selecionarTodos() {
+    setSelecionados(new Set((workspace?.produtos || []).map((p, i) => chaveProduto(p, i))))
   }
 
-  // ── Gera via SSE ──────────────────────────────────────────────────
-  async function gerarEstudio() {
-    const produtosParaGerar = modoEntrada === 'meus-produtos'
-      ? meusProdutos
-          .filter(p => meusSel.has(p.item_id))
-          .map(p => ({ id: p.item_id, title: p.titulo, price: p.preco_venda }))
-      : produtos.filter(p => selecionados.has(p.id))
+  function limparSelecao() {
+    // "Limpar" mantém o 1º anúncio — a seleção nunca fica vazia (mínimo 1)
+    const prods = workspace?.produtos || []
+    if (!prods.length) return
+    setSelecionados(new Set([chaveProduto(prods[0], 0)]))
+  }
 
-    if (!produtosParaGerar.length || !tiposSel.size) return
-
-    setGerando(true)
-    setErroGerar('')
-    setResultado('')
-
-    const primeiroTipo = TIPOS.find(t => tiposSel.has(t.id))
-    if (primeiroTipo) setTabAtiva(primeiroTipo.id)
-
-    if (abortRef.current) abortRef.current.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
+  // ── Ferramentas de IA: gerar/salvar bloco ─────────────────────────
+  async function gerarBloco(blocoId) {
+    if (!workspace || workspace.carregando || gerandoBloco) return
+    if (!produtosSelecionadosWs.length && produtosWs.length) return  // mínimo 1 anúncio de referência
+    setGerandoBloco(blocoId)
+    setErrosBloco(prev => ({ ...prev, [blocoId]: '' }))
     try {
-      const res = await fetch(`${BASE}/api/estudio/gerar`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify({
-          termo: modoEntrada === 'meus-produtos' ? 'meus produtos' : termo,
-          produtos: produtosParaGerar,
-          tipos: Array.from(tiposSel),
-          mercado: modoEntrada === 'meus-produtos' ? null : mercado,
-        }),
-        signal: controller.signal,
-      })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.erro || `HTTP ${res.status}`)
+      const payload = { bloco: blocoId }
+      if (workspace.estudoId) payload.estudo_id = workspace.estudoId
+      if (workspace.termo) payload.termo = workspace.termo
+      // Gera usando APENAS os anúncios selecionados como referência
+      const refs = produtosSelecionadosWs.length ? produtosSelecionadosWs : workspace.produtos
+      if (refs?.length) payload.produtos = refs
+      if (workspace.estudoId && refs?.length && refs.every(p => p?.id != null)) {
+        payload.produtos_ids = refs.map(p => String(p.id))
       }
-
-      const reader  = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop()
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          let parsed
-          try { parsed = JSON.parse(line.slice(6)) } catch { continue }
-          if (parsed.done) {
-            if (parsed.estudo_id) setEstudoId(parsed.estudo_id)
-            setGerando(false)
-            carregarHistorico()
-            return
-          }
-          if (parsed.rate_limit) {
-            setGerando(false)
-            let secs = parsed.retry_after || 62
-            setRetryIn(secs)
-            if (retryTimer.current) clearInterval(retryTimer.current)
-            retryTimer.current = setInterval(() => {
-              secs -= 1
-              setRetryIn(s => {
-                if (s <= 1) {
-                  clearInterval(retryTimer.current)
-                  retryTimer.current = null
-                  gerarEstudio()
-                  return 0
-                }
-                return s - 1
-              })
-            }, 1000)
-            return
-          }
-          if (parsed.erro) throw new Error(parsed.erro)
-          if (parsed.chunk) setResultado(prev => prev + parsed.chunk)
-        }
+      if (workspace.mercado) payload.mercado = workspace.mercado
+      const data = await api.estudio.gerarConteudo(payload)
+      const c = normalizarBlocoLocal(blocoId, data.conteudo)
+      setBlocos(prev => ({ ...prev, [blocoId]: c }))
+      setBlocosOriginais(prev => ({ ...prev, [blocoId]: JSON.parse(JSON.stringify(c)) }))
+      setBlocosAbertos(prev => new Set(prev).add(blocoId))
+      if (data.estudo_id) {
+        setWorkspace(w => (w ? { ...w, estudoId: data.estudo_id } : w))
       }
+      carregarHistorico()
     } catch (err) {
-      if (err.name !== 'AbortError') setErroGerar(err.message)
+      setErrosBloco(prev => ({ ...prev, [blocoId]: err.message }))
     } finally {
-      setGerando(false)
+      setGerandoBloco(null)
     }
+  }
+
+  async function salvarBloco(blocoId) {
+    if (!workspace?.estudoId || !blocos[blocoId] || salvandoBloco) return
+    setSalvandoBloco(blocoId)
+    setErrosBloco(prev => ({ ...prev, [blocoId]: '' }))
+    try {
+      const data = await api.estudio.salvarConteudo(workspace.estudoId, blocos[blocoId], blocoId)
+      const c = normalizarBlocoLocal(blocoId, data.conteudo)
+      setBlocos(prev => ({ ...prev, [blocoId]: c }))
+      setBlocosOriginais(prev => ({ ...prev, [blocoId]: JSON.parse(JSON.stringify(c)) }))
+      setSalvoBloco(blocoId)
+      setTimeout(() => setSalvoBloco(''), 2500)
+    } catch (err) {
+      setErrosBloco(prev => ({ ...prev, [blocoId]: `Erro ao salvar: ${err.message}` }))
+    } finally {
+      setSalvandoBloco(null)
+    }
+  }
+
+  function toggleBlocoAberto(blocoId) {
+    setBlocosAbertos(prev => {
+      const n = new Set(prev)
+      n.has(blocoId) ? n.delete(blocoId) : n.add(blocoId)
+      return n
+    })
+  }
+
+  function setCampoBloco(blocoId, campo, valor) {
+    setBlocos(prev => ({ ...prev, [blocoId]: { ...(prev[blocoId] || {}), [campo]: valor } }))
+  }
+
+  function setItemListaBloco(blocoId, campo, i, valor) {
+    setBlocos(prev => {
+      const c = prev[blocoId] || {}
+      const arr = [...(c[campo] || [])]
+      while (arr.length <= i) arr.push('')
+      arr[i] = valor
+      return { ...prev, [blocoId]: { ...c, [campo]: arr } }
+    })
+  }
+
+  function blocoAlterado(blocoId) {
+    return !!blocos[blocoId]
+      && JSON.stringify(blocos[blocoId]) !== JSON.stringify(blocosOriginais[blocoId])
   }
 
   function copiar(chave, texto) {
@@ -474,95 +396,368 @@ export default function EstudioIA() {
     })
   }
 
-  function baixarArquivo() {
-    if (!resultado) return
-    const date = new Date().toISOString().slice(0, 10)
-    const nomeBase = modoEntrada === 'meus-produtos'
-      ? 'meus-produtos'
-      : termo.replace(/\s+/g, '-').toLowerCase()
-    const nomeArquivo = `estudio-${nomeBase}-${date}.html`
-    const corpo = mdParaHtml(resultado)
-    const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Estúdio IA — ${termo || 'Meus Produtos'}</title>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0c0c0e;color:#d4d4d8;line-height:1.75;padding:40px 20px 80px}
-.wrapper{max-width:820px;margin:0 auto}
-.topo{margin-bottom:36px;padding-bottom:20px;border-bottom:1px solid #27272a}
-.topo h1{font-size:1.3rem;color:#38bdf8;font-weight:700;margin-bottom:4px}
-.topo p{font-size:0.78rem;color:#52525b}
-h1{font-size:1.45rem;color:#38bdf8;margin:40px 0 12px;font-weight:700}
-h2{font-size:1.1rem;color:#7dd3fc;margin:28px 0 10px;font-weight:600}
-h3{font-size:1rem;color:#93c5fd;margin:20px 0 8px;font-weight:600}
-h4,h5,h6{font-size:.95rem;color:#bae6fd;margin:16px 0 6px;font-weight:600}
-p{margin:8px 0;color:#a1a1aa}
-ul,ol{margin:8px 0 8px 24px;color:#a1a1aa}
-li{margin:4px 0}
-strong{color:#e4e4e7;font-weight:600}
-em{color:#c4c4c8;font-style:italic}
-code{background:#1e1e2e;color:#7dd3fc;padding:2px 6px;border-radius:4px;font-size:.85em;font-family:monospace}
-pre{background:#1e1e2e;border:1px solid #27272a;border-radius:8px;padding:16px;overflow-x:auto;margin:16px 0}
-pre code{background:none;padding:0;color:#a8ff78}
-hr{border:none;border-top:1px solid #27272a;margin:32px 0}
-</style>
-</head>
-<body>
-<div class="wrapper">
-<div class="topo">
-<h1>Estúdio IA — ${termo || 'Meus Produtos'}</h1>
-<p>Gerado em ${date} · Seller ML</p>
-</div>
-${corpo}
-</div>
-</body>
-</html>`
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href = url; a.download = nomeArquivo; a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  // Produtos filtrados (client-side)
-  const produtosFiltrados = produtos.filter(p => {
-    // sold_quantity null significa dado indisponível — não filtrar (benefício da dúvida)
-    if (filtros.minVendas && p.sold_quantity !== null && p.sold_quantity !== undefined
-        && p.sold_quantity < Number(filtros.minVendas)) return false
-    if (filtros.minPreco  && (p.price ?? 0) < Number(filtros.minPreco))  return false
-    if (filtros.maxPreco  && (p.price ?? 0) > Number(filtros.maxPreco))  return false
-    if (filtros.minVelocidade) {
-      const vpd = vendasPorDia(p)
-      // só filtra se tiver dado suficiente para calcular velocidade
-      if (vpd !== null && vpd < Number(filtros.minVelocidade)) return false
-    }
-    return true
+  // ── Dados derivados ───────────────────────────────────────────────
+  const historicoFiltrado = historico.filter(h => {
+    const q = buscaHist.trim().toLowerCase()
+    if (!q) return true
+    return (h.termo || '').toLowerCase().includes(q)
+      || (h.link || '').toLowerCase().includes(q)
+      || (h.persona || '').toLowerCase().includes(q)
   })
 
-  const filtrosAtivos = Object.values(filtros).some(v => v !== '')
+  const agora = new Date()
+  const analisesMes = historico.filter(h => {
+    if (!h.created_at) return false
+    const d = new Date(h.created_at)
+    return !isNaN(d) && d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear()
+  }).length
 
-  const secoes = splitResultado(resultado)
-  const temResultado = !!(resultado || gerando || erroGerar)
+  const produtosWs = workspace?.produtos || []
+  const produtosSelecionadosWs = produtosWs.filter((p, i) => selecionados.has(chaveProduto(p, i)))
+  // Faixa de preço recalculada apenas pelos anúncios selecionados
+  const precosWs = statsPreco(produtosSelecionadosWs.length ? produtosSelecionadosWs : produtosWs)
+  const temPersona = !!blocos.persona
 
-  // Tabs dinâmicas — só os tipos selecionados
-  const tabs = TIPOS
-    .filter(t => tiposSel.has(t.id))
-    .map(t => ({
-      id: t.id,
-      label: t.label,
-      conteudo: secoes[t.id],
-    }))
+  // ── Render helpers (Ferramentas de IA) ────────────────────────────
+  function botaoCopiar(chave, texto, rotulo = 'Copiar') {
+    return (
+      <button
+        onClick={() => copiar(chave, texto)}
+        disabled={!texto}
+        title="Copiar"
+        className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-2.5 py-1.5 rounded-lg transition-colors shrink-0"
+      >
+        {copiado === chave
+          ? <><Check size={12} className="text-emerald-400" /> {rotulo ? 'Copiado!' : ''}</>
+          : <><Copy size={12} /> {rotulo}</>}
+      </button>
+    )
+  }
 
-  const tabConteudo = tabs.find(t => t.id === tabAtiva)?.conteudo || ''
+  function botaoSalvarBloco(blocoId) {
+    const salvando = salvandoBloco === blocoId
+    const salvo = salvoBloco === blocoId
+    return (
+      <button
+        onClick={() => salvarBloco(blocoId)}
+        disabled={!workspace?.estudoId || !blocoAlterado(blocoId) || !!salvandoBloco}
+        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${
+          salvo
+            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+            : 'bg-stone-800 border-stone-700 text-stone-300 hover:text-stone-100 hover:border-stone-600'
+        }`}
+      >
+        {salvando
+          ? <><Loader2 size={12} className="animate-spin" /> Salvando...</>
+          : salvo
+            ? <><Check size={12} /> Salvo!</>
+            : <><Save size={12} /> Salvar</>}
+      </button>
+    )
+  }
 
-  const podeGerar = tiposSel.size > 0 && (
-    modoEntrada === 'pesquisa'
-      ? selecionados.size > 0
-      : meusSel.size > 0
-  )
+  function renderResultadoBloco(b) {
+    const c = blocos[b.id]
+    if (!c) return null
+    switch (b.id) {
+      case 'persona': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">
+            {botaoCopiar('bloco_persona', blocoParaTexto('persona', c))}
+          </div>
+          {c.resumo && (
+            <div className="bg-violet-500/10 border border-violet-500/25 rounded-xl p-3.5">
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Persona majoritária (~70%)</p>
+              <p className="text-stone-100 text-sm font-medium leading-relaxed">{c.resumo}</p>
+            </div>
+          )}
+          {c.justificativa && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Evidências</p>
+              <p className="text-stone-300 text-xs leading-relaxed">{c.justificativa}</p>
+            </div>
+          )}
+          {c.secundarias?.length > 0 && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Personas secundárias</p>
+              <ul className="space-y-1">
+                {c.secundarias.map((s, i) => (
+                  <li key={i} className="text-stone-400 text-xs leading-relaxed">• {s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {c.dores_objecoes?.length > 0 && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1.5">Dores e quebras de objeção</p>
+              <div className="space-y-2">
+                {c.dores_objecoes.map((d, i) => (
+                  <div key={i} className="bg-stone-900 border border-stone-700/60 rounded-lg p-2.5">
+                    <p className="text-stone-200 text-xs font-medium">{d.dor}</p>
+                    {d.quebra && <p className="text-emerald-400/90 text-xs mt-1">↳ {d.quebra}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+
+      case 'palavras_chave': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-stone-500 text-xs">
+              {c.termos?.length || 0} termos · do genérico ao nichado
+            </span>
+            {botaoCopiar('bloco_palavras', blocoParaTexto('palavras_chave', c), 'Copiar todas')}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(c.termos || []).map((t, i) => (
+              <button
+                key={i}
+                onClick={() => copiar(`termo_${i}`, t)}
+                title="Copiar termo"
+                className="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 hover:bg-sky-500/25 rounded-full px-2.5 py-1 transition-colors"
+              >
+                {copiado === `termo_${i}` ? '✓ copiado' : t}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
+
+      case 'titulos': {
+        const opcoes = [...(c.opcoes || [])]
+        while (opcoes.length < 3) opcoes.push('')
+        const completo = c.completo || ''
+        const estourouCompleto = completo.length > LIMITE_TITULO_COMPLETO
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center justify-end gap-2">
+              {botaoCopiar('bloco_titulos', blocoParaTexto('titulos', c), 'Copiar todos')}
+              {botaoSalvarBloco('titulos')}
+            </div>
+            {opcoes.map((t, i) => {
+              const estourou = t.length > LIMITE_TITULO_CURTO
+              return (
+                <div key={i} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-stone-500 text-xs font-medium">Opção {i + 1}</span>
+                    <span className={`text-xs tabular-nums ${estourou ? 'text-red-400 font-semibold' : 'text-stone-500'}`}>
+                      {t.length}/{LIMITE_TITULO_CURTO}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={t}
+                      onChange={e => setItemListaBloco('titulos', 'opcoes', i, e.target.value)}
+                      className={`flex-1 min-w-0 bg-stone-900 border rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none transition-colors ${
+                        estourou ? 'border-red-500/60 focus:border-red-500' : 'border-stone-700 focus:border-violet-500'
+                      }`}
+                    />
+                    {botaoCopiar(`titulo_op_${i}`, t, '')}
+                  </div>
+                </div>
+              )
+            })}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500 text-xs font-medium">Título completo</span>
+                <span className={`text-xs tabular-nums ${estourouCompleto ? 'text-red-400 font-semibold' : 'text-stone-500'}`}>
+                  {completo.length}/{LIMITE_TITULO_COMPLETO}
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <textarea
+                  value={completo}
+                  onChange={e => setCampoBloco('titulos', 'completo', e.target.value)}
+                  rows={2}
+                  className={`flex-1 min-w-0 bg-stone-900 border rounded-lg px-3 py-2 text-sm text-stone-200 leading-relaxed resize-y focus:outline-none transition-colors ${
+                    estourouCompleto ? 'border-red-500/60 focus:border-red-500' : 'border-stone-700 focus:border-violet-500'
+                  }`}
+                />
+                {botaoCopiar('titulo_completo', completo, '')}
+              </div>
+            </div>
+            {(opcoes.some(t => t.length > LIMITE_TITULO_CURTO) || estourouCompleto) && (
+              <p className="text-red-400 text-xs">
+                Acima do limite — o Mercado Livre corta títulos maiores que o permitido.
+              </p>
+            )}
+          </div>
+        )
+      }
+
+      case 'descricao': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">{botaoSalvarBloco('descricao')}</div>
+          {(c.versoes?.length ? c.versoes : ['', '']).map((v, i) => (
+            <div key={i} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500 text-xs font-medium">Versão {i + 1}</span>
+                {botaoCopiar(`descricao_v_${i}`, v)}
+              </div>
+              <textarea
+                value={v}
+                onChange={e => setItemListaBloco('descricao', 'versoes', i, e.target.value)}
+                rows={10}
+                className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3.5 py-3 text-sm text-stone-200 leading-relaxed resize-y focus:outline-none focus:border-violet-500 transition-colors"
+              />
+            </div>
+          ))}
+        </div>
+      )
+
+      case 'fotos': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">
+            {botaoCopiar('bloco_fotos', blocoParaTexto('fotos', c), 'Copiar tudo')}
+          </div>
+          {c.briefing_capa && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Briefing da capa (ambientada)</p>
+              <p className="text-stone-300 text-xs leading-relaxed bg-stone-900 border border-stone-700/60 rounded-lg p-3">
+                {c.briefing_capa}
+              </p>
+            </div>
+          )}
+          {c.variacoes_cenario?.length > 0 && (
+            <div>
+              <p className="text-stone-500 text-xs uppercase tracking-widest mb-1">Variações de cenário</p>
+              <ul className="space-y-1">
+                {c.variacoes_cenario.map((v, i) => (
+                  <li key={i} className="text-stone-400 text-xs leading-relaxed">• {v}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {(c.prompts || []).map((p, i) => (
+            <div key={i} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500 text-xs font-medium">Prompt de imagem {i + 1}</span>
+                {botaoCopiar(`foto_prompt_${i}`, p)}
+              </div>
+              <p className="text-stone-300 text-xs leading-relaxed bg-stone-900 border border-stone-700/60 rounded-lg p-3">
+                {p}
+              </p>
+            </div>
+          ))}
+        </div>
+      )
+
+      case 'kits': return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-end">
+            {botaoCopiar('bloco_kits', blocoParaTexto('kits', c), 'Copiar tudo')}
+          </div>
+          {(c.kits || []).map((k, i) => (
+            <div key={i} className="bg-stone-900 border border-stone-700/60 rounded-lg p-3 space-y-1.5">
+              <p className="text-stone-100 text-sm font-medium">{k.nome}</p>
+              {k.produtos?.length > 0 && (
+                <p className="text-stone-400 text-xs">Composição: {k.produtos.join(' + ')}</p>
+              )}
+              {k.porque && <p className="text-stone-500 text-xs leading-relaxed">{k.porque}</p>}
+            </div>
+          ))}
+        </div>
+      )
+
+      default: return null
+    }
+  }
+
+  function renderBlocoCard(b) {
+    const c = blocos[b.id]
+    const gerandoEste = gerandoBloco === b.id
+    const aberto = blocosAbertos.has(b.id)
+    const erro = errosBloco[b.id]
+    return (
+      <div
+        key={b.id}
+        className={`rounded-2xl border p-4 md:p-5 space-y-3 ${
+          b.principal
+            ? 'bg-violet-500/[0.06] border-violet-500/30'
+            : 'bg-stone-800/60 border-stone-700/50'
+        }`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <span className="text-xl leading-none mt-0.5 shrink-0">{b.icone}</span>
+            <div className="min-w-0">
+              <h3 className="text-stone-100 text-sm font-semibold leading-tight flex items-center gap-2 flex-wrap">
+                {b.nome}
+                {b.principal && (
+                  <span className="text-[10px] uppercase tracking-widest bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-full px-2 py-0.5">
+                    Comece aqui
+                  </span>
+                )}
+              </h3>
+              <p className="text-stone-500 text-xs mt-0.5 leading-relaxed">{b.desc}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => gerarBloco(b.id)}
+            disabled={!!gerandoBloco || workspace?.carregando}
+            className="px-4 py-2 rounded-lg text-xs font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all shrink-0"
+            style={{ background: gerandoEste ? 'var(--surface-3)' : 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}
+          >
+            {gerandoEste
+              ? <><Loader2 size={12} className="animate-spin" /> {b.principal ? 'Analisando...' : 'Gerando...'}</>
+              : <><Sparkles size={12} /> {b.principal ? (c ? 'Analisar novamente' : 'Analisar') : (c ? 'Regenerar' : 'Gerar')}</>}
+          </button>
+        </div>
+
+        {!b.principal && !temPersona && (
+          <p className="text-amber-400/90 text-xs bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+            💡 Gere a Persona primeiro para resultados direcionados
+          </p>
+        )}
+
+        {erro && (
+          <div className="bg-red-950/40 border border-red-900/50 rounded-lg p-3 flex items-start gap-2">
+            <X size={13} className="text-red-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-red-300 text-xs">{erro}</p>
+              <button
+                onClick={() => gerarBloco(b.id)}
+                disabled={!!gerandoBloco}
+                className="text-xs text-red-300 underline mt-1 hover:text-red-200 transition-colors disabled:opacity-50"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        )}
+
+        {gerandoEste && (
+          <div className="flex items-center gap-2 py-2">
+            <Loader2 size={14} className="animate-spin text-violet-400" />
+            <p className="text-stone-400 text-xs">Gerando com Gemini...</p>
+          </div>
+        )}
+
+        {!gerandoEste && !c && !erro && (
+          <p className="text-stone-600 text-xs">
+            {b.principal ? 'Nada analisado ainda — clique em Analisar.' : 'Nada gerado ainda — clique em Gerar.'}
+          </p>
+        )}
+
+        {!gerandoEste && c && (
+          <div className="space-y-3">
+            <button
+              onClick={() => toggleBlocoAberto(b.id)}
+              className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 transition-colors"
+            >
+              <ChevronRight size={13} className={`transition-transform ${aberto ? 'rotate-90' : ''}`} />
+              {aberto ? 'Ocultar resultado' : 'Ver resultado'}
+            </button>
+            {aberto && renderResultadoBloco(b)}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-stone-950">
@@ -570,652 +765,452 @@ ${corpo}
 
       <div className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
 
-        {/* ── Cabeçalho ── */}
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-sky-400" />
-            <p className="text-stone-400 text-sm">
-              Selecione produtos e deixe a IA gerar persona, pesquisa de mercado, prompts de imagem e vídeo.
+        {/* ── Cabeçalho da página ── */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold text-stone-100 flex items-center gap-2.5">
+              <Sparkles size={26} className="text-sky-400 shrink-0" />
+              Estúdio IA
+            </h1>
+            <p className="text-stone-400 text-sm mt-2 max-w-2xl leading-relaxed">
+              Pesquise um produto e a análise é salva automaticamente — abra-a no histórico
+              para gerar persona, palavras-chave, títulos, descrição, fotos e kits.
             </p>
           </div>
-          <button
-            onClick={() => setHistAberto(v => !v)}
-            className="shrink-0 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-stone-900 border border-stone-800 text-stone-300 hover:text-white hover:border-stone-700 transition-colors"
-          >
-            <Clock size={14} />
-            Histórico
-            {historico.length > 0 && (
-              <span className="text-xs bg-sky-500/20 text-sky-400 rounded-full px-2 py-0.5">{historico.length}</span>
-            )}
-          </button>
+          <p className="text-stone-500 text-sm shrink-0 sm:text-right sm:pb-1">{fmtHoje()}</p>
         </div>
 
-        {/* ── Histórico de estudos ── */}
-        {histAberto && (
-          <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-stone-200 text-sm font-semibold">Estudos recentes</h3>
-              {carregandoHist && <Loader2 size={14} className="animate-spin text-stone-500" />}
+        {/* ── Barra de pesquisa (única etapa) ── */}
+        <form onSubmit={buscar} className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500" />
+            <input
+              type="text"
+              value={termo}
+              onChange={e => setTermo(e.target.value)}
+              placeholder="Digite um produto (ex: fone bluetooth) ou cole o link de um anúncio do ML..."
+              className="w-full bg-stone-900 border border-stone-800 rounded-xl pl-11 pr-4 py-3.5 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-500 transition-colors"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={buscando || !termo.trim()}
+            className="px-7 py-3.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shrink-0"
+          >
+            {buscando ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
+            {buscando ? 'Analisando...' : 'Analisar'}
+          </button>
+        </form>
+
+        {erroBusca && <p className="text-red-400 text-xs mt-2">{erroBusca}</p>}
+
+        {/* ── Feedback da análise recém-criada ── */}
+        {feedback && !buscando && (
+          <div className="mt-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+              <p className="text-sm min-w-0">
+                <span className="text-emerald-300 font-medium">Análise concluída</span>
+                <span className="text-stone-400"> · {feedback.n} anúncio{feedback.n !== 1 ? 's' : ''} · </span>
+                <span className="text-stone-300 truncate">"{feedback.termo}"</span>
+              </p>
             </div>
-            {historico.length === 0 ? (
-              <p className="text-stone-500 text-xs">Nenhum estudo salvo ainda. Gere o primeiro abaixo.</p>
-            ) : (
-              <div className="space-y-2 max-h-72 overflow-y-auto">
-                {historico.map(h => (
+            {feedback.estudoId && (
+              <button
+                onClick={() => abrirEstudo(feedback.estudoId, { termo: feedback.termo })}
+                className="shrink-0 flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+              >
+                <Wand2 size={13} /> Abrir análise
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── Faixa compacta: resumo + tendências + mais vendidos ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+          {/* Resumo */}
+          <div className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 flex items-center gap-4">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/15 flex items-center justify-center shrink-0">
+              <Sparkles size={14} className="text-sky-400" />
+            </div>
+            <div className="flex items-baseline gap-4">
+              <div>
+                <p className="text-stone-100 text-lg font-bold tabular-nums leading-none">{historico.length}</p>
+                <p className="text-stone-500 text-[11px] mt-1">análises</p>
+              </div>
+              <div>
+                <p className="text-stone-100 text-lg font-bold tabular-nums leading-none">{analisesMes}</p>
+                <p className="text-stone-500 text-[11px] mt-1">neste mês</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tendências da última análise */}
+          <div className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <TrendingUp size={13} className="text-sky-400 shrink-0" />
+              <p className="text-stone-300 text-xs font-semibold truncate">
+                Tendências{mercadoAtual?.categoria ? ` · ${mercadoAtual.categoria}` : ' do ML'}
+              </p>
+            </div>
+            {mercadoAtual?.tendencias?.length > 0 ? (
+              <div className="flex flex-wrap gap-1 overflow-hidden max-h-12">
+                {mercadoAtual.tendencias.slice(0, 6).map((t, i) => (
                   <button
-                    key={h.id}
-                    onClick={() => abrirEstudo(h.id)}
-                    className="w-full text-left bg-stone-800/60 hover:bg-stone-800 border border-stone-700/60 rounded-lg px-3 py-2.5 transition-colors"
+                    key={i}
+                    onClick={() => { setTermo(t); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                    title={`Usar "${t}" como termo de busca`}
+                    className="text-[11px] bg-sky-500/10 text-sky-400 border border-sky-500/20 hover:bg-sky-500/25 rounded-full px-2 py-0.5 transition-colors truncate max-w-full"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-stone-200 text-sm font-medium truncate">{h.termo || h.link || 'Estudo'}</span>
-                      <span className="text-stone-500 text-xs shrink-0">
-                        {h.created_at ? new Date(h.created_at).toLocaleDateString('pt-BR') : ''}
-                      </span>
-                    </div>
-                    {h.persona && <p className="text-stone-400 text-xs mt-1 line-clamp-1">{h.persona}</p>}
-                    {Array.isArray(h.tipos) && h.tipos.length > 0 && (
-                      <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                        {h.tipos.map(t => (
-                          <span key={t} className="text-[10px] uppercase tracking-wide bg-stone-700/60 text-stone-400 rounded px-1.5 py-0.5">{t}</span>
-                        ))}
-                      </div>
-                    )}
+                    {t}
                   </button>
                 ))}
               </div>
+            ) : (
+              <p className="text-stone-600 text-[11px]">Pesquise um produto para ver os termos mais buscados.</p>
             )}
           </div>
-        )}
 
-        {/* ── Layout: 1 col sem resultado / 2 cols com resultado ── */}
-        <div className={temResultado ? 'grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-5 items-start' : 'space-y-4'}>
-
-        {/* ── Coluna esquerda: configuração ── */}
-        <div className="space-y-4">
-
-        {/* ── Step 1: Modo de entrada + produtos ── */}
-        <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-4">
-
-          {/* Tabs de modo */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setModoEntrada('pesquisa')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                modoEntrada === 'pesquisa'
-                  ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
-                  : 'bg-stone-800 text-stone-500 border border-stone-700 hover:text-stone-300'
-              }`}
-            >
-              <Search size={14} /> Pesquisar no ML
-            </button>
-            <button
-              onClick={() => setModoEntrada('meus-produtos')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                modoEntrada === 'meus-produtos'
-                  ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
-                  : 'bg-stone-800 text-stone-500 border border-stone-700 hover:text-stone-300'
-              }`}
-            >
-              <Package size={14} /> Meus Produtos
-            </button>
-          </div>
-
-          {/* ── Pesquisar no ML ── */}
-          {modoEntrada === 'pesquisa' && (
-            <div className="space-y-3">
-              <p className="text-stone-500 text-xs">Digite um termo de busca ou cole um link de anúncio do ML</p>
-              <form onSubmit={buscarProdutos} className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
-                  <input
-                    type="text"
-                    value={termo}
-                    onChange={e => setTermo(e.target.value)}
-                    placeholder='Termo de busca ou https://www.mercadolivre.com.br/...'
-                    className="w-full bg-stone-800 border border-stone-700 rounded-lg pl-9 pr-3 py-2.5 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-500"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={buscando || !termo.trim()}
-                  className="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  {buscando ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-                  Buscar
-                </button>
-              </form>
-
-              {erroBusca && <p className="text-red-400 text-xs">{erroBusca}</p>}
-
-              {/* ── Modo manual: cole os links ── */}
-              {modoManual && !buscando && produtos.length === 0 && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-3">
-                  <div className="flex items-start gap-2">
-                    <span className="text-amber-400 text-lg">⚠️</span>
-                    <div>
-                      <p className="text-amber-300 text-sm font-medium">Busca automática indisponível</p>
-                      <p className="text-stone-400 text-xs mt-1">
-                        O ML bloqueia buscas automáticas para este tipo de app. Cole os links dos concorrentes abaixo — funciona perfeitamente!
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <a
-                      href={`https://lista.mercadolivre.com.br/${encodeURIComponent(termo.trim().replace(/\s+/g, '-'))}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium rounded-lg transition-colors"
-                    >
-                      <ExternalLink size={12} /> Pesquisar "{termo}" no ML
-                    </a>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-stone-400 text-xs">Cole os links dos produtos (um por linha):</p>
-                    <textarea
-                      value={linksTexto}
-                      onChange={e => setLinksTexto(e.target.value)}
-                      placeholder={`https://www.mercadolivre.com.br/produto-1/p/MLB123\nhttps://www.mercadolivre.com.br/produto-2/p/MLB456\nhttps://www.mercadolivre.com.br/produto-3/p/MLB789`}
-                      rows={4}
-                      className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-xs text-stone-300 placeholder-stone-600 focus:outline-none focus:border-sky-500 font-mono resize-none"
-                    />
-                    <button
-                      onClick={buscarPorLinks}
-                      disabled={buscandoLinks || !linksTexto.trim()}
-                      className="flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-                    >
-                      {buscandoLinks ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
-                      Buscar produtos colados
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Painel de mercado real (tendências + mais vendidos do ML) */}
-              {mercado && ((mercado.tendencias && mercado.tendencias.length > 0) || (mercado.mais_vendidos && mercado.mais_vendidos.length > 0)) && (
-                <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-stone-300 text-sm font-semibold">Mercado real — Mercado Livre</span>
-                    {mercado.categoria && (
-                      <span className="text-xs text-stone-500 bg-stone-800 px-2 py-0.5 rounded-full">{mercado.categoria}</span>
+          {/* Mais vendidos da última análise */}
+          <div className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Trophy size={13} className="text-amber-400 shrink-0" />
+              <p className="text-stone-300 text-xs font-semibold">Mais vendidos da categoria</p>
+            </div>
+            {mercadoAtual?.mais_vendidos?.length > 0 ? (
+              <ul className="space-y-1">
+                {mercadoAtual.mais_vendidos.slice(0, 3).map((m, i) => (
+                  <li key={m.id || i} className="flex items-center gap-2 min-w-0">
+                    <span className={`text-[11px] font-bold tabular-nums w-4 shrink-0 ${
+                      i === 0 ? 'text-amber-400' : i === 1 ? 'text-stone-400' : 'text-amber-700'
+                    }`}>#{i + 1}</span>
+                    <p className="text-stone-400 text-[11px] truncate flex-1">{m.title}</p>
+                    {m.price != null && <span className="text-stone-500 text-[11px] shrink-0">{fmtBRL(m.price)}</span>}
+                    {m.permalink && (
+                      <a href={m.permalink} target="_blank" rel="noreferrer"
+                        className="text-stone-600 hover:text-sky-400 transition-colors shrink-0">
+                        <ExternalLink size={10} />
+                      </a>
                     )}
-                  </div>
-                  {mercado.tendencias && mercado.tendencias.length > 0 && (
-                    <div>
-                      <p className="text-xs text-stone-500 mb-1.5">Mais buscados (tendências reais)</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {mercado.tendencias.slice(0, 15).map((t, i) => (
-                          <span key={i} className="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full px-2 py-0.5">{t}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {mercado.mais_vendidos && mercado.mais_vendidos.length > 0 && (
-                    <div>
-                      <p className="text-xs text-stone-500 mb-1.5">Mais vendidos da categoria</p>
-                      <ul className="space-y-1">
-                        {mercado.mais_vendidos.slice(0, 5).map((m, i) => (
-                          <li key={i} className="text-xs text-stone-300 flex justify-between gap-2">
-                            <span className="truncate">{i + 1}. {m.title}</span>
-                            <span className="text-stone-500 shrink-0">{m.price ? `R$ ${m.price}` : ''}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Grid de produtos */}
-              {produtos.length > 0 && (
-                <div className="space-y-3">
-                  {/* Cabeçalho + filtro toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-stone-300 text-sm font-medium">
-                        Top {produtos.length} mais vendidos
-                      </span>
-                      {produtos[0]?.category_name && (
-                        <span className="text-xs text-stone-500 bg-stone-800 px-2 py-0.5 rounded-full">
-                          {produtos[0].category_name}
-                        </span>
-                      )}
-                      {filtrosAtivos && (
-                        <span className="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full">
-                          {produtosFiltrados.length} de {produtos.length}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setFiltroAberto(v => !v)}
-                        className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
-                          filtroAberto || filtrosAtivos
-                            ? 'bg-sky-500/15 border-sky-500/30 text-sky-400'
-                            : 'bg-stone-800 border-stone-700 text-stone-400 hover:text-stone-200'
-                        }`}
-                      >
-                        <SlidersHorizontal size={12} />
-                        Filtros{filtrosAtivos ? ` (${Object.values(filtros).filter(Boolean).length})` : ''}
-                      </button>
-                      <button
-                        onClick={() => setSelecionados(
-                          selecionados.size === produtosFiltrados.length
-                            ? new Set()
-                            : new Set(produtosFiltrados.map(p => p.id))
-                        )}
-                        className="text-xs text-sky-500 hover:text-sky-400 transition-colors"
-                      >
-                        {selecionados.size === produtosFiltrados.length ? 'Limpar' : 'Marcar todos'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Painel de filtros */}
-                  {filtroAberto && (
-                    <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4 space-y-3">
-                      {/* ── Filtros de data (requerem re-busca) ── */}
-                      <div className="space-y-2">
-                        <p className="text-stone-500 text-xs uppercase tracking-widest">📅 Anúncios criados no período</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <label className="text-stone-400 text-xs">De</label>
-                            <input
-                              type="date"
-                              value={filtros.dataDe}
-                              onChange={e => setFiltro('dataDe', e.target.value)}
-                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:border-sky-500"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-stone-400 text-xs">Até</label>
-                            <input
-                              type="date"
-                              value={filtros.dataAte}
-                              onChange={e => setFiltro('dataAte', e.target.value)}
-                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:border-sky-500"
-                            />
-                          </div>
-                        </div>
-                        {(filtros.dataDe || filtros.dataAte) && (
-                          <button
-                            onClick={aplicarFiltroData}
-                            disabled={buscando}
-                            className="w-full flex items-center justify-center gap-2 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
-                          >
-                            {buscando ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
-                            Buscar anúncios desse período
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="border-t border-stone-700/50 pt-3 space-y-2">
-                        <p className="text-stone-500 text-xs uppercase tracking-widest">⚡ Filtros instantâneos</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <label className="text-stone-400 text-xs flex items-center gap-1">
-                              <Zap size={10} className="text-amber-400" /> Velocidade mín (vendas/dia)
-                            </label>
-                            <input
-                              type="number" min="0" placeholder="ex: 5"
-                              value={filtros.minVelocidade}
-                              onChange={e => setFiltro('minVelocidade', e.target.value)}
-                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-stone-400 text-xs">📊 Vendas mínimas (total)</label>
-                            <input
-                              type="number" min="0" placeholder="ex: 100"
-                              value={filtros.minVendas}
-                              onChange={e => setFiltro('minVendas', e.target.value)}
-                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-stone-400 text-xs">💰 Preço mínimo (R$)</label>
-                            <input
-                              type="number" min="0" placeholder="ex: 50"
-                              value={filtros.minPreco}
-                              onChange={e => setFiltro('minPreco', e.target.value)}
-                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-stone-400 text-xs">💰 Preço máximo (R$)</label>
-                            <input
-                              type="number" min="0" placeholder="ex: 500"
-                              value={filtros.maxPreco}
-                              onChange={e => setFiltro('maxPreco', e.target.value)}
-                              className="w-full bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-sky-500"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {filtrosAtivos && (
-                        <button
-                          onClick={() => setFiltros({ minVendas: '', minPreco: '', maxPreco: '', minVelocidade: '', dataDe: '', dataAte: '' })}
-                          className="text-xs text-stone-500 hover:text-stone-300 transition-colors"
-                        >
-                          ✕ Limpar todos os filtros
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-
-                  <div className={temResultado
-                    ? 'space-y-2'
-                    : 'grid grid-cols-1 sm:grid-cols-2 gap-3'
-                  }>
-                  {produtosFiltrados.map((p, i) => {
-                    const sel = selecionados.has(p.id)
-                    const vpd = vendasPorDia(p)
-                    const vpdLabel = fmtVpd(vpd)
-                    return (
-                      <div
-                        key={p.id}
-                        onClick={() => toggleProduto(p.id)}
-                        className={`relative flex gap-3 rounded-xl p-4 cursor-pointer transition-all border ${
-                          sel
-                            ? 'bg-stone-800 border-stone-600 shadow-sm'
-                            : 'bg-stone-800/50 border-stone-700/50 opacity-45 hover:opacity-65'
-                        }`}
-                      >
-                        {/* Checkbox + rank */}
-                        <div className="flex flex-col items-center gap-2 shrink-0">
-                          <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
-                            sel ? 'bg-sky-500 border-sky-500' : 'bg-stone-700 border-stone-600'
-                          }`}>
-                            {sel && <Check size={10} className="text-white" strokeWidth={3} />}
-                          </div>
-                          <span className={`text-xs font-bold tabular-nums ${
-                            i === 0 ? 'text-amber-400' : i === 1 ? 'text-stone-400' : i === 2 ? 'text-amber-700' : 'text-stone-600'
-                          }`}>#{i + 1}</span>
-                        </div>
-
-                        {/* Thumbnail */}
-                        {p.thumbnail && (
-                          <img src={p.thumbnail} alt={p.title}
-                            className={`object-cover rounded-lg bg-stone-700 shrink-0 ${temResultado ? 'w-12 h-12' : 'w-16 h-16'}`} />
-                        )}
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0 space-y-1.5">
-                          <p className={`text-stone-200 font-medium leading-snug ${temResultado ? 'text-xs line-clamp-2' : 'text-sm line-clamp-2'}`}>
-                            {p.title}
-                          </p>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sky-400 font-semibold text-sm">{fmtBRL(p.price)}</span>
-                            {p.sold_quantity > 0 && (
-                              <span className="text-xs text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                                {fmtNum(p.sold_quantity)} vendas
-                              </span>
-                            )}
-                            {vpdLabel && (
-                              <span className="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                                <Zap size={9} className="shrink-0" />{vpdLabel}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Link externo */}
-                        {p.permalink && (
-                          <a href={p.permalink} target="_blank" rel="noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            className="absolute top-3 right-3 text-stone-600 hover:text-sky-400 transition-colors">
-                            <ExternalLink size={12} />
-                          </a>
-                        )}
-                      </div>
-                    )
-                  })}
-                  </div>
-
-                  <p className="text-stone-600 text-xs">
-                    {selecionados.size} de {produtosFiltrados.length} selecionado{selecionados.size !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── Meus Produtos ── */}
-          {modoEntrada === 'meus-produtos' && (
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={buscaMeus}
-                onChange={e => setBuscaMeus(e.target.value)}
-                placeholder="Buscar nos meus produtos..."
-                className="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2.5 text-sm text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-500"
-              />
-
-              {carregandoMeus && (
-                <p className="text-stone-500 text-xs text-center py-4">Carregando produtos...</p>
-              )}
-              {!carregandoMeus && meusProdutos.length === 0 && (
-                <p className="text-stone-500 text-xs text-center py-4">Nenhum produto ativo encontrado.</p>
-              )}
-
-              {meusProdutos.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-stone-500 text-xs">
-                      {meusProdutos.length} produto{meusProdutos.length !== 1 ? 's' : ''} ativo{meusProdutos.length !== 1 ? 's' : ''}
-                    </p>
-                    <button
-                      onClick={() => setMeusSel(
-                        meusSel.size === meusProdutos.length
-                          ? new Set()
-                          : new Set(meusProdutos.map(p => p.item_id))
-                      )}
-                      className="text-xs text-sky-500 hover:text-sky-400 transition-colors"
-                    >
-                      {meusSel.size === meusProdutos.length ? 'Limpar todos' : 'Marcar todos'}
-                    </button>
-                  </div>
-
-                  {meusProdutos.map(p => {
-                    const sel = meusSel.has(p.item_id)
-                    return (
-                      <div
-                        key={p.item_id}
-                        onClick={() => toggleMeuProduto(p.item_id)}
-                        className={`flex items-center gap-3 rounded-lg p-3 cursor-pointer transition-colors border ${
-                          sel
-                            ? 'bg-sky-500/[0.07] border-sky-500/25'
-                            : 'bg-stone-800 border-stone-700 opacity-50 hover:opacity-70'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${
-                          sel ? 'bg-sky-500 border-sky-500' : 'bg-stone-700 border-stone-600'
-                        }`}>
-                          {sel && <Check size={10} className="text-white" strokeWidth={3} />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-stone-200 text-xs font-medium truncate">{p.titulo}</p>
-                          <p className="text-stone-500 text-xs mt-0.5">
-                            {p.item_id}
-                            {p.preco_venda && ` · ${fmtBRL(p.preco_venda)}`}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
-
-                  <p className="text-stone-600 text-xs">
-                    {meusSel.size} selecionado{meusSel.size !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-stone-600 text-[11px]">Pesquise um produto para ver o ranking da categoria.</p>
+            )}
+          </div>
         </div>
 
-        {/* ── Step 2: O que gerar ── */}
-        {(produtos.length > 0 || (modoEntrada === 'meus-produtos' && meusProdutos.length > 0)) && (
-          <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-3">
+        {/* ══ Área principal: histórico OU workspace da análise ══ */}
+        <div ref={workspaceRef} className="mt-5 scroll-mt-4">
 
-            <div className="flex items-center justify-between">
-              <p className="text-stone-400 text-xs uppercase tracking-widest">O que gerar?</p>
-              <button
-                onClick={marcarTodosTipos}
-                className="text-xs text-sky-500 hover:text-sky-400 transition-colors"
-              >
-                {tiposSel.size === TIPOS.length ? 'Limpar todos' : 'Marcar todos'}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {TIPOS.map(t => {
-                const sel = tiposSel.has(t.id)
-                return (
-                  <div
-                    key={t.id}
-                    onClick={() => toggleTipo(t.id)}
-                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${
-                      sel
-                        ? 'bg-sky-500/[0.07] border-sky-500/25'
-                        : 'bg-stone-800 border-stone-700 hover:border-stone-600'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border mt-0.5 transition-colors ${
-                      sel ? 'bg-sky-500 border-sky-500' : 'bg-stone-700 border-stone-600'
-                    }`}>
-                      {sel && <Check size={10} className="text-white" strokeWidth={3} />}
-                    </div>
-                    <div className="min-w-0">
-                      <p className={`text-sm font-medium ${sel ? 'text-stone-100' : 'text-stone-400'}`}>
-                        {t.label}
-                      </p>
-                      <p className="text-stone-600 text-xs mt-0.5">{t.desc}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            <button
-              onClick={gerarEstudio}
-              disabled={gerando || !podeGerar}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{
-                background: gerando ? '#44403c' : 'linear-gradient(135deg, #0ea5e9, #6366f1)',
-              }}
-            >
-              {gerando
-                ? <><Loader2 size={15} className="animate-spin" /> Gerando com Gemini...</>
-                : <><Sparkles size={15} /> Gerar</>
-              }
-            </button>
-          </div>
-        )}
-
-        {/* ── Banner rate limit ── */}
-        {retryIn > 0 && (
-          <div className="bg-amber-950/60 border border-amber-800/50 rounded-xl p-4 flex items-center gap-3">
-            <Loader2 size={16} className="text-amber-400 animate-spin shrink-0" />
-            <div>
-              <p className="text-amber-300 text-sm font-medium">Limite de requisições atingido</p>
-              <p className="text-amber-500 text-xs mt-0.5">
-                Tentando novamente em <span className="font-bold text-amber-300">{retryIn}s</span> automaticamente...
-              </p>
-            </div>
-          </div>
-        )}
-
-        </div>{/* ── fim coluna esquerda ── */}
-
-        {/* ── Coluna direita: resultado ── */}
-        {temResultado && (
-          <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-3 lg:sticky lg:top-4">
-            <p className="text-stone-400 text-xs uppercase tracking-widest">Resultado</p>
-
-            {erroGerar && <p className="text-red-400 text-sm">{erroGerar}</p>}
-
-            {/* Tabs dinâmicas */}
-            <div className="flex gap-0 border-b border-stone-800 overflow-x-auto">
-              {tabs.map(t => (
-                <button key={t.id}
-                  onClick={() => setTabAtiva(t.id)}
-                  className={`text-xs px-4 py-2.5 whitespace-nowrap transition-colors border-b-2 ${
-                    tabAtiva === t.id
-                      ? 'text-stone-100 border-sky-500 font-medium'
-                      : 'text-stone-500 border-transparent hover:text-stone-300'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="relative">
-              <div className="flex items-center justify-between mb-2">
-                {gerando && !secoes[tabAtiva] ? (
-                  <span className="text-emerald-400 text-xs flex items-center gap-1">
-                    <span className="inline-block w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                    Gerando...
-                  </span>
-                ) : <span />}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={baixarArquivo}
-                    disabled={!resultado}
-                    className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    <Download size={12} /> Baixar HTML
-                  </button>
-                  <button
-                    onClick={() => copiar(tabAtiva, tabConteudo)}
-                    disabled={!tabConteudo}
-                    className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 disabled:opacity-40 bg-stone-800 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    {copiado === tabAtiva
-                      ? <><Check size={12} className="text-emerald-400" /> Copiado!</>
-                      : <><Copy size={12} /> Copiar</>
-                    }
-                  </button>
+        {!workspace ? (
+          /* ── Histórico de Análises (lista principal, full-width) ── */
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-sky-500/15 flex items-center justify-center shrink-0">
+                  <Clock size={16} className="text-sky-400" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-stone-100 text-base font-semibold leading-tight">Histórico de Análises</h2>
+                  <p className="text-stone-500 text-xs mt-0.5">Clique em uma análise para abrir o workspace com as Ferramentas de IA</p>
                 </div>
               </div>
-
-              <div className="bg-stone-800 rounded-xl p-5 min-h-32 max-h-[75vh] overflow-y-auto">
-                {tabConteudo ? (
-                  <div className="prose prose-invert max-w-none
-                    prose-headings:text-sky-400 prose-headings:font-semibold
-                    prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
-                    prose-p:text-stone-300 prose-p:leading-relaxed
-                    prose-li:text-stone-300
-                    prose-strong:text-stone-100
-                    prose-code:text-sky-300 prose-code:bg-stone-700 prose-code:px-1 prose-code:rounded
-                    prose-hr:border-stone-700">
-                    <ReactMarkdown>{tabConteudo}</ReactMarkdown>
-                    {gerando && <span className="inline-block w-2 h-4 bg-sky-400 animate-pulse ml-0.5 align-middle" />}
-                  </div>
-                ) : (
-                  <p className="text-stone-600 text-sm text-center py-8">
-                    {gerando ? 'Aguardando conteúdo...' : 'Nenhum conteúdo gerado nesta tab.'}
-                  </p>
-                )}
-              </div>
+              {historico.length > 0 && (
+                <div className="relative sm:w-64 shrink-0">
+                  <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-500" />
+                  <input
+                    type="text"
+                    value={buscaHist}
+                    onChange={e => setBuscaHist(e.target.value)}
+                    placeholder="Pesquisar no histórico..."
+                    className="w-full bg-stone-800 border border-stone-700 rounded-lg pl-9 pr-3 py-2 text-xs text-stone-200 placeholder-stone-500 focus:outline-none focus:border-sky-500 transition-colors"
+                  />
+                </div>
+              )}
             </div>
 
-            {!gerando && resultado && (
+            <div className="mt-4">
+              {carregandoHist && historico.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-2">
+                  <Loader2 size={20} className="animate-spin text-stone-600" />
+                  <p className="text-stone-500 text-xs">Carregando histórico...</p>
+                </div>
+              ) : historico.length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-center py-12 gap-2">
+                  <FileSearch size={28} className="text-stone-600" />
+                  <p className="text-stone-400 text-sm font-medium">Nenhuma análise ainda</p>
+                  <p className="text-stone-500 text-xs">Pesquise um produto acima — a análise é criada e salva automaticamente.</p>
+                </div>
+              ) : historicoFiltrado.length === 0 ? (
+                <p className="text-stone-500 text-xs text-center py-8">
+                  Nada encontrado para "{buscaHist}".
+                </p>
+              ) : (
+                <div className="space-y-1 -mx-2">
+                  {historicoFiltrado.map(h => {
+                    const n = h.num_produtos || 0
+                    return (
+                      <div
+                        key={h.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => abrirEstudo(h.id, { termo: h.termo || h.link, criadoEm: h.created_at })}
+                        onKeyDown={e => { if (e.key === 'Enter') abrirEstudo(h.id, { termo: h.termo || h.link, criadoEm: h.created_at }) }}
+                        className="group w-full text-left flex items-center gap-3 rounded-xl px-3 py-3 border border-transparent hover:bg-stone-800/60 hover:border-stone-700/60 transition-colors cursor-pointer"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-stone-200 text-sm font-medium truncate">
+                              {h.termo || h.link || 'Análise'}
+                            </span>
+                            <span className="text-stone-500 text-xs shrink-0">{fmtDataHist(h.created_at)}</span>
+                          </div>
+                          <div className="flex items-center gap-2.5 mt-1 min-w-0">
+                            <span className="text-emerald-400 text-xs flex items-center gap-1 shrink-0">
+                              <CheckCircle2 size={11} />
+                              Concluída{n > 0 && ` · ${n} anúncio${n !== 1 ? 's' : ''}`}
+                            </span>
+                            {h.persona && (
+                              <span className="text-stone-500 text-xs truncate">{h.persona}</span>
+                            )}
+                          </div>
+                        </div>
+                        <ChevronRight size={14} className="text-stone-600 group-hover:text-stone-400 transition-colors shrink-0" />
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ── Workspace da análise ── */
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 md:p-6 space-y-5">
+
+            {/* Header do workspace */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <button
+                  onClick={fecharWorkspace}
+                  className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-200 transition-colors mb-2.5"
+                >
+                  <ArrowLeft size={13} /> Voltar ao histórico
+                </button>
+                <h2 className="text-stone-100 text-lg font-semibold leading-tight truncate flex items-center gap-2">
+                  <Wand2 size={17} className="text-violet-400 shrink-0" />
+                  {workspace.termo}
+                </h2>
+                <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
+                  {workspace.criadoEm && (
+                    <span className="text-stone-500 text-xs">{fmtDataHist(workspace.criadoEm)}</span>
+                  )}
+                  {!workspace.carregando && (
+                    <span className="text-emerald-400 text-xs flex items-center gap-1">
+                      <CheckCircle2 size={11} /> Concluída · {produtosWs.length} anúncio{produtosWs.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
               <button
-                onClick={gerarEstudio}
-                className="flex items-center gap-2 text-xs text-stone-400 hover:text-stone-200 transition-colors"
+                onClick={fecharWorkspace}
+                title="Fechar workspace"
+                className="p-2.5 rounded-xl bg-stone-800 border border-stone-700 text-stone-400 hover:text-stone-200 transition-colors shrink-0"
               >
-                <RefreshCw size={12} /> Regenerar
+                <X size={14} />
               </button>
+            </div>
+
+            {workspace.erro && (
+              <p className="text-red-400 text-xs">Erro ao carregar a análise: {workspace.erro}</p>
+            )}
+
+            {workspace.carregando ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <Loader2 size={22} className="animate-spin text-stone-600" />
+                <p className="text-stone-500 text-xs">Carregando análise...</p>
+              </div>
+            ) : (
+              <>
+                {/* Infos da análise: preços */}
+                {precosWs && (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl px-4 py-3">
+                      <p className="text-stone-500 text-[11px] uppercase tracking-widest">Menor preço</p>
+                      <p className="text-stone-100 text-base font-bold mt-0.5">{fmtBRL(precosWs.min)}</p>
+                    </div>
+                    <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl px-4 py-3">
+                      <p className="text-stone-500 text-[11px] uppercase tracking-widest">Preço médio</p>
+                      <p className="text-sky-400 text-base font-bold mt-0.5">{fmtBRL(precosWs.media)}</p>
+                    </div>
+                    <div className="bg-stone-800/60 border border-stone-700/50 rounded-xl px-4 py-3">
+                      <p className="text-stone-500 text-[11px] uppercase tracking-widest">Maior preço</p>
+                      <p className="text-stone-100 text-base font-bold mt-0.5">{fmtBRL(precosWs.max)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Produtos analisados — seleção de anúncios de referência */}
+                {produtosWs.length > 0 && (
+                  <div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                      <p className="text-stone-400 text-xs uppercase tracking-widest flex items-center gap-1.5 min-w-0">
+                        <Package size={12} className="shrink-0" />
+                        <span className="truncate">
+                          Anúncios analisados · {produtosSelecionadosWs.length} de {produtosWs.length} selecionado{produtosWs.length !== 1 ? 's' : ''}
+                        </span>
+                      </p>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={selecionarTodos}
+                          disabled={produtosSelecionadosWs.length === produtosWs.length}
+                          className="text-[11px] text-stone-400 hover:text-stone-200 bg-stone-800 border border-stone-700 hover:border-stone-600 rounded-lg px-2.5 py-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Selecionar todos
+                        </button>
+                        <button
+                          onClick={limparSelecao}
+                          disabled={produtosSelecionadosWs.length <= 1}
+                          title="Mantém o 1º anúncio — mínimo 1 selecionado"
+                          className="text-[11px] text-stone-400 hover:text-stone-200 bg-stone-800 border border-stone-700 hover:border-stone-600 rounded-lg px-2.5 py-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-stone-600 text-[11px] mb-2.5 -mt-1">
+                      Os blocos de IA e a faixa de preço usam apenas os anúncios selecionados como referência.
+                    </p>
+                    <div className="space-y-1.5">
+                      {produtosWs.map((p, i) => {
+                        const chave = chaveProduto(p, i)
+                        const marcado = selecionados.has(chave)
+                        const vpdLabel = fmtVpd(vendasPorDia(p))
+                        const dias = diasNoAr(p)
+                        return (
+                          <div
+                            key={chave}
+                            role="checkbox"
+                            aria-checked={marcado}
+                            tabIndex={0}
+                            onClick={() => toggleSelecionado(chave)}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSelecionado(chave) } }}
+                            title={marcado ? 'Desmarcar como referência' : 'Usar como referência'}
+                            className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 min-w-0 cursor-pointer transition-all ${
+                              marcado
+                                ? 'bg-stone-800/60 border-violet-500/40 hover:border-violet-400/60'
+                                : 'bg-stone-800/30 border-stone-700/50 hover:border-stone-600 opacity-55'
+                            }`}
+                          >
+                            {/* Checkbox de seleção (esquerda) */}
+                            <span
+                              aria-hidden="true"
+                              className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                                marcado
+                                  ? 'bg-violet-500 border-violet-400 text-white'
+                                  : 'bg-stone-900 border-stone-600'
+                              }`}
+                            >
+                              {marcado && <Check size={11} strokeWidth={3} />}
+                            </span>
+
+                            {/* Ranking */}
+                            <span className={`text-[11px] font-bold tabular-nums w-6 text-right shrink-0 ${
+                              i === 0 ? 'text-amber-400' : i === 1 ? 'text-stone-400' : i === 2 ? 'text-amber-700' : 'text-stone-600'
+                            }`}>#{i + 1}</span>
+
+                            {/* Thumbnail */}
+                            {p.thumbnail
+                              ? <img src={p.thumbnail} alt="" className="w-12 h-12 rounded-lg object-cover bg-stone-700 shrink-0" />
+                              : <div className="w-12 h-12 rounded-lg bg-stone-700 shrink-0" />}
+
+                            {/* Título + faixa de metadados */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <p className="text-stone-200 text-xs font-medium leading-snug line-clamp-2 min-w-0">{p.title}</p>
+                                {p.meu && (
+                                  <span className="text-[9px] uppercase tracking-wider bg-sky-500/15 text-sky-400 border border-sky-500/25 rounded-full px-1.5 py-0.5 shrink-0">minha loja</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 flex-wrap text-[11px]">
+                                <span className="text-sky-400 font-semibold">{fmtBRL(p.price)}</span>
+                                <span className="text-stone-400 flex items-center gap-1" title="Visitas nos últimos 30 dias">
+                                  <Eye size={11} className="text-stone-500 shrink-0" />
+                                  {p.visitas_30d !== null && p.visitas_30d !== undefined
+                                    ? `${fmtNum(p.visitas_30d)} visitas (30d)` : '— visitas (30d)'}
+                                </span>
+                                <span className="text-stone-400 flex items-center gap-1" title="Dias desde a publicação do anúncio">
+                                  <Clock size={11} className="text-stone-500 shrink-0" />
+                                  {dias !== null && dias !== undefined
+                                    ? `${fmtNum(dias)} dias no ar` : '— dias no ar'}
+                                </span>
+                                <span className="text-amber-400 flex items-center gap-1" title="média: total de vendas ÷ dias no ar">
+                                  <Zap size={11} className="shrink-0" />
+                                  {vpdLabel ? `${vpdLabel} (média)` : '— vendas/dia (média)'}
+                                </span>
+                                {p.full && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 rounded-full px-2 py-0.5" title="Logística Full (fulfillment do Mercado Livre)">
+                                    Full
+                                  </span>
+                                )}
+                                <span className="text-stone-300 flex items-center gap-1" title="Nota média (nº de avaliações)">
+                                  <Star size={11} className="text-amber-400 shrink-0" fill="currentColor" />
+                                  {p.nota !== null && p.nota !== undefined
+                                    ? <>{Number(p.nota).toFixed(1)}{p.num_avaliacoes !== null && p.num_avaliacoes !== undefined ? ` (${fmtNum(p.num_avaliacoes)})` : ''}</>
+                                    : '—'}
+                                </span>
+                                {p.vendas_reais !== null && p.vendas_reais !== undefined && (
+                                  <span
+                                    className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full px-2 py-0.5"
+                                    title="Vendas reais observadas pelo monitoramento: diferença de vendas do anúncio entre duas buscas — dado real, não média"
+                                  >
+                                    ✚{fmtNum(p.vendas_reais)} {p.vendas_reais === 1 ? 'venda real' : 'vendas reais'}
+                                    {p.vendas_reais_desde ? ` desde ${fmtDiaMes(p.vendas_reais_desde)}` : ''}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Link externo */}
+                            {p.permalink && (
+                              <a
+                                href={p.permalink}
+                                target="_blank"
+                                rel="noreferrer"
+                                title="Abrir anúncio no Mercado Livre"
+                                onClick={e => e.stopPropagation()}
+                                className="text-stone-600 hover:text-sky-400 transition-colors shrink-0 p-1"
+                              >
+                                <ExternalLink size={13} />
+                              </a>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Ferramentas de IA */}
+                <div className="space-y-4 pt-1">
+                  <p className="text-stone-400 text-xs uppercase tracking-widest flex items-center gap-1.5">
+                    <Wand2 size={12} className="text-violet-400" /> Ferramentas de IA
+                  </p>
+
+                  {/* Bloco principal: Persona do Produto */}
+                  {renderBlocoCard(BLOCOS_IA[0])}
+
+                  {/* Demais ferramentas — habilitadas sempre; persona direciona */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                    {BLOCOS_IA.slice(1).map(b => renderBlocoCard(b))}
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}
-
-        </div>{/* ── fim grid ── */}
+        </div>
       </div>
     </div>
   )
