@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   if (v === null || v === undefined) return '—'
@@ -67,6 +68,7 @@ export default function Analitico() {
       <Header title="Analítico" onRefresh={refetch} isLoading={isLoading} />
 
       <main className="flex-1 p-3 sm:p-6 overflow-auto space-y-4">
+        <LojasIndisponiveisAviso lojas={prodData?.lojas_indisponiveis ?? anuncData?.lojas_indisponiveis} />
         {error && (
           <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4">
             {error.message}

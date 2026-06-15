@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
@@ -34,6 +35,7 @@ export default function Margem() {
     <div className="flex flex-col flex-1">
       <Header title="Margem" onRefresh={refetch} isLoading={isLoading} />
       <main className="flex-1 p-3 sm:p-6">
+        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
         {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
         {data && (
