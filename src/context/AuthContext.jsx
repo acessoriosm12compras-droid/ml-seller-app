@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeAccounts, setActiveAccounts] = useState([])
+  const [editAccountState, setEditAccountState] = useState(null)
   const [mlContas, setMlContas] = useState(null) // null = ainda carregando
 
   useEffect(() => {
@@ -37,6 +38,13 @@ export function AuthProvider({ children }) {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Keep editAccountState valid: if the chosen store is no longer in activeAccounts, reset to first
+  useEffect(() => {
+    if (!activeAccounts.includes(editAccountState)) {
+      setEditAccountState(activeAccounts[0] || null)
+    }
+  }, [activeAccounts])
 
   useEffect(() => {
     setTokenProvider(() => session?.access_token || null)
@@ -72,7 +80,10 @@ export function AuthProvider({ children }) {
 
   // Derived from activeAccounts — keeps existing read pages working unchanged
   const activeAccount = activeAccounts.join(',')
-  const editAccount = activeAccounts[0] || null
+  const editAccount = editAccountState
+  const setEditAccount = (c) => {
+    if (activeAccounts.includes(c)) setEditAccountState(c)
+  }
   const setActiveAccount = (c) => setActiveAccounts(c ? [c] : [])
 
   return (
@@ -80,7 +91,7 @@ export function AuthProvider({ children }) {
       isLoggedIn, loading, user, role, contaMl,
       activeAccounts, setActiveAccounts,
       activeAccount, setActiveAccount,
-      editAccount,
+      editAccount, setEditAccount,
       mlContas, setMlContas,
       login, loginWithGoogle, logout,
       getToken: () => session?.access_token || null,

@@ -2,13 +2,15 @@ import { render, screen, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from './AuthContext'
 
 function MultiProbe() {
-  const { activeAccounts, activeAccount, editAccount, setActiveAccounts } = useAuth()
+  const { activeAccounts, activeAccount, editAccount, setActiveAccounts, setEditAccount } = useAuth()
   return (
     <div>
       <span data-testid="accounts">{JSON.stringify(activeAccounts)}</span>
       <span data-testid="joined">{activeAccount}</span>
       <span data-testid="edit">{editAccount}</span>
       <button onClick={() => setActiveAccounts(['YUSO', 'M12'])}>multi</button>
+      <button onClick={() => setEditAccount('M12')}>set-edit-m12</button>
+      <button onClick={() => setActiveAccounts(['OTHER'])}>change-accounts</button>
     </div>
   )
 }
@@ -20,6 +22,26 @@ it('activeAccount é a junção das contas e editAccount é a primeira', async (
   expect(screen.getByTestId('accounts').textContent).toBe('["YUSO","M12"]')
   expect(screen.getByTestId('joined').textContent).toBe('YUSO,M12')
   expect(screen.getByTestId('edit').textContent).toBe('YUSO')
+})
+
+it('setEditAccount muda editAccount quando a loja está em activeAccounts', async () => {
+  render(<AuthProvider><MultiProbe /></AuthProvider>)
+  await act(async () => {})
+  await act(async () => { screen.getByText('multi').click() })
+  expect(screen.getByTestId('edit').textContent).toBe('YUSO')
+  await act(async () => { screen.getByText('set-edit-m12').click() })
+  expect(screen.getByTestId('edit').textContent).toBe('M12')
+})
+
+it('mudar activeAccounts para conjunto sem o editAccount escolhido reseta para o primeiro', async () => {
+  render(<AuthProvider><MultiProbe /></AuthProvider>)
+  await act(async () => {})
+  await act(async () => { screen.getByText('multi').click() })
+  await act(async () => { screen.getByText('set-edit-m12').click() })
+  expect(screen.getByTestId('edit').textContent).toBe('M12')
+  // now change activeAccounts to ['OTHER'] which doesn't include M12
+  await act(async () => { screen.getByText('change-accounts').click() })
+  expect(screen.getByTestId('edit').textContent).toBe('OTHER')
 })
 
 // Mock Supabase
