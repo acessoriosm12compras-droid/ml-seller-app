@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
+import EditAccountBanner from '../components/EditAccountBanner'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -159,6 +160,7 @@ export default function CustosProdutos() {
     <div className="flex flex-col flex-1">
       <Header title="Custos por Produto" onRefresh={refetch} isLoading={isLoading} />
       <main className="flex-1 p-3 sm:p-6 space-y-4">
+        <EditAccountBanner />
 
         {/* Cabeçalho + busca */}
         <div className="flex flex-wrap items-center justify-between gap-3">

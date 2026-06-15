@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
+import EditAccountBanner from '../components/EditAccountBanner'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   if (v === null || v === undefined) return '—'
@@ -82,7 +84,7 @@ function EditModal({ anuncio, onClose, onSave, isSaving }) {
 }
 
 export default function Gerenciamento() {
-  const { activeAccount } = useAuth()
+  const { activeAccount, editAccount } = useAuth()
   const qc = useQueryClient()
   const [modal, setModal] = useState(null)
   const [semSku, setSemSku] = useState(false)
@@ -95,7 +97,7 @@ export default function Gerenciamento() {
   })
 
   const saveMut = useMutation({
-    mutationFn: ({ itemId, payload }) => api.gerenciamento.atualizarAnuncio(itemId, payload),
+    mutationFn: ({ itemId, payload }) => api.gerenciamento.atualizarAnuncio(itemId, { ...payload, conta_ml: editAccount }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['gerenciamento-anuncios'] }); setModal(null) },
   })
 
@@ -117,6 +119,8 @@ export default function Gerenciamento() {
       )}
 
       <main className="flex-1 p-3 sm:p-6 space-y-5 overflow-auto">
+        <EditAccountBanner />
+        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
         {error && (
           <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4">
             {error.message}

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
+import EditAccountBanner from '../components/EditAccountBanner'
 
 function formatBRL(v) {
   if (v === null || v === undefined) return '—'
@@ -223,6 +224,7 @@ export default function Movimentacoes() {
       )}
 
       <main className="flex-1 p-3 sm:p-6 space-y-5 overflow-auto">
+        <EditAccountBanner />
         {error && (
           <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4">
             {error.message}

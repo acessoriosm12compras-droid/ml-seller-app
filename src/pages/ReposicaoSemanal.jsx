@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
+import EditAccountBanner from '../components/EditAccountBanner'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   if (v == null) return '—'
@@ -106,6 +108,8 @@ export default function ReposicaoSemanal() {
       <Header title="Planejador de Reposição" onRefresh={refetch} isLoading={isLoading} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-6">
+        <EditAccountBanner />
+        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
 
         {/* Resumo financeiro */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
