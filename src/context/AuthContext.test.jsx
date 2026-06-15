@@ -1,6 +1,27 @@
 import { render, screen, act } from '@testing-library/react'
 import { AuthProvider, useAuth } from './AuthContext'
 
+function MultiProbe() {
+  const { activeAccounts, activeAccount, editAccount, setActiveAccounts } = useAuth()
+  return (
+    <div>
+      <span data-testid="accounts">{JSON.stringify(activeAccounts)}</span>
+      <span data-testid="joined">{activeAccount}</span>
+      <span data-testid="edit">{editAccount}</span>
+      <button onClick={() => setActiveAccounts(['YUSO', 'M12'])}>multi</button>
+    </div>
+  )
+}
+
+it('activeAccount é a junção das contas e editAccount é a primeira', async () => {
+  render(<AuthProvider><MultiProbe /></AuthProvider>)
+  await act(async () => {})
+  await act(async () => { screen.getByText('multi').click() })
+  expect(screen.getByTestId('accounts').textContent).toBe('["YUSO","M12"]')
+  expect(screen.getByTestId('joined').textContent).toBe('YUSO,M12')
+  expect(screen.getByTestId('edit').textContent).toBe('YUSO')
+})
+
 // Mock Supabase
 vi.mock('../lib/supabase', () => ({
   supabase: {

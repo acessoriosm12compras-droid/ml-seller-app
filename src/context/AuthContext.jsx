@@ -7,7 +7,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeAccount, setActiveAccount] = useState(null)
+  const [activeAccounts, setActiveAccounts] = useState([])
   const [mlContas, setMlContas] = useState(null) // null = ainda carregando
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
       setSession(session)
       if (session) {
         const meta = session.user?.user_metadata || {}
-        setActiveAccount(meta.conta_ml || null)
+        setActiveAccounts(meta.conta_ml ? [meta.conta_ml] : [])
       }
       setLoading(false)
     })
@@ -24,9 +24,9 @@ export function AuthProvider({ children }) {
       setSession(session)
       if (session) {
         const meta = session.user?.user_metadata || {}
-        setActiveAccount(meta.conta_ml || null)
+        setActiveAccounts(meta.conta_ml ? [meta.conta_ml] : [])
       } else {
-        setActiveAccount(null)
+        setActiveAccounts([])
         setMlContas(null)
       }
     })
@@ -57,7 +57,7 @@ export function AuthProvider({ children }) {
   async function logout() {
     await supabase.auth.signOut()
     setSession(null)
-    setActiveAccount(null)
+    setActiveAccounts([])
     setMlContas(null)
   }
 
@@ -66,10 +66,17 @@ export function AuthProvider({ children }) {
   const contaMl = user?.user_metadata?.conta_ml || null
   const isLoggedIn = !!session
 
+  // Derived from activeAccounts — keeps existing read pages working unchanged
+  const activeAccount = activeAccounts.join(',')
+  const editAccount = activeAccounts[0] || null
+  const setActiveAccount = (c) => setActiveAccounts(c ? [c] : [])
+
   return (
     <AuthContext.Provider value={{
       isLoggedIn, loading, user, role, contaMl,
+      activeAccounts, setActiveAccounts,
       activeAccount, setActiveAccount,
+      editAccount,
       mlContas, setMlContas,
       login, loginWithGoogle, logout,
       getToken: () => session?.access_token || null,
