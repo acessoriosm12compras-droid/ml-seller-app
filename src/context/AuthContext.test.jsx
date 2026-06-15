@@ -34,9 +34,10 @@ vi.mock('../lib/supabase', () => ({
   },
 }))
 
-// Mock setTokenProvider from api
+// Mock setTokenProvider + api from api
 vi.mock('../api', () => ({
   setTokenProvider: vi.fn(),
+  api: { minhasContas: vi.fn().mockResolvedValue({ contas: [] }) },
 }))
 
 function TestComponent() {
@@ -70,4 +71,23 @@ test('logout calls supabase signOut', async () => {
   await act(async () => {})
   await act(async () => { screen.getByText('logout').click() })
   expect(supabase.auth.signOut).toHaveBeenCalled()
+})
+
+test('não reseta a seleção de lojas quando o Supabase re-dispara evento de auth', async () => {
+  const { supabase } = await import('../lib/supabase')
+  render(<AuthProvider><MultiProbe /></AuthProvider>)
+  await act(async () => {})
+  // usuária seleciona 2 lojas
+  await act(async () => { screen.getByText('multi').click() })
+  expect(screen.getByTestId('accounts').textContent).toBe('["YUSO","M12"]')
+  // Supabase re-dispara um evento (ex.: TOKEN_REFRESHED / re-foco) com a conta padrão
+  const cb = supabase.auth.onAuthStateChange.mock.calls.at(-1)[0]
+  await act(async () => {
+    cb('TOKEN_REFRESHED', {
+      user: { user_metadata: { conta_ml: 'YUSO', role: 'admin' } },
+      access_token: 'x',
+    })
+  })
+  // a seleção da usuária deve ser preservada (não voltar para ['YUSO'])
+  expect(screen.getByTestId('accounts').textContent).toBe('["YUSO","M12"]')
 })

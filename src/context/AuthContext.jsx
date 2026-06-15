@@ -15,7 +15,9 @@ export function AuthProvider({ children }) {
       setSession(session)
       if (session) {
         const meta = session.user?.user_metadata || {}
-        setActiveAccounts(meta.conta_ml ? [meta.conta_ml] : [])
+        // Só inicializa se ainda não há seleção — não sobrescreve a escolha do
+        // usuário quando o Supabase re-dispara eventos (refresh de token, re-foco).
+        setActiveAccounts(prev => prev.length ? prev : (meta.conta_ml ? [meta.conta_ml] : []))
       }
       setLoading(false)
     })
@@ -24,7 +26,9 @@ export function AuthProvider({ children }) {
       setSession(session)
       if (session) {
         const meta = session.user?.user_metadata || {}
-        setActiveAccounts(meta.conta_ml ? [meta.conta_ml] : [])
+        // Só inicializa se ainda não há seleção — não sobrescreve a escolha do
+        // usuário quando o Supabase re-dispara eventos (refresh de token, re-foco).
+        setActiveAccounts(prev => prev.length ? prev : (meta.conta_ml ? [meta.conta_ml] : []))
       } else {
         setActiveAccounts([])
         setMlContas(null)
