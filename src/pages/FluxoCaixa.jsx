@@ -64,7 +64,7 @@ export default function FluxoCaixa() {
               </p>
             </div>
 
-            <DadosDoMes data={data} onSave={salvar.mutate} salvando={salvar.isPending} />
+            <DadosDoMes key={`${conta}-${anoMes}`} data={data} onSave={salvar.mutate} salvando={salvar.isPending} erro={salvar.isError ? salvar.error?.message : null} />
 
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
               <Indic label="Cobertura de estoque" valor={data.indicadores.cobertura_estoque == null ? '—' : `${NUM(data.indicadores.cobertura_estoque)} mês`} />
@@ -172,7 +172,7 @@ function Fornecedores({ lista, set, editavel }) {
     </div>
   )
 }
-function DadosDoMes({ data, onSave, salvando }) {
+function DadosDoMes({ data, onSave, salvando, erro }) {
   const editavel = data.editavel
   const [form, setForm] = useState({
     estoque_custo: data.inputs.estoque_custo ?? '',
@@ -205,10 +205,13 @@ function DadosDoMes({ data, onSave, salvando }) {
       </div>
       <Fornecedores lista={form.fornecedores} set={l => setForm({ ...form, fornecedores: l })} editavel={editavel} />
       {editavel && (
-        <button onClick={submit} disabled={salvando}
-          className="bg-sky-500 hover:bg-sky-400 text-white text-sm font-medium px-4 py-2 rounded-lg disabled:opacity-60">
-          {salvando ? 'Salvando...' : 'Salvar dados do mês'}
-        </button>
+        <>
+          {erro && <div className="text-red-500 text-sm">{erro}</div>}
+          <button onClick={submit} disabled={salvando}
+            className="bg-sky-500 hover:bg-sky-400 text-white text-sm font-medium px-4 py-2 rounded-lg disabled:opacity-60">
+            {salvando ? 'Salvando...' : 'Salvar dados do mês'}
+          </button>
+        </>
       )}
     </div>
   )
