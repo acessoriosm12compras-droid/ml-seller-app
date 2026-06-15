@@ -18,3 +18,11 @@ it('botão Todas seleciona todas as lojas', () => {
   fireEvent.click(screen.getByLabelText('Todas'))
   expect(onChange).toHaveBeenCalledWith(CONTAS)
 })
+
+it('não permite desmarcar a última loja (mantém ao menos uma)', () => {
+  const onChange = vi.fn()
+  render(<StoreMultiSelect contas={CONTAS} selecionadas={['YUSO']} onChange={onChange} />)
+  fireEvent.click(screen.getByText(/YUSO/))            // abre o dropdown
+  fireEvent.click(screen.getByLabelText('YUSO'))       // tenta desmarcar a única
+  expect(onChange).not.toHaveBeenCalled()
+})

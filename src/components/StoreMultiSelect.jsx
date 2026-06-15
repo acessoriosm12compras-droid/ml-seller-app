@@ -19,7 +19,12 @@ export default function StoreMultiSelect({ contas, selecionadas, onChange }) {
 
   function toggle(conta) {
     const set = new Set(selecionadas)
-    set.has(conta) ? set.delete(conta) : set.add(conta)
+    if (set.has(conta)) {
+      if (set.size === 1) return            // mantém ao menos uma loja selecionada
+      set.delete(conta)
+    } else {
+      set.add(conta)
+    }
     onChange(contas.filter(c => set.has(c)))
   }
 
