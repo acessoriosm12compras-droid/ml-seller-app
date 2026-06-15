@@ -74,7 +74,7 @@ function EditableCell({ value, onSave, prefix = '', suffix = '', type = 'number'
 }
 
 export default function ReposicaoSemanal() {
-  const { activeAccount } = useAuth()
+  const { activeAccount, editAccount } = useAuth()
   const queryClient = useQueryClient()
   const [filtro, setFiltro] = useState('todos') // todos | repor | ok
 
@@ -86,7 +86,7 @@ export default function ReposicaoSemanal() {
   })
 
   const mutation = useMutation({
-    mutationFn: (payload) => api.reposicao.atualizarEstoqueMinimo({ conta_ml: activeAccount, ...payload }),
+    mutationFn: (payload) => api.reposicao.atualizarEstoqueMinimo({ conta_ml: editAccount, ...payload }),
     onSuccess: () => queryClient.invalidateQueries(['reposicao', activeAccount]),
   })
 
@@ -120,7 +120,7 @@ export default function ReposicaoSemanal() {
             <p className={`text-xl font-bold ${resumo.saldo_ml != null ? 'text-sky-400' : 'text-stone-500'}`}>
               {resumo.saldo_ml != null ? formatBRL(resumo.saldo_ml) : 'Indisponível'}
             </p>
-            <p className="text-xs text-stone-500 mt-1">conta: {activeAccount}</p>
+            <p className="text-xs text-stone-500 mt-1">conta: {editAccount}</p>
           </div>
 
           <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4">

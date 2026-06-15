@@ -177,7 +177,7 @@ function MovModal({ item, onClose, onSave, isSaving }) {
 }
 
 export default function Movimentacoes() {
-  const { activeAccount } = useAuth()
+  const { activeAccount, editAccount } = useAuth()
   const qc = useQueryClient()
   const [mes, setMes] = useState(() => new Date().toISOString().slice(0, 7))
   const [modal, setModal] = useState(null) // null | { item?: obj }
@@ -193,7 +193,7 @@ export default function Movimentacoes() {
     mutationFn: (payload) =>
       modal?.item?.id
         ? api.movimentacoes.update(modal.item.id, payload)
-        : api.movimentacoes.create({ ...payload, conta_ml: activeAccount }),
+        : api.movimentacoes.create({ ...payload, conta_ml: editAccount }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['movimentacoes'] }); setModal(null) },
   })
 
