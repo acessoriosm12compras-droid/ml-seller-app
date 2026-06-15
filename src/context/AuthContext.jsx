@@ -7,7 +7,8 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeAccount, setActiveAccount] = useState(null)
+  const [activeAccounts, setActiveAccounts] = useState([])
+  const [editAccountState, setEditAccountState] = useState(null)
   const [mlContas, setMlContas] = useState(null) // null = ainda carregando
 
   useEffect(() => {
@@ -15,7 +16,9 @@ export function AuthProvider({ children }) {
       setSession(session)
       if (session) {
         const meta = session.user?.user_metadata || {}
-        setActiveAccount(meta.conta_ml || null)
+        // Só inicializa se ainda não há seleção — não sobrescreve a escolha do
+        // usuário quando o Supabase re-dispara eventos (refresh de token, re-foco).
+        setActiveAccounts(prev => prev.length ? prev : (meta.conta_ml ? [meta.conta_ml] : []))
       }
       setLoading(false)
     })
@@ -24,15 +27,24 @@ export function AuthProvider({ children }) {
       setSession(session)
       if (session) {
         const meta = session.user?.user_metadata || {}
-        setActiveAccount(meta.conta_ml || null)
+        // Só inicializa se ainda não há seleção — não sobrescreve a escolha do
+        // usuário quando o Supabase re-dispara eventos (refresh de token, re-foco).
+        setActiveAccounts(prev => prev.length ? prev : (meta.conta_ml ? [meta.conta_ml] : []))
       } else {
-        setActiveAccount(null)
+        setActiveAccounts([])
         setMlContas(null)
       }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Keep editAccountState valid: if the chosen store is no longer in activeAccounts, reset to first
+  useEffect(() => {
+    if (!activeAccounts.includes(editAccountState)) {
+      setEditAccountState(activeAccounts[0] || null)
+    }
+  }, [activeAccounts])
 
   useEffect(() => {
     setTokenProvider(() => session?.access_token || null)
@@ -57,7 +69,7 @@ export function AuthProvider({ children }) {
   async function logout() {
     await supabase.auth.signOut()
     setSession(null)
-    setActiveAccount(null)
+    setActiveAccounts([])
     setMlContas(null)
   }
 
@@ -66,10 +78,20 @@ export function AuthProvider({ children }) {
   const contaMl = user?.user_metadata?.conta_ml || null
   const isLoggedIn = !!session
 
+  // Derived from activeAccounts — keeps existing read pages working unchanged
+  const activeAccount = activeAccounts.join(',')
+  const editAccount = editAccountState
+  const setEditAccount = (c) => {
+    if (activeAccounts.includes(c)) setEditAccountState(c)
+  }
+  const setActiveAccount = (c) => setActiveAccounts(c ? [c] : [])
+
   return (
     <AuthContext.Provider value={{
       isLoggedIn, loading, user, role, contaMl,
+      activeAccounts, setActiveAccounts,
       activeAccount, setActiveAccount,
+      editAccount, setEditAccount,
       mlContas, setMlContas,
       login, loginWithGoogle, logout,
       getToken: () => session?.access_token || null,

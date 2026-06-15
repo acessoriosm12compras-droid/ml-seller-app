@@ -4,6 +4,7 @@ import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
 import { TrendingUp, MousePointerClick, Eye, DollarSign, Target, BarChart2 } from 'lucide-react'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function fmt(v) {
   if (v === null || v === undefined) return '—'
@@ -79,6 +80,7 @@ export default function Ads() {
       <Header title="Mercado Ads" onRefresh={refetch} isLoading={isLoading} />
 
       <main className="flex-1 p-3 sm:p-6 overflow-auto space-y-5">
+        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
         {error && (
           <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-4">
             {error.message}

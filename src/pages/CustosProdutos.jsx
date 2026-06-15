@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
+import EditAccountBanner from '../components/EditAccountBanner'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -38,7 +39,7 @@ function getDivergencia(produto) {
 }
 
 export default function CustosProdutos() {
-  const { activeAccount, getToken } = useAuth()
+  const { activeAccount, editAccount, getToken } = useAuth()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [filtro, setFiltro] = useState('todos') // todos | problemas | sem_custo
@@ -56,7 +57,7 @@ export default function CustosProdutos() {
     try {
       const form = new FormData()
       form.append('arquivo', file)
-      if (activeAccount) form.append('conta_ml', activeAccount)
+      if (editAccount) form.append('conta_ml', editAccount)
       const res = await fetch(`${BASE}/api/importar-custos-planilha`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${getToken()}` },
@@ -105,7 +106,7 @@ export default function CustosProdutos() {
       return
     }
     setSavingStatus(s => ({ ...s, [produto.item_id]: 'saving' }))
-    mutation.mutate({ item_id: produto.item_id, titulo: produto.titulo, custo_unitario: value, conta_ml: activeAccount })
+    mutation.mutate({ item_id: produto.item_id, titulo: produto.titulo, custo_unitario: value, conta_ml: editAccount })
     setEditingCosts(s => { const n = {...s}; delete n[produto.item_id]; return n })
   }
 
@@ -159,6 +160,7 @@ export default function CustosProdutos() {
     <div className="flex flex-col flex-1">
       <Header title="Custos por Produto" onRefresh={refetch} isLoading={isLoading} />
       <main className="flex-1 p-3 sm:p-6 space-y-4">
+        <EditAccountBanner />
 
         {/* Cabeçalho + busca */}
         <div className="flex flex-wrap items-center justify-between gap-3">

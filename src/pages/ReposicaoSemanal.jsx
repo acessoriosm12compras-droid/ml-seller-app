@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
+import EditAccountBanner from '../components/EditAccountBanner'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   if (v == null) return '—'
@@ -74,7 +76,7 @@ function EditableCell({ value, onSave, prefix = '', suffix = '', type = 'number'
 }
 
 export default function ReposicaoSemanal() {
-  const { activeAccount } = useAuth()
+  const { activeAccount, editAccount } = useAuth()
   const queryClient = useQueryClient()
   const [filtro, setFiltro] = useState('todos') // todos | repor | ok
 
@@ -86,7 +88,7 @@ export default function ReposicaoSemanal() {
   })
 
   const mutation = useMutation({
-    mutationFn: (payload) => api.reposicao.atualizarEstoqueMinimo({ conta_ml: activeAccount, ...payload }),
+    mutationFn: (payload) => api.reposicao.atualizarEstoqueMinimo({ conta_ml: editAccount, ...payload }),
     onSuccess: () => queryClient.invalidateQueries(['reposicao', activeAccount]),
   })
 
@@ -106,6 +108,8 @@ export default function ReposicaoSemanal() {
       <Header title="Planejador de Reposição" onRefresh={refetch} isLoading={isLoading} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-6">
+        <EditAccountBanner />
+        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
 
         {/* Resumo financeiro */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -120,7 +124,7 @@ export default function ReposicaoSemanal() {
             <p className={`text-xl font-bold ${resumo.saldo_ml != null ? 'text-sky-400' : 'text-stone-500'}`}>
               {resumo.saldo_ml != null ? formatBRL(resumo.saldo_ml) : 'Indisponível'}
             </p>
-            <p className="text-xs text-stone-500 mt-1">conta: {activeAccount}</p>
+            <p className="text-xs text-stone-500 mt-1">conta: {editAccount}</p>
           </div>
 
           <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4">

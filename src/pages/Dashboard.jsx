@@ -12,6 +12,7 @@ import {
 import { api } from '../api'
 import Header from '../components/Header'
 import ProdutosTable from '../components/resultado/ProdutosTable'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 import { useAuth } from '../context/AuthContext'
 
 function formatBRL(v) {
@@ -195,6 +196,8 @@ export default function Dashboard() {
             {error.status === 401 ? 'Sessão expirada — faça login novamente.' : error.message}
           </div>
         )}
+
+        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
 
         {/* ── Alert: products without cost ── */}
         {semCusto.length > 0 && (

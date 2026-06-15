@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
@@ -110,6 +111,7 @@ export default function Conciliacao() {
   return (
     <div className="flex flex-col flex-1">
       <Header title="Conciliação Bancária" onRefresh={refetch} isLoading={isLoading} />
+      <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-6">
         {/* Controls row */}

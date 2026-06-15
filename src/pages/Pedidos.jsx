@@ -5,6 +5,7 @@ import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
 import { downloadCSV, todayStr } from '../lib/exportCSV'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   if (v === null || v === undefined) return '—'
@@ -117,6 +118,7 @@ export default function Pedidos() {
       <Header title="Pedidos" onRefresh={refetch} isLoading={isLoading} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-4 overflow-auto">
+        <LojasIndisponiveisAviso lojas={dataPedidos?.lojas_indisponiveis ?? dataVendas?.lojas_indisponiveis} />
         {/* Tabs */}
         <div className="flex gap-1 border-b border-stone-800">
           {[
@@ -185,7 +187,11 @@ export default function Pedidos() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <Link to={`/pedidos/${p.ml_order_id}`} className="text-xs text-sky-400 hover:text-sky-300">
+                            <Link
+                              to={`/pedidos/${p.ml_order_id}`}
+                              state={{ loja: p.loja }}
+                              className="text-xs text-sky-400 hover:text-sky-300"
+                            >
                               Ver →
                             </Link>
                           </td>

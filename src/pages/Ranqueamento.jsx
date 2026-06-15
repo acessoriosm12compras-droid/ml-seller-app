@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 const ML_SEARCH = 'https://api.mercadolibre.com/sites/MLB/search'
 
@@ -75,6 +76,7 @@ export default function Ranqueamento() {
     <div className="flex flex-col flex-1">
       <Header title="Ranqueamento" onRefresh={refetch} isLoading={isLoading} />
       <main className="flex-1 p-3 sm:p-6 space-y-4">
+        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
         <div className="flex justify-between items-center">
           <p className="text-stone-500 text-sm">
             Clique em "Verificar Posições" para buscar a posição de cada anúncio no ML.

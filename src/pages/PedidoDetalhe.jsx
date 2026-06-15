@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
@@ -9,10 +9,14 @@ function formatBRL(v) {
 
 export default function PedidoDetalhe() {
   const { id } = useParams()
-  const { activeAccount } = useAuth()
+  const { state } = useLocation()
+  const { editAccount } = useAuth()
+  // Use the loja embedded in the navigation state (from the Pedidos list row),
+  // falling back to editAccount for deep-links (no state).
+  const contaMl = state?.loja || editAccount
   const { data, isLoading, error } = useQuery({
-    queryKey: ['pedido', id, activeAccount],
-    queryFn: () => api.pedido(id, activeAccount ? { conta_ml: activeAccount } : {}),
+    queryKey: ['pedido', id, contaMl],
+    queryFn: () => api.pedido(id, contaMl ? { conta_ml: contaMl } : {}),
   })
 
   return (

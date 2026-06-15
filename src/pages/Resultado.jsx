@@ -6,6 +6,7 @@ import Header from '../components/Header'
 import KpiCard from '../components/resultado/KpiCard'
 import ProdutosTable from '../components/resultado/ProdutosTable'
 import { downloadCSV, todayStr } from '../lib/exportCSV'
+import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 
 function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v ?? 0)
@@ -40,6 +41,7 @@ export default function Resultado() {
     <div className="flex flex-col flex-1">
       <Header title="Resultado" onRefresh={refetch} isLoading={isLoading} />
       <main className="flex-1 p-3 sm:p-6 space-y-6">
+        <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
 
         {/* Alert: products without cost */}
