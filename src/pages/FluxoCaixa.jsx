@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
+import { useAuth } from '../context/AuthContext'
 
 const BRL = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
 const PCT = v => v == null ? '—' : `${(v * 100).toFixed(1)}%`
@@ -13,38 +14,33 @@ function mesAtual() {
 }
 
 export default function FluxoCaixa() {
-  const [conta, setConta] = useState('__all__')
+  const { activeAccount } = useAuth()
   const [anoMes, setAnoMes] = useState(mesAtual())
   const qc = useQueryClient()
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['fluxo-caixa', conta, anoMes],
-    queryFn: () => api.fluxoCaixa({ conta_ml: conta, ano_mes: anoMes }),
+    queryKey: ['fluxo-caixa', activeAccount, anoMes],
+    queryFn: () => api.fluxoCaixa({ conta_ml: activeAccount, ano_mes: anoMes }),
+    enabled: !!activeAccount,
   })
 
   const salvar = useMutation({
-    mutationFn: (body) => api.salvarFluxoCaixa({ ...body, conta_ml: conta, ano_mes: anoMes }),
+    mutationFn: (body) => api.salvarFluxoCaixa({ ...body, conta_ml: activeAccount, ano_mes: anoMes }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['fluxo-caixa'] }),
   })
-
-  const contas = ['__all__', 'YUSO', 'M12']
-  const label = c => c === '__all__' ? 'YUSO + M12' : c
 
   return (
     <div className="flex flex-col flex-1">
       <Header title="Fluxo de Caixa" onRefresh={refetch} isLoading={isLoading} />
       <main className="flex-1 p-3 sm:p-6 space-y-6">
-        <div className="flex items-center gap-2 flex-wrap">
-          {contas.map(c => (
-            <button key={c} onClick={() => setConta(c)}
-              className={`px-3 py-1.5 rounded-lg text-sm ${conta === c ? 'bg-sky-500 text-white' : 'bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300'}`}>
-              {label(c)}
-            </button>
-          ))}
+        <div className="flex items-center justify-end">
           <input type="month" value={anoMes} onChange={e => setAnoMes(e.target.value)}
-            className="ml-auto px-3 py-1.5 rounded-lg text-sm bg-stone-100 dark:bg-stone-800 border border-stone-300 dark:border-stone-700" />
+            className="px-3 py-1.5 rounded-lg text-sm bg-stone-100 dark:bg-stone-800 border border-stone-300 dark:border-stone-700" />
         </div>
 
+        {!activeAccount && (
+          <div className="text-stone-500 text-sm">Selecione uma loja no topo.</div>
+        )}
         {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
         {data && (
@@ -64,7 +60,7 @@ export default function FluxoCaixa() {
               </p>
             </div>
 
-            <DadosDoMes key={`${conta}-${anoMes}`} data={data} onSave={salvar.mutate} salvando={salvar.isPending} erro={salvar.isError ? salvar.error?.message : null} />
+            <DadosDoMes key={`${activeAccount}-${anoMes}`} data={data} onSave={salvar.mutate} salvando={salvar.isPending} erro={salvar.isError ? salvar.error?.message : null} />
 
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
               <Indic label="Cobertura de estoque" valor={data.indicadores.cobertura_estoque == null ? '—' : `${NUM(data.indicadores.cobertura_estoque)} mês`} />
