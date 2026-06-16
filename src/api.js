@@ -170,11 +170,6 @@ export const api = {
     remove: (id) => request(`/api/despesas-fixas/${id}`, { method: 'DELETE' }),
   },
 
-  fluxoCaixa: {
-    get: (params) => request(`/api/fluxo-caixa?${new URLSearchParams(params)}`),
-    put: (data) => request('/api/fluxo-caixa', { method: 'PUT', body: JSON.stringify(data) }),
-  },
-
   ads: (params) =>
     request(`/api/ads/campanhas?${new URLSearchParams(params)}`),
 
