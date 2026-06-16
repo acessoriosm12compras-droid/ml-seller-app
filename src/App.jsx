@@ -29,6 +29,7 @@ import Ads from './pages/Ads'
 import EstudioIA from './pages/EstudioIA'
 import Onboarding from './pages/Onboarding'
 import ReposicaoSemanal from './pages/ReposicaoSemanal'
+import DefinirSenha from './pages/DefinirSenha'
 import NotFound from './pages/NotFound'
 
 const queryClient = new QueryClient({
@@ -44,6 +45,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/definir-senha" element={<DefinirSenha />} />
             <Route
               path="/"
               element={

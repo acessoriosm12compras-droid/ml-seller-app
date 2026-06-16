@@ -4,7 +4,7 @@ import Logo from './Logo'
 import {
   LayoutDashboard, PieChart, Banknote,
   ShoppingBag, Settings, Package, SlidersHorizontal, ClipboardList, Megaphone, Sparkles, LogOut,
-  ShoppingCart, Wallet,
+  ShoppingCart, Wallet, Users,
 } from 'lucide-react'
 
 const NAV = [
@@ -22,6 +22,10 @@ const NAV = [
   { to: '/configuracoes',   label: 'Configurações',  icon: SlidersHorizontal },
 ]
 
+const NAV_ADMIN = [
+  { to: '/admin/usuarios', label: 'Vendedores', icon: Users },
+]
+
 const itemClass = ({ isActive }) =>
   `flex items-center gap-3 h-9 px-2.5 rounded-lg transition-colors duration-150 ${
     isActive
@@ -30,7 +34,8 @@ const itemClass = ({ isActive }) =>
   }`
 
 export default function Sidebar() {
-  const { logout } = useAuth()
+  const { logout, role } = useAuth()
+  const isAdmin = role === 'admin'
 
   return (
     <>
@@ -65,6 +70,27 @@ export default function Sidebar() {
               )}
             </NavLink>
           ))}
+          {isAdmin && (
+            <>
+              <div className="my-1 border-t border-stone-800" />
+              {NAV_ADMIN.map(({ to, label, icon: Icon }) => (
+                <NavLink key={to} to={to} title={label} className={itemClass}>
+                  {({ isActive }) => (
+                    <>
+                      <Icon
+                        size={16}
+                        strokeWidth={1.75}
+                        className={`shrink-0 ${isActive ? 'text-accent-text' : ''}`}
+                      />
+                      <span className="text-sm whitespace-nowrap overflow-hidden">
+                        {label}
+                      </span>
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* Logout */}

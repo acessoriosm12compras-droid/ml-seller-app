@@ -64,6 +64,7 @@ export const api = {
     criarUsuario: (data) => request('/admin/usuarios', { method: 'POST', body: JSON.stringify(data) }),
     editarUsuario: (id, data) => request(`/admin/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     toggleAtivo: (id, ativo) => request(`/admin/usuarios/${id}`, { method: 'PATCH', body: JSON.stringify({ ativo }) }),
+    convidar: (data) => request('/admin/usuarios/convidar', { method: 'POST', body: JSON.stringify(data) }),
   },
 
   pluggy: {
