@@ -202,14 +202,15 @@ function Section({ title, columns, rows, isLoading, onAdd, onSave, onDelete, new
 }
 
 // ── Donut chart ───────────────────────────────────────────────────────────────
-const CHART_COLORS = ['#38bdf8', '#a78bfa', '#fbbf24', '#fb7185']
+const CHART_COLORS = ['#38bdf8', '#a78bfa', '#fbbf24', '#fb7185', '#34d399']
 
-function CostChart({ totalCompras, totalFretes, totalMontagem, totalDespesas }) {
+function CostChart({ totalCompras, totalFretes, totalMontagem, totalDespesas, totalFixas }) {
   const data = [
-    { name: 'Compras',    value: totalCompras },
-    { name: 'Fretes',     value: totalFretes },
-    { name: 'Montagem',   value: totalMontagem },
-    { name: 'Despesas',   value: totalDespesas },
+    { name: 'Compras',      value: totalCompras },
+    { name: 'Fretes',       value: totalFretes },
+    { name: 'Montagem',     value: totalMontagem },
+    { name: 'Despesas',     value: totalDespesas },
+    { name: 'Custos Fixos', value: totalFixas },
   ].filter(d => d.value > 0)
 
   const total = data.reduce((s, d) => s + d.value, 0)
@@ -301,18 +302,21 @@ export default function Fechamento() {
   const fretesQ   = useQuery({ queryKey: ['fechamento-fretes',   mesAno, activeAccount], queryFn: () => api.fechamento.fretes.list({ mes_ano: mesAno, ...accountParams }) })
   const montagemQ = useQuery({ queryKey: ['fechamento-montagem', mesAno, activeAccount], queryFn: () => api.fechamento.montagem.list({ mes_ano: mesAno, ...accountParams }) })
   const despesasQ = useQuery({ queryKey: ['fechamento-despesas', mesAno, activeAccount], queryFn: () => api.fechamento.despesas.list({ mes_ano: mesAno, ...accountParams }) })
+  const fixasQ    = useQuery({ queryKey: ['despesas-fixas', mesAno, activeAccount], queryFn: () => api.despesasFixas.list({ mes_ano: mesAno, ...accountParams }) })
 
   // Edit maps
   const [comprasEdit,  setComprasEditMap]  = useState({})
   const [fretesEdit,   setFretesEditMap]   = useState({})
   const [montagemEdit, setMontagemEditMap] = useState({})
   const [despesasEdit, setDespesasEditMap] = useState({})
+  const [fixasEdit,    setFixasEditMap]    = useState({})
 
   // New row drafts
   const [newCompra,   setNewCompra]   = useState(null)
   const [newFrete,    setNewFrete]    = useState(null)
   const [newMontagem, setNewMontagem] = useState(null)
   const [newDespesa,  setNewDespesa]  = useState(null)
+  const [newFixa,     setNewFixa]     = useState(null)
 
   function makeSetEdit(setMap) {
     return (id, val) => setMap(m => ({ ...m, [id]: val }))
@@ -322,12 +326,14 @@ export default function Fechamento() {
   const setFretesEdit   = makeSetEdit(setFretesEditMap)
   const setMontagemEdit = makeSetEdit(setMontagemEditMap)
   const setDespesasEdit = makeSetEdit(setDespesasEditMap)
+  const setFixasEdit    = makeSetEdit(setFixasEditMap)
 
   // Mutations — top-level (Rules of Hooks)
   const invCompras  = () => qc.invalidateQueries({ queryKey: ['fechamento-compras',  mesAno, activeAccount] })
   const invFretes   = () => qc.invalidateQueries({ queryKey: ['fechamento-fretes',   mesAno, activeAccount] })
   const invMontagem = () => qc.invalidateQueries({ queryKey: ['fechamento-montagem', mesAno, activeAccount] })
   const invDespesas = () => qc.invalidateQueries({ queryKey: ['fechamento-despesas', mesAno, activeAccount] })
+  const invFixas    = () => qc.invalidateQueries({ queryKey: ['despesas-fixas',      mesAno, activeAccount] })
 
   const saveCompra = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.compras.update(id, data, accountParams)  : api.fechamento.compras.create({ ...data, mes_ano: mesAno }, accountParams),  onSuccess: invCompras })
   const delCompra  = useMutation({ mutationFn: (id) => api.fechamento.compras.delete(id, accountParams),  onSuccess: invCompras })
@@ -337,6 +343,8 @@ export default function Fechamento() {
   const delMontag  = useMutation({ mutationFn: (id) => api.fechamento.montagem.delete(id, accountParams), onSuccess: invMontagem })
   const saveDesp   = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.despesas.update(id, data, accountParams) : api.fechamento.despesas.create({ ...data, mes_ano: mesAno }, accountParams), onSuccess: invDespesas })
   const delDesp    = useMutation({ mutationFn: (id) => api.fechamento.despesas.delete(id, accountParams), onSuccess: invDespesas })
+  const saveFixa   = useMutation({ mutationFn: ({ id, data }) => id ? api.despesasFixas.update(id, { ...data }) : api.despesasFixas.create({ ...data, mes_ano: mesAno, ...accountParams }), onSuccess: invFixas })
+  const delFixa    = useMutation({ mutationFn: (id) => api.despesasFixas.remove(id), onSuccess: invFixas })
 
   // Conta Simples sync (Despesas)
   const csStatusQ = useQuery({ queryKey: ['contasimples-status'], queryFn: () => api.fechamento.contaSimples.status() })
@@ -419,13 +427,23 @@ export default function Fechamento() {
       color: v => statusColor(v) },
   ]
 
+  const fixasCols = [
+    { key: 'categoria',  label: 'Categoria' },
+    { key: 'descricao',  label: 'Descrição' },
+    { key: 'valor',      label: 'Valor', type: 'number', align: 'right',
+      render: v => formatBRL(v), color: () => 'text-emerald-400 font-semibold' },
+  ]
+
   // Raw data
   const comprasAll  = comprasQ.data  || []
   const fretesAll   = fretesQ.data   || []
   const montagemAll = montagemQ.data || []
   const despesasAll = despesasQ.data || []
+  const fixasData   = fixasQ.data    || {}
+  const fixasAll    = fixasData.itens || []
+  const fixasCopiaDe = fixasData.copiado_de || null
 
-  // Filtered (used for display and totals)
+  // Filtered (used for display and totals; fixas não têm data, sempre exibidas completas)
   const compras  = filterByDate(comprasAll,  dateFrom, dateTo)
   const fretes   = filterByDate(fretesAll,   dateFrom, dateTo)
   const montagem = filterByDate(montagemAll, dateFrom, dateTo)
@@ -435,11 +453,12 @@ export default function Fechamento() {
   const totalFretes   = totalOf(fretes,   'total')
   const totalMontagem = totalOf(montagem, 'valor')
   const totalDespesas = totalOf(despesas, 'valor')
-  const totalGeral    = totalCompras + totalFretes + totalMontagem + totalDespesas
+  const totalFixas    = fixasData.total || totalOf(fixasAll, 'valor')
+  const totalGeral    = totalCompras + totalFretes + totalMontagem + totalDespesas + totalFixas
 
-  const isLoading = comprasQ.isLoading || fretesQ.isLoading || montagemQ.isLoading || despesasQ.isLoading
-  const apiError = comprasQ.error || fretesQ.error || montagemQ.error || despesasQ.error
-  const refetchAll = () => { comprasQ.refetch(); fretesQ.refetch(); montagemQ.refetch(); despesasQ.refetch() }
+  const isLoading = comprasQ.isLoading || fretesQ.isLoading || montagemQ.isLoading || despesasQ.isLoading || fixasQ.isLoading
+  const apiError = comprasQ.error || fretesQ.error || montagemQ.error || despesasQ.error || fixasQ.error
+  const refetchAll = () => { comprasQ.refetch(); fretesQ.refetch(); montagemQ.refetch(); despesasQ.refetch(); fixasQ.refetch() }
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -505,7 +524,7 @@ export default function Fechamento() {
         {/* KPIs + Pie chart */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           {/* KPI stack */}
-          <div className="xl:col-span-2 grid grid-cols-2 sm:grid-cols-2 gap-4 content-start">
+          <div className="xl:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4 content-start">
             <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-sky-500 rounded-xl p-4">
               <p className="text-xs text-stone-500">Total Compras</p>
               <p className="text-xl font-bold text-sky-400">{formatBRL(totalCompras)}</p>
@@ -522,7 +541,11 @@ export default function Fechamento() {
               <p className="text-xs text-stone-500">Despesas Variáveis</p>
               <p className="text-xl font-bold text-rose-400">{formatBRL(totalDespesas)}</p>
             </div>
-            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-emerald-500 rounded-xl p-4 sm:col-span-2">
+            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-teal-500 rounded-xl p-4">
+              <p className="text-xs text-stone-500">Custos Fixos</p>
+              <p className="text-xl font-bold text-teal-400">{formatBRL(totalFixas)}</p>
+            </div>
+            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-emerald-500 rounded-xl p-4 col-span-2 sm:col-span-3">
               <p className="text-xs text-stone-500">
                 Total Geral
                 {hasFilter && <span className="ml-1.5 text-amber-400">· filtrado</span>}
@@ -542,6 +565,7 @@ export default function Fechamento() {
             totalFretes={totalFretes}
             totalMontagem={totalMontagem}
             totalDespesas={totalDespesas}
+            totalFixas={totalFixas}
           />
         </div>
 
@@ -628,6 +652,31 @@ export default function Fechamento() {
                 {syncCS.data.avisos?.length > 0 && (
                   <span className="text-amber-400"> · {syncCS.data.avisos.join(' · ')}</span>
                 )}
+              </div>
+            ) : null
+          }
+        />
+
+        {/* Custos Fixos Mensais */}
+        <Section
+          title={`Custos Fixos${fixasAll.length ? ` · ${fixasAll.length} registros` : ''}`}
+          columns={fixasCols}
+          rows={fixasAll}
+          isLoading={fixasQ.isLoading}
+          editMap={fixasEdit}
+          setEdit={setFixasEdit}
+          newRow={newFixa}
+          setNewRow={setNewFixa}
+          onAdd={() => setNewFixa({ categoria: '', descricao: '', valor: '' })}
+          onSave={handleSave(saveFixa, setFixasEdit, setNewFixa)}
+          onDelete={handleDelete(delFixa)}
+          banner={
+            fixasCopiaDe ? (
+              <div className="px-4 py-2 text-xs text-teal-400 bg-teal-500/10 border-b border-stone-800 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 bg-teal-500/20 border border-teal-500/30 rounded-full px-2 py-0.5 text-[11px] font-medium">
+                  Copiado de {fixasCopiaDe}
+                </span>
+                <span className="text-stone-500">Edite os valores que mudaram neste mês.</span>
               </div>
             ) : null
           }

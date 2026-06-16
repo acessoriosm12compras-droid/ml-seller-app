@@ -156,6 +156,18 @@ export const api = {
     },
   },
 
+  despesasFixas: {
+    list: (params) => request(`/api/despesas-fixas?${new URLSearchParams(params)}`),
+    create: (data) => request('/api/despesas-fixas', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => request(`/api/despesas-fixas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    remove: (id) => request(`/api/despesas-fixas/${id}`, { method: 'DELETE' }),
+  },
+
+  fluxoCaixa: {
+    get: (params) => request(`/api/fluxo-caixa?${new URLSearchParams(params)}`),
+    put: (data) => request('/api/fluxo-caixa', { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
   ads: (params) =>
     request(`/api/ads/campanhas?${new URLSearchParams(params)}`),
 

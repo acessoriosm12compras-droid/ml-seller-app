@@ -24,6 +24,7 @@ import Gerenciamento from './pages/Gerenciamento'
 import Inventario from './pages/Inventario'
 import Configuracoes from './pages/Configuracoes'
 import Fechamento from './pages/Fechamento'
+import FluxoCaixa from './pages/FluxoCaixa'
 import Ads from './pages/Ads'
 import EstudioIA from './pages/EstudioIA'
 import Onboarding from './pages/Onboarding'
@@ -70,6 +71,7 @@ export default function App() {
               <Route path="inventario" element={<Inventario />} />
               <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="fechamento" element={<Fechamento />} />
+              <Route path="fluxo-caixa" element={<FluxoCaixa />} />
               <Route path="ads" element={<Ads />} />
               <Route path="estudio-ia" element={<EstudioIA />} />
               <Route path="reposicao" element={<ReposicaoSemanal />} />
