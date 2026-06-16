@@ -12,6 +12,8 @@ export default function AdminUsuarios() {
   const [erro, setErro] = useState('')
   const [linkGerado, setLinkGerado] = useState('')
   const [copiado, setCopiado] = useState(false)
+  // per-row recovery link state: { [uid]: { link, copiado, loading, erro } }
+  const [rowLinks, setRowLinks] = useState({})
 
   const { data: usuarios = [], isLoading } = useQuery({
     queryKey: ['admin-usuarios'],
@@ -45,6 +47,24 @@ export default function AdminUsuarios() {
     navigator.clipboard.writeText(linkGerado).then(() => {
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2500)
+    })
+  }
+
+  async function gerarLinkAcesso(uid) {
+    setRowLinks(prev => ({ ...prev, [uid]: { loading: true, link: '', copiado: false, erro: '' } }))
+    try {
+      const data = await api.admin.linkAcesso(uid)
+      setRowLinks(prev => ({ ...prev, [uid]: { loading: false, link: data.link, copiado: false, erro: '' } }))
+    } catch (e) {
+      setRowLinks(prev => ({ ...prev, [uid]: { loading: false, link: '', copiado: false, erro: e.message || 'Erro ao gerar link' } }))
+    }
+  }
+
+  function copiarRowLink(uid) {
+    const link = rowLinks[uid]?.link || ''
+    navigator.clipboard.writeText(link).then(() => {
+      setRowLinks(prev => ({ ...prev, [uid]: { ...prev[uid], copiado: true } }))
+      setTimeout(() => setRowLinks(prev => ({ ...prev, [uid]: { ...prev[uid], copiado: false } })), 2500)
     })
   }
 
@@ -129,26 +149,60 @@ export default function AdminUsuarios() {
               {isLoading && (
                 <tr><td colSpan={5} className="text-center text-stone-500 py-6">Carregando...</td></tr>
               )}
-              {usuarios.map(u => (
-                <tr key={u.id} className="border-b border-stone-800 last:border-0">
-                  <td className="px-4 py-3 text-stone-200">{u.email}</td>
-                  <td className="px-4 py-3 text-sky-400">{u.conta_ml}</td>
-                  <td className="px-4 py-3 text-stone-400">{u.role}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${u.ativo ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                      {u.ativo ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => toggleAtivo.mutate({ id: u.id, ativo: !u.ativo })}
-                      className="text-xs text-stone-400 hover:text-stone-200 transition-colors"
-                    >
-                      {u.ativo ? 'Desativar' : 'Ativar'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {usuarios.map(u => {
+                const row = rowLinks[u.id] || {}
+                return (
+                  <>
+                    <tr key={u.id} className="border-b border-stone-800 last:border-0">
+                      <td className="px-4 py-3 text-stone-200">{u.email}</td>
+                      <td className="px-4 py-3 text-sky-400">{u.conta_ml}</td>
+                      <td className="px-4 py-3 text-stone-400">{u.role}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${u.ativo ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                          {u.ativo ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 flex items-center gap-3">
+                        <button
+                          onClick={() => toggleAtivo.mutate({ id: u.id, ativo: !u.ativo })}
+                          className="text-xs text-stone-400 hover:text-stone-200 transition-colors"
+                        >
+                          {u.ativo ? 'Desativar' : 'Ativar'}
+                        </button>
+                        <button
+                          onClick={() => gerarLinkAcesso(u.id)}
+                          disabled={row.loading}
+                          className="text-xs text-amber-400 hover:text-amber-300 disabled:opacity-50 transition-colors whitespace-nowrap"
+                        >
+                          {row.loading ? 'Gerando…' : 'Gerar link'}
+                        </button>
+                      </td>
+                    </tr>
+                    {(row.link || row.erro) && (
+                      <tr key={`${u.id}-link`} className="border-b border-stone-800 bg-stone-950/50">
+                        <td colSpan={5} className="px-4 py-2">
+                          {row.erro && <p className="text-red-400 text-xs">{row.erro}</p>}
+                          {row.link && (
+                            <div className="flex items-center gap-2">
+                              <input
+                                readOnly value={row.link}
+                                className="flex-1 bg-stone-800 border border-stone-700 rounded-lg px-3 py-1.5 text-xs text-stone-300 focus:outline-none"
+                              />
+                              <button
+                                onClick={() => copiarRowLink(u.id)}
+                                className="shrink-0 flex items-center gap-1 bg-stone-700 hover:bg-stone-600 text-stone-200 px-2.5 py-1.5 rounded-lg text-xs transition-colors"
+                              >
+                                {row.copiado ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                                {row.copiado ? 'Copiado!' : 'Copiar'}
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                )
+              })}
             </tbody>
           </table>
         </div>
