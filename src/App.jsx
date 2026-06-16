@@ -8,7 +8,6 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Pedidos from './pages/Pedidos'
 import PedidoDetalhe from './pages/PedidoDetalhe'
-import Financeiro from './pages/Financeiro'
 import Margem from './pages/Margem'
 import CustosProdutos from './pages/CustosProdutos'
 import AdminUsuarios from './pages/AdminUsuarios'
@@ -58,7 +57,7 @@ export default function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="pedidos" element={<Pedidos />} />
               <Route path="pedidos/:id" element={<PedidoDetalhe />} />
-              <Route path="financeiro" element={<Financeiro />} />
+              <Route path="fluxo-caixa" element={<FluxoCaixa />} />
               <Route path="margem" element={<Margem />} />
               <Route path="resultado" element={<Resultado />} />
               <Route path="custos-produtos" element={<CustosProdutos />} />
@@ -73,7 +72,6 @@ export default function App() {
               <Route path="inventario" element={<Inventario />} />
               <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="fechamento" element={<Fechamento />} />
-              <Route path="fluxo-caixa" element={<FluxoCaixa />} />
               <Route path="ads" element={<Ads />} />
               <Route path="estudio-ia" element={<EstudioIA />} />
               <Route path="reposicao" element={<ReposicaoSemanal />} />

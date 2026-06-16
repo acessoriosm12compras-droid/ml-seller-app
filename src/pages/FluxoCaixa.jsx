@@ -100,8 +100,7 @@ function AcompanhamentoTable({ rows }) {
 }
 
 export default function FluxoCaixa() {
-  const { activeAccount, user } = useAuth()
-  const isAdmin = user?.role === 'admin'
+  const { activeAccount } = useAuth()
   const now = new Date()
   const [anoMes, setAnoMes] = useState(
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -110,15 +109,14 @@ export default function FluxoCaixa() {
   const [editData, setEditData] = useState({})
   const qc = useQueryClient()
 
-  const accountParams = activeAccount ? { conta_ml: activeAccount } : {}
-
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['fluxo-caixa', anoMes, activeAccount],
-    queryFn: () => api.fluxoCaixa.get({ ano_mes: anoMes, ...accountParams }),
+    queryFn: () => api.fluxoCaixa({ ano_mes: anoMes, conta_ml: activeAccount }),
+    enabled: !!activeAccount,
   })
 
   const putMut = useMutation({
-    mutationFn: (body) => api.fluxoCaixa.put(body),
+    mutationFn: (body) => api.salvarFluxoCaixa(body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fluxo-caixa', anoMes, activeAccount] })
       setShowEdit(false)
@@ -157,7 +155,6 @@ export default function FluxoCaixa() {
 
       <main className="flex-1 p-3 sm:p-6 space-y-6 overflow-auto">
 
-        {/* Month picker */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <label className="text-xs text-stone-500">Mês/Ano</label>
@@ -168,6 +165,9 @@ export default function FluxoCaixa() {
               className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
           </div>
+          {!activeAccount && (
+            <span className="text-stone-500 text-sm">Selecione uma loja no topo.</span>
+          )}
           {data?.editavel && (
             <button
               onClick={showEdit ? () => setShowEdit(false) : handleEditOpen}
@@ -186,7 +186,6 @@ export default function FluxoCaixa() {
           </div>
         )}
 
-        {/* Inline edit form */}
         {showEdit && data?.editavel && (
           <div className="bg-stone-900 border border-sky-500/30 rounded-xl p-4 space-y-3">
             <h3 className="text-sm font-semibold text-stone-300">Editar inputs manuais — {anoMes}</h3>
@@ -225,7 +224,6 @@ export default function FluxoCaixa() {
 
         {data && (
           <>
-            {/* Saldo inicial (custos fixos) highlight */}
             {despesasFixasTotal > 0 && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex flex-wrap items-center gap-4">
                 <div>
@@ -246,7 +244,6 @@ export default function FluxoCaixa() {
               </div>
             )}
 
-            {/* KPI grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
               <KpiCard label="Faturamento" value={formatBRL(data.vendas?.faturamento)} accent="sky" />
               <KpiCard label="Lucro Líquido" value={formatBRL(data.vendas?.lucro_liquido)} accent="emerald" />
@@ -268,7 +265,6 @@ export default function FluxoCaixa() {
               <KpiCard label="Custo Produtos" value={formatBRL(data.vendas?.custo_produtos)} accent="amber" />
             </div>
 
-            {/* Indicadores */}
             <div className="bg-stone-900 border border-stone-800 rounded-xl p-4">
               <h2 className="text-sm font-semibold text-stone-300 mb-3">Indicadores</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -291,7 +287,6 @@ export default function FluxoCaixa() {
               </div>
             </div>
 
-            {/* Cenários */}
             <div className="bg-stone-900 border border-stone-800 rounded-xl p-4">
               <h2 className="text-sm font-semibold text-stone-300 mb-3">Cenários de capital de giro</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -318,7 +313,6 @@ export default function FluxoCaixa() {
               </div>
             </div>
 
-            {/* Fornecedores */}
             {fornecedores.length > 0 && (
               <div className="bg-stone-900 border border-stone-800 rounded-xl p-4">
                 <h2 className="text-sm font-semibold text-stone-300 mb-3">
@@ -330,11 +324,9 @@ export default function FluxoCaixa() {
               </div>
             )}
 
-            {/* Acompanhamento histórico */}
             <AcompanhamentoTable rows={data.acompanhamento} />
           </>
         )}
-
       </main>
     </div>
   )

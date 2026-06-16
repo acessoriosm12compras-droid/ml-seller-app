@@ -40,6 +40,11 @@ export const api = {
   financeiro: (params) =>
     request(`/api/financeiro?${new URLSearchParams(params)}`),
 
+  fluxoCaixa: (params) =>
+    request(`/api/fluxo-caixa?${new URLSearchParams(params)}`),
+  salvarFluxoCaixa: (body) =>
+    request('/api/fluxo-caixa', { method: 'PUT', body: JSON.stringify(body) }),
+
   margem: (params) =>
     request(`/api/margem?${new URLSearchParams(params)}`),
 
