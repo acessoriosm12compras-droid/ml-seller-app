@@ -3,12 +3,12 @@ import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
 import {
   LayoutDashboard, PieChart, Banknote,
-  ShoppingBag, Settings, Package, SlidersHorizontal, ClipboardList, Megaphone, Sparkles, LogOut,
-  ShoppingCart, Wallet, Users,
+  ShoppingBag, Settings, Package, SlidersHorizontal, Megaphone, Sparkles, LogOut,
+  ShoppingCart, Users,
 } from 'lucide-react'
 
 const NAV = [
-  { to: '/dashboard',       label: 'Dashboard',     icon: LayoutDashboard },
+  { to: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard },
   { to: '/curva-abc',       label: 'Curva ABC',      icon: PieChart },
   { to: '/fluxo-caixa',     label: 'Fluxo de Caixa', icon: Banknote },
   { to: '/pedidos',         label: 'Pedidos',        icon: ShoppingBag },
@@ -17,8 +17,6 @@ const NAV = [
   { to: '/custos-produtos', label: 'Custos',         icon: Settings },
   { to: '/reposicao',       label: 'Reposição',      icon: ShoppingCart },
   { to: '/inventario',      label: 'Inventário',     icon: Package },
-  { to: '/fechamento',      label: 'Fechamento',     icon: ClipboardList },
-  { to: '/fluxo-caixa',     label: 'Fluxo de Caixa', icon: Wallet },
   { to: '/configuracoes',   label: 'Configurações',  icon: SlidersHorizontal },
 ]
 
