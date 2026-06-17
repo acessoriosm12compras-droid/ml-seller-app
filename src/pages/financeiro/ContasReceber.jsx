@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import Header from '../../components/Header'
 import { useAuth } from '../../context/AuthContext'
 
-const MESES = ['Janeiro','Fevereiro','MarÃ§o','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 function formatBRL(v) {
   const n = parseFloat(v)
@@ -34,7 +34,7 @@ const STATUS_COLOR = {
   'Previsto': 'text-amber-400',
   'Agendado': 'text-sky-400',
 }
-const STATUS_ICON = { 'Recebido': 'â', 'Previsto': 'â³', 'Agendado': 'ð' }
+const STATUS_ICON = { 'Recebido': '✅', 'Previsto': '⏳', 'Agendado': '📅' }
 
 const defaultInputs = { recebido: '', ate7dias: '', acima7dias: '', faturamento: '' }
 
@@ -114,7 +114,7 @@ export default function ContasReceber() {
         {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <label className="text-xs text-stone-500">MÃªs/Ano</label>
+            <label className="text-xs text-stone-500">Mês/Ano</label>
             <input type="month" value={anoMes} onChange={e => setAnoMes(e.target.value)}
               className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500" />
           </div>
@@ -123,26 +123,26 @@ export default function ContasReceber() {
             {showInputs ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             {showInputs ? 'Recolher' : 'Editar inputs'}
           </button>
-          {saved && <span className="text-xs text-emerald-400">â Salvo</span>}
+          {saved && <span className="text-xs text-emerald-400">✓ Salvo</span>}
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <KpiCard label="A receber (faturamento)" value={formatBRL(faturamento)} sub="Vendas ML acumuladas" accent="sky" />
-          <KpiCard label="Repasses recebidos" value={formatBRL(totalRecebido)} sub="JÃ¡ depositado na conta" accent="emerald" />
+          <KpiCard label="Repasses recebidos" value={formatBRL(totalRecebido)} sub="Já depositado na conta" accent="emerald" />
           <KpiCard label="Aguardando repasse" value={formatBRL(totalAReceber)} sub="Em processamento ML" accent="amber" />
-          <KpiCard label="Prazo mÃ©dio recebimento" value="~14 dias" sub="ApÃ³s aprovaÃ§Ã£o da compra" accent="violet" />
+          <KpiCard label="Prazo médio recebimento" value="~14 dias" sub="Após aprovação da compra" accent="violet" />
         </div>
 
         {/* Inputs */}
         {showInputs && (
           <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-4">
-            <h3 className="text-sm font-semibold text-stone-300">Repasses Mercado Livre â {mesLabel}</h3>
+            <h3 className="text-sm font-semibold text-stone-300">Repasses Mercado Livre — {mesLabel}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { k: 'faturamento', label: 'Faturamento / A receber total (R$)', ph: 'Vendas ML acumuladas' },
-                { k: 'recebido', label: 'Repasse jÃ¡ recebido (R$)', ph: 'Valores jÃ¡ na conta' },
-                { k: 'ate7dias', label: 'A receber em atÃ© 7 dias (R$)', ph: 'PrevisÃ£o para a semana' },
+                { k: 'recebido', label: 'Repasse já recebido (R$)', ph: 'Valores já na conta' },
+                { k: 'ate7dias', label: 'A receber em até 7 dias (R$)', ph: 'Previsão para a semana' },
                 { k: 'acima7dias', label: 'A receber acima de 7 dias (R$)', ph: 'Saldo retido ML' },
               ].map(({ k, label, ph }) => (
                 <div key={k}>
@@ -162,13 +162,13 @@ export default function ContasReceber() {
         {/* Repasses table */}
         <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-stone-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-stone-300">PrevisÃ£o de Repasses â Mercado Livre</h2>
+            <h2 className="text-sm font-semibold text-stone-300">Previsão de Repasses — Mercado Livre</h2>
             <button onClick={addRepasse}
               className="text-xs text-sky-400 hover:text-sky-300 transition-colors">+ Adicionar</button>
           </div>
           {repasses.length === 0 ? (
             <div className="px-4 py-8 text-center text-xs text-stone-500">
-              Nenhum repasse cadastrado. Clique em "+ Adicionar" para comeÃ§ar.
+              Nenhum repasse cadastrado. Clique em "+ Adicionar" para começar.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -176,10 +176,10 @@ export default function ContasReceber() {
                 <thead>
                   <tr className="border-b border-stone-800">
                     <th className="px-3 py-2.5 text-left text-stone-500 font-medium">Data prevista</th>
-                    <th className="px-3 py-2.5 text-left text-stone-500 font-medium">DescriÃ§Ã£o</th>
+                    <th className="px-3 py-2.5 text-left text-stone-500 font-medium">Descrição</th>
                     <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Valor bruto</th>
                     <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Taxa ML</th>
-                    <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Valor lÃ­quido</th>
+                    <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Valor líquido</th>
                     <th className="px-3 py-2.5 text-center text-stone-500 font-medium">Status</th>
                     <th className="px-3 py-2.5"></th>
                   </tr>
@@ -195,7 +195,7 @@ export default function ContasReceber() {
                         </td>
                         <td className="px-3 py-2.5">
                           <input value={r.descricao} onChange={e => updateRepasse(r.id, 'descricao', e.target.value)}
-                            placeholder="DescriÃ§Ã£o" className="bg-transparent text-stone-300 outline-none w-40" />
+                            placeholder="Descrição" className="bg-transparent text-stone-300 outline-none w-40" />
                         </td>
                         <td className="px-3 py-2.5 text-right">
                           <input type="number" step="0.01" value={r.valorBruto} onChange={e => updateRepasse(r.id, 'valorBruto', e.target.value)}
@@ -213,7 +213,7 @@ export default function ContasReceber() {
                           </select>
                         </td>
                         <td className="px-3 py-2.5 text-center">
-                          <button onClick={() => removeRepasse(r.id)} className="text-stone-600 hover:text-red-400 transition-colors">â</button>
+                          <button onClick={() => removeRepasse(r.id)} className="text-stone-600 hover:text-red-400 transition-colors">✕</button>
                         </td>
                       </tr>
                     )
