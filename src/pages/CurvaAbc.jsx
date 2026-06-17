@@ -143,8 +143,8 @@ export default function CurvaAbc() {
                           {p.curva}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-stone-700 max-w-[220px]">
-                        <div className="truncate" title={p.titulo}>{p.titulo}</div>
+                      <td className="px-4 py-3 max-w-[220px]">
+                        <div className="truncate font-medium text-stone-900" title={p.titulo}>{p.titulo}</div>
                         <div className="text-stone-400 font-mono text-[10px]">{p.ml_item_id}</div>
                       </td>
                       <td className="px-4 py-3 text-right text-stone-700">{p.unidades}</td>
