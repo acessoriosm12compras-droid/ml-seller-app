@@ -19,6 +19,7 @@ import Analitico from './pages/Analitico'
 import CurvaAbc from './pages/CurvaAbc'
 import Movimentacoes from './pages/Movimentacoes'
 import FinanceiroResumo from './pages/FinanceiroResumo'
+import Financeiro from './pages/Financeiro'
 import Gerenciamento from './pages/Gerenciamento'
 import Inventario from './pages/Inventario'
 import Configuracoes from './pages/Configuracoes'
@@ -38,57 +39,58 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <ThemeProvider>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/definir-senha" element={<DefinirSenha />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="pedidos" element={<Pedidos />} />
-              <Route path="pedidos/:id" element={<PedidoDetalhe />} />
-              <Route path="fluxo-caixa" element={<FluxoCaixa />} />
-              <Route path="margem" element={<Margem />} />
-              <Route path="resultado" element={<Resultado />} />
-              <Route path="custos-produtos" element={<CustosProdutos />} />
-              <Route path="conciliacao" element={<Conciliacao />} />
-              <Route path="projecao" element={<ProjecaoVendas />} />
-              <Route path="graficos" element={<Graficos />} />
-              <Route path="analitico" element={<Analitico />} />
-              <Route path="curva-abc" element={<CurvaAbc />} />
-              <Route path="movimentacoes" element={<Movimentacoes />} />
-              <Route path="financeiro-resumo" element={<FinanceiroResumo />} />
-              <Route path="gerenciamento" element={<Gerenciamento />} />
-              <Route path="inventario" element={<Inventario />} />
-              <Route path="configuracoes" element={<Configuracoes />} />
-              <Route path="fechamento" element={<Fechamento />} />
-              <Route path="ads" element={<Ads />} />
-              <Route path="estudio-ia" element={<EstudioIA />} />
-              <Route path="reposicao" element={<ReposicaoSemanal />} />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/definir-senha" element={<DefinirSenha />} />
               <Route
-                path="admin/usuarios"
+                path="/"
                 element={
-                  <ProtectedRoute adminOnly>
-                    <AdminUsuarios />
+                  <ProtectedRoute>
+                    <Layout />
                   </ProtectedRoute>
                 }
-              />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+              >
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="pedidos" element={<Pedidos />} />
+                <Route path="pedidos/:id" element={<PedidoDetalhe />} />
+                <Route path="fluxo-caixa" element={<FluxoCaixa />} />
+                <Route path="margem" element={<Margem />} />
+                <Route path="resultado" element={<Resultado />} />
+                <Route path="custos-produtos" element={<CustosProdutos />} />
+                <Route path="conciliacao" element={<Conciliacao />} />
+                <Route path="projecao" element={<ProjecaoVendas />} />
+                <Route path="graficos" element={<Graficos />} />
+                <Route path="analitico" element={<Analitico />} />
+                <Route path="curva-abc" element={<CurvaAbc />} />
+                <Route path="movimentacoes" element={<Movimentacoes />} />
+                <Route path="financeiro-resumo" element={<FinanceiroResumo />} />
+                <Route path="financeiro" element={<Financeiro />} />
+                <Route path="gerenciamento" element={<Gerenciamento />} />
+                <Route path="inventario" element={<Inventario />} />
+                <Route path="configuracoes" element={<Configuracoes />} />
+                <Route path="fechamento" element={<Fechamento />} />
+                <Route path="ads" element={<Ads />} />
+                <Route path="estudio-ia" element={<EstudioIA />} />
+                <Route path="reposicao" element={<ReposicaoSemanal />} />
+                <Route
+                  path="admin/usuarios"
+                  element={
+                    <ProtectedRoute adminOnly>
+                      <AdminUsuarios />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   )
 }
