@@ -11,8 +11,24 @@ export default function DefinirSenha() {
   const [ok, setOk] = useState(false)
   const [loading, setLoading] = useState(false)
   const [sessionReady, setSessionReady] = useState(false)
+  const [linkExpirado, setLinkExpirado] = useState(false)
 
   useEffect(() => {
+    // Verificar se há erro no hash da URL (ex: link expirado)
+    const hash = window.location.hash.substring(1)
+    const params = new URLSearchParams(hash)
+    const errorCode = params.get('error_code')
+
+    if (errorCode) {
+      setLinkExpirado(true)
+      if (errorCode === 'otp_expired') {
+        setErro('Este link de convite expirou. Por favor, solicite um novo acesso ao administrador.')
+      } else {
+        setErro('Link inválido ou já utilizado. Solicite um novo acesso ao administrador.')
+      }
+      return
+    }
+
     // Supabase JS processa automaticamente o hash #access_token=...&type=invite
     // e dispara onAuthStateChange com event SIGNED_IN.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -53,11 +69,19 @@ export default function DefinirSenha() {
           </p>
         </div>
 
-        {!sessionReady && (
+        {linkExpirado && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center space-y-3">
+            <p className="text-red-400 font-medium">Link expirado</p>
+            <p className="text-stone-400 text-sm">{erro}</p>
+            <p className="text-stone-500 text-xs">Entre em contato com o administrador para receber um novo convite.</p>
+          </div>
+        )}
+
+        {!linkExpirado && !sessionReady && (
           <p className="text-stone-400 text-sm text-center">Validando convite…</p>
         )}
 
-        {sessionReady && !ok && (
+        {!linkExpirado && sessionReady && !ok && (
           <form onSubmit={handleSubmit} className="bg-stone-900 border border-stone-800 rounded-xl p-6 space-y-4">
             <div>
               <label className="block text-xs text-stone-400 mb-1">Nova senha</label>
