@@ -98,7 +98,7 @@ export default function ContasCorrentes() {
     return { ...e, saldoApos: saldoRunning }
   })
 
-  const [mesN, ano] = anoMes.split('-')
+  const [ano, mesN] = anoMes.split('-')
   const mesLabel = `${MESES[parseInt(mesN)-1]} ${ano}`
 
   return (
