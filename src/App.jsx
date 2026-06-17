@@ -46,6 +46,15 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/definir-senha" element={<DefinirSenha />} />
+              {/* Financeiro em tela cheia — sem o Layout/sidebar do app */}
+              <Route
+                path="/financeiro"
+                element={
+                  <ProtectedRoute>
+                    <Financeiro />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/"
                 element={
@@ -69,7 +78,6 @@ export default function App() {
                 <Route path="curva-abc" element={<CurvaAbc />} />
                 <Route path="movimentacoes" element={<Movimentacoes />} />
                 <Route path="financeiro-resumo" element={<FinanceiroResumo />} />
-                <Route path="financeiro" element={<Financeiro />} />
                 <Route path="gerenciamento" element={<Gerenciamento />} />
                 <Route path="inventario" element={<Inventario />} />
                 <Route path="configuracoes" element={<Configuracoes />} />
