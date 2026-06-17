@@ -126,7 +126,7 @@ export default function ContasPagar() {
   const pagas = lancamentos.filter(l => l.status === 'Pago').reduce((acc, l) => acc + (parseFloat(l.valor) || 0), 0)
   const emAberto = lancamentos.filter(l => l.status !== 'Pago').reduce((acc, l) => acc + (parseFloat(l.valor) || 0), 0)
 
-  const [mesN, ano] = anoMes.split('-')
+  const [ano, mesN] = anoMes.split('-')
   const mesLabel = `${MESES[parseInt(mesN)-1]} ${ano}`
 
   const statusColor = s => ({
