@@ -19,7 +19,6 @@ import Analitico from './pages/Analitico'
 import CurvaAbc from './pages/CurvaAbc'
 import Movimentacoes from './pages/Movimentacoes'
 import FinanceiroResumo from './pages/FinanceiroResumo'
-import Financeiro from './pages/Financeiro'
 import Gerenciamento from './pages/Gerenciamento'
 import Inventario from './pages/Inventario'
 import Configuracoes from './pages/Configuracoes'
@@ -31,6 +30,10 @@ import Onboarding from './pages/Onboarding'
 import ReposicaoSemanal from './pages/ReposicaoSemanal'
 import DefinirSenha from './pages/DefinirSenha'
 import NotFound from './pages/NotFound'
+import ContasPagar from './pages/financeiro/ContasPagar'
+import ContasReceber from './pages/financeiro/ContasReceber'
+import ContasCorrentes from './pages/financeiro/ContasCorrentes'
+import RegrasCategorização from './pages/financeiro/RegrasCategorização'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -46,15 +49,6 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/definir-senha" element={<DefinirSenha />} />
-              {/* Financeiro em tela cheia — sem o Layout/sidebar do app */}
-              <Route
-                path="/financeiro"
-                element={
-                  <ProtectedRoute>
-                    <Financeiro />
-                  </ProtectedRoute>
-                }
-              />
               <Route
                 path="/"
                 element={
@@ -85,6 +79,12 @@ export default function App() {
                 <Route path="ads" element={<Ads />} />
                 <Route path="estudio-ia" element={<EstudioIA />} />
                 <Route path="reposicao" element={<ReposicaoSemanal />} />
+                {/* Financeiro — seções integradas */}
+                <Route path="financeiro" element={<Navigate to="/financeiro/contas-pagar" replace />} />
+                <Route path="financeiro/contas-pagar" element={<ContasPagar />} />
+                <Route path="financeiro/contas-receber" element={<ContasReceber />} />
+                <Route path="financeiro/contas-correntes" element={<ContasCorrentes />} />
+                <Route path="financeiro/regras" element={<RegrasCategorização />} />
                 <Route
                   path="admin/usuarios"
                   element={
