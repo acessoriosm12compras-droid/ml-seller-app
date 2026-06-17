@@ -31,6 +31,7 @@ function KpiCard({ label, value, sub, accent = 'sky' }) {
 
 const CATEGORIAS_EXT = ['Receita ML','Fornecedor','Banco','Interno','Outros']
 const defaultInputs = { cc: '', mp: '', outras: '' }
+
 const defaultModal = { data: '', descricao: '', categoria: 'Receita ML', entrada: '', saida: '' }
 
 export default function ContasCorrentes() {
@@ -92,6 +93,7 @@ export default function ContasCorrentes() {
   const saldoOutras = parseFloat(inputs.outras) || 0
   const totalDisponivel = saldoCC + saldoMP + saldoOutras
 
+  // Build running balance for extrato
   let saldoRunning = saldoCC
   const extratoComSaldo = extrato.map(e => {
     saldoRunning += (parseFloat(e.entrada) || 0) - (parseFloat(e.saida) || 0)
@@ -104,10 +106,12 @@ export default function ContasCorrentes() {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <Header title="Contas Correntes" />
+
       <main className="flex-1 p-3 sm:p-6 space-y-6 overflow-auto">
+        {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <label className="text-xs text-stone-500">Mes/Ano</label>
+            <label className="text-xs text-stone-500">Mês/Ano</label>
             <input type="month" value={anoMes} onChange={e => setAnoMes(e.target.value)}
               className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500" />
           </div>
@@ -118,24 +122,28 @@ export default function ContasCorrentes() {
           </button>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-1.5 text-xs bg-sky-700 hover:bg-sky-600 text-white px-3 py-1.5 rounded-lg transition-colors">
-            <Plus size={13} /> Novo lancamento
+            <Plus size={13} /> Novo lançamento
           </button>
-          {saved && <span className="text-xs text-emerald-400">Salvo</span>}
+          {saved && <span className="text-xs text-emerald-400">✓ Salvo</span>}
         </div>
+
+        {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <KpiCard label="Saldo atual C/C" value={formatBRL(saldoCC)} sub="Conta corrente principal" accent="sky" />
+          <KpiCard label="Saldo atual — C/C" value={formatBRL(saldoCC)} sub="Conta corrente principal" accent="sky" />
           <KpiCard label="Mercado Pago" value={formatBRL(saldoMP)} sub="Saldo conta ML" accent="teal" />
-          <KpiCard label="Total disponivel" value={formatBRL(totalDisponivel)} sub="Soma de todas as contas" accent="emerald" />
-          <KpiCard label="Outras contas" value={formatBRL(saldoOutras)} sub="Poupanca, caixinha, etc." accent="violet" />
+          <KpiCard label="Total disponível" value={formatBRL(totalDisponivel)} sub="Soma de todas as contas" accent="emerald" />
+          <KpiCard label="Outras contas" value={formatBRL(saldoOutras)} sub="Poupança, caixinha, etc." accent="violet" />
         </div>
+
+        {/* Inputs */}
         {showInputs && (
           <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-stone-300">Saldos das Contas</h3>
+            <h3 className="text-sm font-semibold text-stone-300">Saldos das Contas — {mesLabel}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { k: 'cc', label: 'Conta Corrente Principal (R$)', ph: 'Banco principal' },
+                { k: 'cc', label: 'Conta Corrente Principal (R$)', ph: 'Banco principal da empresa' },
                 { k: 'mp', label: 'Mercado Pago (R$)', ph: 'Saldo na conta ML' },
-                { k: 'outras', label: 'Outras contas (R$)', ph: 'Poupanca, etc.' },
+                { k: 'outras', label: 'Outras contas (R$)', ph: 'Poupança, caixinha, etc.' },
               ].map(({ k, label, ph }) => (
                 <div key={k}>
                   <label className="text-xs text-stone-500">{label}</label>
@@ -150,14 +158,16 @@ export default function ContasCorrentes() {
             </div>
           </div>
         )}
+
+        {/* Extrato table */}
         <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-stone-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-stone-300">Extrato</h2>
-            <span className="text-xs text-stone-500">{extrato.length} lancamento(s)</span>
+            <h2 className="text-sm font-semibold text-stone-300">Extrato — {mesLabel}</h2>
+            <span className="text-xs text-stone-500">{extrato.length} lançamento(s)</span>
           </div>
           {extrato.length === 0 ? (
             <div className="px-4 py-8 text-center text-xs text-stone-500">
-              Nenhuma movimentacao registrada.
+              Nenhuma movimentação registrada. Clique em "+ Novo lançamento" para começar.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -165,10 +175,10 @@ export default function ContasCorrentes() {
                 <thead>
                   <tr className="border-b border-stone-800">
                     <th className="px-3 py-2.5 text-left text-stone-500 font-medium">Data</th>
-                    <th className="px-3 py-2.5 text-left text-stone-500 font-medium">Descricao</th>
+                    <th className="px-3 py-2.5 text-left text-stone-500 font-medium">Descrição</th>
                     <th className="px-3 py-2.5 text-left text-stone-500 font-medium">Categoria</th>
                     <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Entrada</th>
-                    <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Saida</th>
+                    <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Saída</th>
                     <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Saldo</th>
                     <th className="px-3 py-2.5"></th>
                   </tr>
@@ -176,14 +186,19 @@ export default function ContasCorrentes() {
                 <tbody>
                   {extratoComSaldo.map(e => (
                     <tr key={e.id} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
-                      <td className="px-3 py-2.5 text-stone-400">{e.data || '-'}</td>
+                      <td className="px-3 py-2.5 text-stone-400">{e.data || '—'}</td>
                       <td className="px-3 py-2.5 text-stone-300">{e.descricao}</td>
                       <td className="px-3 py-2.5 text-stone-500">{e.categoria}</td>
-                      <td className="px-3 py-2.5 text-right text-emerald-400">{e.entrada ? formatBRL(e.entrada) : '-'}</td>
-                      <td className="px-3 py-2.5 text-right text-rose-400">{e.saida ? formatBRL(e.saida) : '-'}</td>
+                      <td className="px-3 py-2.5 text-right text-emerald-400">
+                        {e.entrada ? formatBRL(e.entrada) : '—'}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-rose-400">
+                        {e.saida ? formatBRL(e.saida) : '—'}
+                      </td>
                       <td className="px-3 py-2.5 text-right font-semibold text-stone-200">{formatBRL(e.saldoApos)}</td>
                       <td className="px-3 py-2.5 text-center">
-                        <button onClick={() => removeMovimento(e.id)} className="text-stone-600 hover:text-red-400 transition-colors">
+                        <button onClick={() => removeMovimento(e.id)}
+                          className="text-stone-600 hover:text-red-400 transition-colors">
                           <Trash2 size={13} />
                         </button>
                       </td>
@@ -195,10 +210,12 @@ export default function ContasCorrentes() {
           )}
         </div>
       </main>
+
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-stone-900 border border-stone-700 rounded-xl p-5 w-full max-w-sm space-y-4">
-            <h3 className="text-sm font-semibold text-stone-200">Novo lancamento</h3>
+            <h3 className="text-sm font-semibold text-stone-200">Novo lançamento</h3>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -215,7 +232,7 @@ export default function ContasCorrentes() {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-stone-500">Descricao</label>
+                <label className="text-xs text-stone-500">Descrição</label>
                 <input value={modal.descricao} onChange={e => setModal(m => ({...m, descricao: e.target.value}))}
                   className="mt-1 w-full bg-stone-800 border border-stone-700 focus:border-sky-500 outline-none text-stone-200 text-sm rounded-lg px-3 py-2" />
               </div>
@@ -226,15 +243,21 @@ export default function ContasCorrentes() {
                     className="mt-1 w-full bg-stone-800 border border-stone-700 focus:border-sky-500 outline-none text-stone-200 text-sm rounded-lg px-3 py-2" />
                 </div>
                 <div>
-                  <label className="text-xs text-stone-500">Saida (R$)</label>
+                  <label className="text-xs text-stone-500">Saída (R$)</label>
                   <input type="number" step="0.01" value={modal.saida} onChange={e => setModal(m => ({...m, saida: e.target.value}))}
                     className="mt-1 w-full bg-stone-800 border border-stone-700 focus:border-sky-500 outline-none text-stone-200 text-sm rounded-lg px-3 py-2" />
                 </div>
               </div>
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={addMovimento} className="flex-1 bg-sky-700 hover:bg-sky-600 text-white text-sm py-2 rounded-lg transition-colors">Salvar</button>
-              <button onClick={() => { setShowModal(false); setModal(defaultModal) }} className="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm py-2 rounded-lg transition-colors">Cancelar</button>
+              <button onClick={addMovimento}
+                className="flex-1 bg-sky-700 hover:bg-sky-600 text-white text-sm py-2 rounded-lg transition-colors">
+                Salvar
+              </button>
+              <button onClick={() => { setShowModal(false); setModal(defaultModal) }}
+                className="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm py-2 rounded-lg transition-colors">
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
