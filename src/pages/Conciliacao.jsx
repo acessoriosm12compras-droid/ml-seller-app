@@ -69,21 +69,40 @@ function StatusBadge({ status }) {
   return null
 }
 
+const PLUGGY_CDN = 'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.js'
+
 function loadPluggyScript() {
   return new Promise((resolve, reject) => {
+    // Already loaded
     if (window.PluggyConnect) { resolve(); return }
+
+    const timeout = setTimeout(() => reject(new Error('Timeout ao carregar SDK do Pluggy')), 10000)
+
+    function onLoad() {
+      clearTimeout(timeout)
+      if (window.PluggyConnect) resolve()
+      else reject(new Error('SDK do Pluggy carregou mas PluggyConnect não encontrado'))
+    }
+    function onError() {
+      clearTimeout(timeout)
+      reject(new Error('Falha ao carregar SDK do Pluggy (CDN inacessível)'))
+    }
+
+    // Script already in DOM (previous attempt) — just poll for PluggyConnect
     const existing = document.getElementById('pluggy-connect-script')
     if (existing) {
-      existing.addEventListener('load', resolve)
-      existing.addEventListener('error', reject)
+      const poll = setInterval(() => {
+        if (window.PluggyConnect) { clearInterval(poll); clearTimeout(timeout); resolve() }
+      }, 100)
       return
     }
+
     const script = document.createElement('script')
     script.id = 'pluggy-connect-script'
-    script.src = 'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.js'
+    script.src = PLUGGY_CDN
     script.async = true
-    script.onload = resolve
-    script.onerror = reject
+    script.onload = onLoad
+    script.onerror = onError
     document.head.appendChild(script)
   })
 }
