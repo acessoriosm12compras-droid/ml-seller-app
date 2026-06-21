@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useState, useEffect, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
@@ -69,17 +69,87 @@ function StatusBadge({ status }) {
   return null
 }
 
+function usePluggyScript() {
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    if (window.PluggyConnect) { setLoaded(true); return }
+    const script = document.createElement('script')
+    script.src = 'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.js'
+    script.async = true
+    script.onload = () => setLoaded(true)
+    document.head.appendChild(script)
+    return () => { document.head.removeChild(script) }
+  }, [])
+
+  return loaded
+}
+
 export default function Conciliacao() {
   const { activeAccount } = useAuth()
+  const queryClient = useQueryClient()
   const [mes, setMes] = useState(getCurrentMonth)
   const [activeTab, setActiveTab] = useState('Todos')
   const [syncLoading, setSyncLoading] = useState(false)
+  const [connectLoading, setConnectLoading] = useState(false)
+  const [connectError, setConnectError] = useState(null)
+  const pluggyReady = usePluggyScript()
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['conciliacao', mes, activeAccount],
     queryFn: () => api.conciliacao({ mes, conta_ml: activeAccount }),
     enabled: !!activeAccount,
   })
+
+  const { data: conexao, refetch: refetchConexao } = useQuery({
+    queryKey: ['pluggy-conexao', activeAccount],
+    queryFn: () => api.pluggy.conexoes(),
+    enabled: !!activeAccount,
+  })
+
+  const desconectarMutation = useMutation({
+    mutationFn: () => api.pluggy.desconectar(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pluggy-conexao'] })
+      queryClient.invalidateQueries({ queryKey: ['conciliacao'] })
+    },
+  })
+
+  const handleConectar = useCallback(async () => {
+    if (!pluggyReady) return
+    setConnectLoading(true)
+    setConnectError(null)
+    try {
+      const itemId = conexao?.item_id || null
+      const { access_token } = await api.pluggy.connectToken(itemId ? { item_id: itemId } : {})
+
+      const widget = new window.PluggyConnect({
+        connectToken: access_token,
+        onSuccess: async ({ item }) => {
+          try {
+            await api.pluggy.saveItem({ item_id: item.id })
+            await refetchConexao()
+            await refetch()
+          } catch (e) {
+            setConnectError('Erro ao salvar conexão bancária.')
+          } finally {
+            setConnectLoading(false)
+          }
+        },
+        onError: (err) => {
+          setConnectError(`Erro na conexão: ${err?.message || 'tente novamente'}`)
+          setConnectLoading(false)
+        },
+        onClose: () => {
+          setConnectLoading(false)
+        },
+      })
+      widget.init()
+    } catch (e) {
+      setConnectError('Não foi possível iniciar a conexão bancária.')
+      setConnectLoading(false)
+    }
+  }, [pluggyReady, conexao, refetch, refetchConexao])
 
   async function handleSync() {
     setSyncLoading(true)
@@ -90,8 +160,6 @@ export default function Conciliacao() {
       setSyncLoading(false)
     }
   }
-
-  const bankNotConnected = !data || !data.cards
 
   const filterStatus = TAB_FILTER_MAP[activeTab]
 
@@ -107,6 +175,7 @@ export default function Conciliacao() {
   })
 
   const cards = data?.cards || {}
+  const bancoBloqueado = !conexao?.conectado
 
   return (
     <div className="flex flex-col flex-1">
@@ -114,6 +183,52 @@ export default function Conciliacao() {
       <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-6">
+        {/* Bank connection status bar */}
+        <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🏦</span>
+            <div>
+              {conexao?.conectado ? (
+                <>
+                  <p className="text-sm font-medium text-stone-200">{conexao.banco_nome}</p>
+                  <p className="text-xs text-stone-500">
+                    Conta terminando em {conexao.conta_numero} · Conectado
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-stone-300">Nenhum banco conectado</p>
+                  <p className="text-xs text-stone-500">Conecte sua conta para ativar a conciliação</p>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {conexao?.conectado && (
+              <button
+                onClick={() => desconectarMutation.mutate()}
+                disabled={desconectarMutation.isPending}
+                className="text-xs text-stone-500 hover:text-red-400 transition-colors px-3 py-1.5 border border-stone-700 rounded-lg"
+              >
+                Desconectar
+              </button>
+            )}
+            <button
+              onClick={handleConectar}
+              disabled={connectLoading || !pluggyReady}
+              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-stone-900 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
+            >
+              {connectLoading ? '⏳ Abrindo...' : conexao?.conectado ? '🔄 Reconectar' : '+ Conectar banco'}
+            </button>
+          </div>
+        </div>
+
+        {connectError && (
+          <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
+            {connectError}
+          </div>
+        )}
+
         {/* Controls row */}
         <div className="flex items-center justify-end gap-3">
           <input
@@ -124,31 +239,26 @@ export default function Conciliacao() {
           />
           <button
             onClick={handleSync}
-            disabled={syncLoading}
+            disabled={syncLoading || bancoBloqueado}
             className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-stone-900 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
           >
             {syncLoading ? '⏳ Sincronizando...' : '🔄 Sincronizar banco'}
           </button>
         </div>
+
         {isLoading && <div className="text-stone-500 text-sm">Carregando...</div>}
         {error && <div className="text-red-400 text-sm">{error.message}</div>}
 
-        {!isLoading && !error && bankNotConnected && (
-          <div className="bg-stone-900 border border-stone-800 rounded-xl p-8 flex flex-col items-center gap-4 text-center">
-            <span className="text-4xl">🏦</span>
+        {!isLoading && !error && bancoBloqueado && (
+          <div className="bg-stone-900 border border-stone-800 rounded-xl p-8 flex flex-col items-center gap-3 text-center">
+            <span className="text-4xl">📊</span>
             <p className="text-stone-400 text-sm max-w-sm">
-              Conecte sua conta bancária para ver a conciliação
+              Conecte sua conta bancária acima para ver os repasses do ML x depósitos bancários conciliados.
             </p>
-            <button
-              onClick={() => alert('Funcionalidade de conexão bancária disponível em breve')}
-              className="bg-sky-500 hover:bg-sky-400 text-stone-900 text-sm font-medium px-6 py-2 rounded-lg transition-colors"
-            >
-              Conectar banco
-            </button>
           </div>
         )}
 
-        {!isLoading && !error && !bankNotConnected && (
+        {!isLoading && !error && !bancoBloqueado && (
           <>
             {/* KPI Cards */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
@@ -200,7 +310,6 @@ export default function Conciliacao() {
               ) : (
                 filteredTimeline.map((group, gi) => (
                   <div key={gi} className="space-y-2">
-                    {/* Date header */}
                     <div className="flex items-center gap-2 pb-1 border-b border-stone-800">
                       <span className="text-sm font-medium text-stone-300">
                         {formatDate(group.data)}
@@ -209,8 +318,6 @@ export default function Conciliacao() {
                         <span className="text-sky-400 text-sm" title="Divergência neste dia">⚠</span>
                       )}
                     </div>
-
-                    {/* Events */}
                     {group.eventos.map((evento, ei) => (
                       <div
                         key={ei}

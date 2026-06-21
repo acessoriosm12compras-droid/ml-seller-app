@@ -77,6 +77,8 @@ export const api = {
     connectToken: (data) => request('/api/financeiro/pluggy/connect-token', { method: 'POST', body: JSON.stringify(data) }),
     saveItem: (data) => request('/api/financeiro/pluggy/save-item', { method: 'POST', body: JSON.stringify(data) }),
     sync: () => request('/api/financeiro/pluggy/sync', { method: 'POST' }),
+    conexoes: () => request('/api/financeiro/pluggy/conexoes'),
+    desconectar: () => request('/api/financeiro/pluggy/desconectar', { method: 'POST' }),
   },
 
   conciliacao: (params) => request(`/api/financeiro/conciliacao?${new URLSearchParams(params)}`),
