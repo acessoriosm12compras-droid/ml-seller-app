@@ -140,9 +140,25 @@ export default function Conciliacao() {
     setConnectError(null)
     try {
       await loadPluggyScript()
-      const itemId = conexao?.item_id || null
-      const { access_token } = await api.pluggy.connectToken(itemId ? { item_id: itemId } : {})
+    } catch (e) {
+      setConnectError(`Erro ao carregar SDK do Pluggy: ${e.message}`)
+      setConnectLoading(false)
+      return
+    }
 
+    let access_token
+    try {
+      const itemId = conexao?.item_id || null
+      const resp = await api.pluggy.connectToken(itemId ? { item_id: itemId } : {})
+      access_token = resp.access_token
+      if (!access_token) throw new Error(resp.erro || 'token vazio')
+    } catch (e) {
+      setConnectError(`Erro ao obter token bancário: ${e.message}`)
+      setConnectLoading(false)
+      return
+    }
+
+    try {
       const widget = new window.PluggyConnect({
         connectToken: access_token,
         onSuccess: async ({ item }) => {
@@ -157,7 +173,7 @@ export default function Conciliacao() {
           }
         },
         onError: (err) => {
-          setConnectError(`Erro na conexão: ${err?.message || 'tente novamente'}`)
+          setConnectError(`Erro na conexão bancária: ${err?.message || 'tente novamente'}`)
           setConnectLoading(false)
         },
         onClose: () => {
@@ -166,7 +182,7 @@ export default function Conciliacao() {
       })
       widget.init()
     } catch (e) {
-      setConnectError('Não foi possível iniciar a conexão bancária. Verifique sua conexão e tente novamente.')
+      setConnectError(`Erro ao abrir widget: ${e.message}`)
       setConnectLoading(false)
     }
   }, [conexao, refetch, refetchConexao])
