@@ -69,7 +69,7 @@ function StatusBadge({ status }) {
   return null
 }
 
-const PLUGGY_CDN = 'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.js'
+const PLUGGY_CDN = 'https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js'
 
 function loadPluggyScript() {
   return new Promise((resolve, reject) => {
