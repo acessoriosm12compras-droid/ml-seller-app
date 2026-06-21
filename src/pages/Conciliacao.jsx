@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
@@ -69,20 +69,23 @@ function StatusBadge({ status }) {
   return null
 }
 
-function usePluggyScript() {
-  const [loaded, setLoaded] = useState(false)
-
-  useEffect(() => {
-    if (window.PluggyConnect) { setLoaded(true); return }
+function loadPluggyScript() {
+  return new Promise((resolve, reject) => {
+    if (window.PluggyConnect) { resolve(); return }
+    const existing = document.getElementById('pluggy-connect-script')
+    if (existing) {
+      existing.addEventListener('load', resolve)
+      existing.addEventListener('error', reject)
+      return
+    }
     const script = document.createElement('script')
+    script.id = 'pluggy-connect-script'
     script.src = 'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.js'
     script.async = true
-    script.onload = () => setLoaded(true)
+    script.onload = resolve
+    script.onerror = reject
     document.head.appendChild(script)
-    return () => { document.head.removeChild(script) }
-  }, [])
-
-  return loaded
+  })
 }
 
 export default function Conciliacao() {
@@ -93,8 +96,6 @@ export default function Conciliacao() {
   const [syncLoading, setSyncLoading] = useState(false)
   const [connectLoading, setConnectLoading] = useState(false)
   const [connectError, setConnectError] = useState(null)
-  const pluggyReady = usePluggyScript()
-
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['conciliacao', mes, activeAccount],
     queryFn: () => api.conciliacao({ mes, conta_ml: activeAccount }),
@@ -116,10 +117,10 @@ export default function Conciliacao() {
   })
 
   const handleConectar = useCallback(async () => {
-    if (!pluggyReady) return
     setConnectLoading(true)
     setConnectError(null)
     try {
+      await loadPluggyScript()
       const itemId = conexao?.item_id || null
       const { access_token } = await api.pluggy.connectToken(itemId ? { item_id: itemId } : {})
 
@@ -146,10 +147,10 @@ export default function Conciliacao() {
       })
       widget.init()
     } catch (e) {
-      setConnectError('Não foi possível iniciar a conexão bancária.')
+      setConnectError('Não foi possível iniciar a conexão bancária. Verifique sua conexão e tente novamente.')
       setConnectLoading(false)
     }
-  }, [pluggyReady, conexao, refetch, refetchConexao])
+  }, [conexao, refetch, refetchConexao])
 
   async function handleSync() {
     setSyncLoading(true)
@@ -215,7 +216,7 @@ export default function Conciliacao() {
             )}
             <button
               onClick={handleConectar}
-              disabled={connectLoading || !pluggyReady}
+              disabled={connectLoading}
               className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-stone-900 text-sm font-medium px-4 py-1.5 rounded-lg transition-colors"
             >
               {connectLoading ? '⏳ Abrindo...' : conexao?.conectado ? '🔄 Reconectar' : '+ Conectar banco'}
