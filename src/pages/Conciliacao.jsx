@@ -190,9 +190,13 @@ export default function Conciliacao() {
 
   async function handleSync() {
     setSyncLoading(true)
+    setConnectError(null)
     try {
-      await api.pluggy.sync()
+      const res = await api.pluggy.sync()
+      if (res?.erro) throw new Error(res.erro)
       await refetch()
+    } catch (e) {
+      setConnectError(`Erro ao sincronizar: ${e.message}`)
     } finally {
       setSyncLoading(false)
     }
