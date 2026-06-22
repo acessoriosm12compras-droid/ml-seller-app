@@ -163,11 +163,12 @@ export default function Conciliacao() {
         connectToken: access_token,
         onSuccess: async ({ item }) => {
           try {
-            await api.pluggy.saveItem({ item_id: item.id })
+            const res = await api.pluggy.saveItem({ item_id: item.id })
+            if (res?.erro) throw new Error(res.erro)
             await refetchConexao()
             await refetch()
           } catch (e) {
-            setConnectError('Erro ao salvar conexão bancária.')
+            setConnectError(`Erro ao salvar conexão bancária: ${e.message}`)
           } finally {
             setConnectLoading(false)
           }
