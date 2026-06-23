@@ -14,7 +14,7 @@ const BLOCOS_IA = [
   { id: 'palavras_chave', icone: '🔑', nome: 'Palavras-chave',            desc: 'Termos de busca e título na linguagem real do público, do genérico ao nichado.' },
   { id: 'titulos',        icone: '✍️', nome: 'Títulos que filtram',       desc: '3 opções de até 60 caracteres + 1 título completo de até 120.', editavel: true },
   { id: 'descricao',      icone: '💬', nome: 'Descrição que conversa',    desc: '2 versões: dor → solução no mundo da persona → quebra de objeção.', editavel: true },
-  { id: 'fotos',          icone: '🖼️', nome: 'Fotos que espelham',        desc: 'Briefing de capa ambientada + 3 prompts de imagem prontos.' },
+  { id: 'fotos',          icone: '🖼️', nome: 'Fotos que espelham',        desc: 'Briefing da capa + 7 prompts prontos para IA de imagem (capa, infográfico, lifestyle, specs, objeção, kit...).' },
   { id: 'kits',           icone: '📦', nome: 'Kits direcionados',         desc: 'Kits que resolvem o problema completo da persona.' },
 ]
 
