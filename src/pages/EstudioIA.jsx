@@ -632,17 +632,28 @@ export default function EstudioIA() {
               </ul>
             </div>
           )}
-          {(c.prompts || []).map((p, i) => (
-            <div key={i} className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-stone-500 text-xs font-medium">Prompt de imagem {i + 1}</span>
-                {botaoCopiar(`foto_prompt_${i}`, p)}
+          {(c.prompts || []).map((p, i) => {
+            const labels = [
+              '📸 Capa Lifestyle',
+              '⬜ Capa Fundo Branco',
+              '✨ Infográfico — Diferenciais',
+              '📐 A+ Especificações Técnicas',
+              '💬 Quebra de Objeção',
+              '🌍 Lifestyle Contextualizado',
+              '🎁 Kit / Composição',
+            ]
+            return (
+              <div key={i} className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-stone-500 text-xs font-medium">{labels[i] || `Prompt ${i + 1}`}</span>
+                  {botaoCopiar(`foto_prompt_${i}`, p)}
+                </div>
+                <p className="text-stone-300 text-xs leading-relaxed bg-stone-900 border border-stone-700/60 rounded-lg p-3">
+                  {p}
+                </p>
               </div>
-              <p className="text-stone-300 text-xs leading-relaxed bg-stone-900 border border-stone-700/60 rounded-lg p-3">
-                {p}
-              </p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )
 
