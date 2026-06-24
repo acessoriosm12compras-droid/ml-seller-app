@@ -72,10 +72,10 @@
   --active: rgba(255, 255, 255, 0.08);
 
   --text: #eae8e3;
-  --text-secondary: #c8c5be;
-  --text-muted: #938f87;
-  --text-faint: #6a6760;
-  --text-disabled: #4a4844;
+  --text-secondary: #cac7c0;
+  --text-muted: #a09c94;
+  --text-faint: #7c7870;
+  --text-disabled: #5e5a56;
 
   /* ouro mais saturado e luminoso no escuro */
   --accent: #f0a420;
@@ -230,10 +230,12 @@
 :root .text-stone-600,
 :root .text-zinc-600 { color: var(--text-faint); }
 :root .text-stone-700,
-:root .text-zinc-700 { color: var(--text-disabled); }
-/* tons quase-pretos: usados como texto sobre o acento/branco — fixos nos 2 temas */
+:root .text-zinc-700 { color: var(--text-faint); }
+/* tons quase-pretos: escuros no claro, mas no dark precisam seguir o token */
 :root .text-stone-900,
 :root .text-stone-950 { color: #26211a; }
+.dark .text-stone-900,
+.dark .text-stone-950 { color: var(--text); }
 :root .placeholder-stone-500::placeholder,
 :root .placeholder-stone-600::placeholder { color: var(--text-faint); }
 
