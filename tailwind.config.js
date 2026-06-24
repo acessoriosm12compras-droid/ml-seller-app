@@ -4,6 +4,10 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        display: ['Syne', 'system-ui', 'sans-serif'],
+      },
       colors: {
         // Tokens do tema (definidos em src/index.css — claro em :root, escuro em .dark)
         app: {

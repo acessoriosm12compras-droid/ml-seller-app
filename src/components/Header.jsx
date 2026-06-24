@@ -15,7 +15,7 @@ export default function Header({ title, onRefresh, isLoading }) {
       style={{ borderBottom: '1px solid var(--border)' }}
     >
       <div className="flex items-center gap-3 shrink-0">
-        <h1 className="text-ink font-semibold text-sm tracking-tight">{title}</h1>
+        <h1 className="text-ink font-semibold text-sm" style={{ fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 700, letterSpacing: '-0.01em' }}>{title}</h1>
         {role === 'admin' && (
           <StoreMultiSelect contas={CONTAS} selecionadas={activeAccounts} onChange={setActiveAccounts} />
         )}

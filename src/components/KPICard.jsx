@@ -4,21 +4,23 @@ export default function KPICard({ label, value, variacao, prefix = '', suffix = 
   const isNegative = varNum !== null && varNum < 0
 
   return (
-    <div className="bg-stone-900 border border-stone-800 rounded-xl p-5">
-      <p className="text-xs text-stone-500 uppercase tracking-wider mb-2">{label}</p>
-      <p className="text-2xl font-bold text-stone-100">
+    <div className="card-kpi p-5">
+      <p className="text-xs font-medium uppercase tracking-widest mb-2.5" style={{ color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+        {label}
+      </p>
+      <p className="text-2xl font-bold num" style={{ color: 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>
         {prefix}{value}{suffix}
       </p>
       {varNum !== null && (
-        <p className={`text-xs mt-1.5 flex items-center gap-1 ${
+        <p className={`text-xs mt-2 flex items-center gap-1 font-medium ${
           isPositive ? 'text-emerald-400' : isNegative ? 'text-red-400' : 'text-stone-500'
         }`}>
-          <span>{isPositive ? '▲' : isNegative ? '▼' : '—'}</span>
+          <span className="text-[10px]">{isPositive ? '▲' : isNegative ? '▼' : '—'}</span>
           <span>{Math.abs(varNum).toFixed(1)}% vs período anterior</span>
         </p>
       )}
       {variacao === null && (
-        <p className="text-xs mt-1.5 text-stone-600">sem dados anteriores</p>
+        <p className="text-xs mt-2 text-stone-600">sem dados anteriores</p>
       )}
     </div>
   )

@@ -38,17 +38,17 @@ const FIN_NAV = [
 const FIN_PREFIXES = ['/financeiro', '/fluxo-caixa', '/conciliacao', '/movimentacoes']
 
 const itemClass = ({ isActive }) =>
-  `flex items-center gap-3 h-9 px-2.5 rounded-lg transition-colors duration-150 ${
+  `flex items-center gap-3 h-9 rounded-lg transition-all duration-150 ${
     isActive
-      ? 'bg-app-active text-ink font-medium'
-      : 'text-ink-muted hover:text-ink hover:bg-app-hover'
+      ? 'bg-app-active text-ink font-semibold border-l-[3px] border-accent-text pl-[7px] pr-2.5'
+      : 'text-ink-muted hover:text-ink hover:bg-app-hover border-l-[3px] border-transparent px-2.5'
   }`
 
 const subItemClass = ({ isActive }) =>
-  `flex items-center gap-2.5 h-8 pl-7 pr-2.5 rounded-lg transition-colors duration-150 ${
+  `flex items-center gap-2.5 h-8 rounded-lg transition-all duration-150 ${
     isActive
-      ? 'bg-app-active text-ink font-medium'
-      : 'text-ink-muted hover:text-ink hover:bg-app-hover'
+      ? 'bg-app-active text-ink font-semibold border-l-[3px] border-accent-text pl-[25px] pr-2.5'
+      : 'text-ink-muted hover:text-ink hover:bg-app-hover border-l-[3px] border-transparent pl-7 pr-2.5'
   }`
 
 export default function Sidebar() {
@@ -68,7 +68,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="flex items-center h-14 shrink-0 px-3.5 gap-3">
           <Logo size={28} />
-          <span className="text-ink font-semibold text-sm tracking-tight whitespace-nowrap overflow-hidden">
+          <span className="text-ink font-display font-700 text-sm tracking-tight whitespace-nowrap overflow-hidden" style={{ fontFamily: 'Syne, system-ui, sans-serif', fontWeight: 700, letterSpacing: '-0.02em' }}>
             Seller ML
           </span>
         </div>
@@ -90,10 +90,10 @@ export default function Sidebar() {
           <div className="mt-0.5">
             <button
               onClick={() => setFinOpen(o => !o)}
-              className={`flex items-center w-full h-9 px-2.5 rounded-lg transition-colors duration-150 ${
+              className={`flex items-center w-full h-9 rounded-lg transition-all duration-150 ${
                 isFinanceiroActive && !finOpen
-                  ? 'bg-app-active text-ink font-medium'
-                  : 'text-ink-muted hover:text-ink hover:bg-app-hover'
+                  ? 'bg-app-active text-ink font-semibold border-l-[3px] border-accent-text pl-[7px] pr-2.5'
+                  : 'text-ink-muted hover:text-ink hover:bg-app-hover border-l-[3px] border-transparent px-2.5'
               }`}
             >
               <Wallet size={16} strokeWidth={1.75} className={`shrink-0 mr-3 ${isFinanceiroActive ? 'text-accent-text' : ''}`} />
