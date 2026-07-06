@@ -33,17 +33,20 @@ function DecisaoInativo({ item, onDecide, loading }) {
 }
 
 export default function Inventario() {
-  const { activeAccount } = useAuth()
+  const { activeAccount, role } = useAuth()
   const queryClient = useQueryClient()
   const [alertaMinimo, setAlertaMinimo] = useState(5)
   const [apenasBAixo, setApenasBaixo] = useState(false)
   const [busca, setBusca] = useState('')
   const [decidindo, setDecidindo] = useState(null) // item_id em loading
 
+  // Admin vê todas as contas; não-admin vê só a própria
+  const contaParam = role === 'admin' ? 'all' : activeAccount
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['inventario', activeAccount, alertaMinimo, apenasBAixo],
+    queryKey: ['inventario', contaParam, alertaMinimo, apenasBAixo],
     queryFn: () => api.inventario({
-      conta_ml: activeAccount,
+      conta_ml: contaParam,
       alerta_minimo: alertaMinimo,
       apenas_baixo: apenasBAixo ? '1' : '0',
     }),
