@@ -114,6 +114,7 @@ export const api = {
   },
 
   inventario: (params) => request(`/api/inventario/full?${new URLSearchParams(params)}`),
+  inventarioIntencao: (body) => request('/api/inventario/intencao', { method: 'POST', body: JSON.stringify(body) }),
 
   sync: {
     trigger: (data) => request('/api/sync', { method: 'POST', body: JSON.stringify(data || {}) }),

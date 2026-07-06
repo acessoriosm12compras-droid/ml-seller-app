@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
@@ -10,11 +10,35 @@ function formatBRL(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
 }
 
+function DecisaoInativo({ item, onDecide, loading }) {
+  return (
+    <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+      <span className="text-[10px] text-stone-500 italic">Vai repor?</span>
+      <button
+        disabled={loading}
+        onClick={() => onDecide(item, true)}
+        className="px-2 py-0.5 rounded text-[10px] font-medium bg-sky-500/15 text-sky-400 border border-sky-500/30 hover:bg-sky-500/25 disabled:opacity-50 transition-colors"
+      >
+        Sim, em breve
+      </button>
+      <button
+        disabled={loading}
+        onClick={() => onDecide(item, false)}
+        className="px-2 py-0.5 rounded text-[10px] font-medium bg-stone-700/50 text-stone-400 border border-stone-600 hover:bg-stone-700 disabled:opacity-50 transition-colors"
+      >
+        Não vou mais vender
+      </button>
+    </div>
+  )
+}
+
 export default function Inventario() {
   const { activeAccount } = useAuth()
+  const queryClient = useQueryClient()
   const [alertaMinimo, setAlertaMinimo] = useState(5)
   const [apenasBAixo, setApenasBaixo] = useState(false)
   const [busca, setBusca] = useState('')
+  const [decidindo, setDecidindo] = useState(null) // item_id em loading
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['inventario', activeAccount, alertaMinimo, apenasBAixo],
@@ -26,6 +50,24 @@ export default function Inventario() {
     enabled: !!activeAccount,
     staleTime: 5 * 60_000,
   })
+
+  const intencaoMutation = useMutation({
+    mutationFn: ({ item_id, conta_ml, vai_repor }) =>
+      api.inventarioIntencao({ item_id, conta_ml, vai_repor }),
+    onMutate: ({ item_id }) => setDecidindo(item_id),
+    onSettled: () => {
+      setDecidindo(null)
+      queryClient.invalidateQueries({ queryKey: ['inventario'] })
+    },
+  })
+
+  const handleDecide = (item, vai_repor) => {
+    intencaoMutation.mutate({
+      item_id: item.ml_item_id,
+      conta_ml: item.loja,
+      vai_repor,
+    })
+  }
 
   const itens = (data?.itens || []).filter(i =>
     !busca || i.titulo?.toLowerCase().includes(busca.toLowerCase()) || i.ml_item_id?.includes(busca)
@@ -65,9 +107,9 @@ export default function Inventario() {
           </div>
         )}
 
-        {/* Venda e Líquido previstos */}
+        {/* Venda e Líquido previstos + inativos aguardando decisão */}
         {data && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
             <div className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
               <p className="text-xs text-stone-500">Venda Prevista (estoque × preço)</p>
               <p className="text-lg font-semibold text-sky-400">{formatBRL(data.venda_prevista_total)}</p>
@@ -76,6 +118,12 @@ export default function Inventario() {
               <p className="text-xs text-stone-500">Líquido Previsto (~70% da venda)</p>
               <p className="text-lg font-semibold text-blue-400">{formatBRL(data.liquido_previsto_total)}</p>
             </div>
+            {data.total_inativos_sem_decisao > 0 && (
+              <div className="bg-stone-900 border border-amber-500/30 border-l-4 border-l-amber-500 rounded-xl px-4 py-3 flex flex-col gap-0.5">
+                <p className="text-xs text-amber-500/80">Inativos aguardando decisão</p>
+                <p className="text-lg font-semibold text-amber-400">{data.total_inativos_sem_decisao}</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -149,19 +197,52 @@ export default function Inventario() {
                   <tr><td colSpan={8} className="px-4 py-10 text-center text-stone-600">Nenhum item encontrado.</td></tr>
                 )}
                 {itens.map(item => {
-                  const estoqueColor = item.estoque_baixo
+                  const isInativo = item.inativo
+                  const estoqueColor = isInativo
+                    ? 'text-stone-600'
+                    : item.estoque_baixo
                     ? 'text-red-400 font-bold'
                     : item.estoque <= alertaMinimo * 2
                     ? 'text-sky-400'
                     : 'text-emerald-400'
                   return (
-                    <tr key={item.ml_item_id} className={`border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors ${item.estoque_baixo ? 'bg-red-500/5' : ''}`}>
+                    <tr
+                      key={item.ml_item_id}
+                      className={`border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors ${
+                        isInativo
+                          ? 'bg-stone-800/20 opacity-70'
+                          : item.estoque_baixo
+                          ? 'bg-red-500/5'
+                          : ''
+                      }`}
+                    >
                       <td className="px-4 py-3 text-stone-300 overflow-hidden">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {item.estoque_baixo && <span title="Estoque baixo" className="text-red-400 text-xs shrink-0">⚠</span>}
-                          <div className="min-w-0">
-                            <div className="truncate" title={item.titulo}>{item.titulo}</div>
+                        <div className="flex items-start gap-2 min-w-0">
+                          {item.estoque_baixo && !isInativo && (
+                            <span title="Estoque baixo" className="text-red-400 text-xs shrink-0 mt-0.5">⚠</span>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="truncate" title={item.titulo}>{item.titulo}</span>
+                              {isInativo && (
+                                <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-stone-700 text-stone-400 border border-stone-600 uppercase tracking-wide">
+                                  Inativo
+                                </span>
+                              )}
+                              {item.vai_repor === true && (
+                                <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30 uppercase tracking-wide">
+                                  Repondo
+                                </span>
+                              )}
+                            </div>
                             <div className="text-stone-600 font-mono text-[10px] truncate">{item.ml_item_id}</div>
+                            {item.aguardando_decisao && (
+                              <DecisaoInativo
+                                item={item}
+                                onDecide={handleDecide}
+                                loading={decidindo === item.ml_item_id}
+                              />
+                            )}
                           </div>
                         </div>
                       </td>
