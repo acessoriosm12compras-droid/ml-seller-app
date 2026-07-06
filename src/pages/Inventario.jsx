@@ -98,6 +98,12 @@ export default function Inventario() {
             <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-blue-500 rounded-xl p-4">
               <p className="text-xs text-stone-500">Unidades em Estoque</p>
               <p className="text-xl font-bold text-blue-400">{data.total_unidades?.toLocaleString('pt-BR')}</p>
+              {data.total_em_processamento > 0 && (
+                <div className="mt-1 space-y-0.5">
+                  <p className="text-[10px] text-emerald-400">✓ {data.total_disponivel?.toLocaleString('pt-BR')} disponíveis</p>
+                  <p className="text-[10px] text-amber-400">⟳ {data.total_em_processamento?.toLocaleString('pt-BR')} em processamento</p>
+                </div>
+              )}
             </div>
             <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-violet-500 rounded-xl p-4">
               <p className="text-xs text-stone-500">Custo Total Estoque</p>
@@ -253,9 +259,20 @@ export default function Inventario() {
                       <td className="px-4 py-3 text-right text-sky-400">{formatBRL(item.preco)}</td>
                       <td className="px-4 py-3 text-right text-stone-400">{item.custo_unitario !== null ? formatBRL(item.custo_unitario) : <span className="text-stone-600">—</span>}</td>
                       <td className={`px-4 py-3 text-right text-base ${estoqueColor}`}>
-                        {item.estoque}
-                        {item.estoque_total !== undefined && item.estoque_total !== item.estoque && (
-                          <div className="text-stone-500 text-[10px] font-normal">{item.estoque_total} total</div>
+                        {item.estoque?.toLocaleString('pt-BR')}
+                        {item.em_processamento > 0 && (
+                          <div className="text-amber-500/80 text-[10px] font-normal" title={
+                            Object.entries(item.detalhe_processamento || {})
+                              .map(([k, v]) => `${k}: ${v}`)
+                              .join(' | ')
+                          }>
+                            ⟳ {item.em_processamento?.toLocaleString('pt-BR')} proc.
+                          </div>
+                        )}
+                        {item.disponivel !== undefined && item.disponivel !== item.estoque && (
+                          <div className="text-emerald-600 text-[10px] font-normal">
+                            {item.disponivel?.toLocaleString('pt-BR')} disp.
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right text-stone-400">{item.custo_total_estoque !== null ? formatBRL(item.custo_total_estoque) : <span className="text-stone-600">—</span>}</td>
