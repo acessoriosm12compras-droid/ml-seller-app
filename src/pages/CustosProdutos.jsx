@@ -47,6 +47,10 @@ export default function CustosProdutos() {
   const [savingStatus, setSavingStatus] = useState({})
   const [importando, setImportando] = useState(false)
   const [importResult, setImportResult] = useState(null)
+  // Modal "A partir de quando?"
+  const [pendingCusto, setPendingCusto] = useState(null) // { item_id, titulo, custo_unitario, conta_ml }
+  const [vigenteTipo, setVigenteTipo] = useState('hoje') // 'hoje' | 'data' | 'sempre'
+  const [vigenteData, setVigenteData] = useState('')
 
   async function handleImport(e) {
     const file = e.target.files?.[0]
@@ -105,9 +109,26 @@ export default function CustosProdutos() {
       setEditingCosts(s => { const n = {...s}; delete n[produto.item_id]; return n })
       return
     }
-    setSavingStatus(s => ({ ...s, [produto.item_id]: 'saving' }))
-    mutation.mutate({ item_id: produto.item_id, titulo: produto.titulo, custo_unitario: value, conta_ml: editAccount })
     setEditingCosts(s => { const n = {...s}; delete n[produto.item_id]; return n })
+    // Abre modal para perguntar vigência antes de salvar
+    const hoje = new Date().toISOString().slice(0, 10)
+    setVigenteTipo('hoje')
+    setVigenteData(hoje)
+    setPendingCusto({ item_id: produto.item_id, titulo: produto.titulo, custo_unitario: value, conta_ml: editAccount })
+  }
+
+  function handleConfirmarVigencia() {
+    if (!pendingCusto) return
+    const vigente_desde = vigenteTipo === 'sempre' ? 'sempre'
+      : vigenteTipo === 'data' ? vigenteData
+      : 'hoje'
+    setSavingStatus(s => ({ ...s, [pendingCusto.item_id]: 'saving' }))
+    mutation.mutate({ ...pendingCusto, vigente_desde })
+    setPendingCusto(null)
+  }
+
+  function handleCancelarVigencia() {
+    setPendingCusto(null)
   }
 
   const todos = data?.produtos ?? []
@@ -378,6 +399,76 @@ export default function CustosProdutos() {
           * Margem Est. = (Preço ML − Custo) ÷ Preço ML, sem deduzir taxas do Mercado Livre. Serve apenas para identificar divergências.
         </p>
       </main>
+
+      {/* Modal: A partir de quando? */}
+      {pendingCusto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-stone-900 border border-stone-700 rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-5">
+            <div>
+              <h2 className="text-base font-semibold text-stone-100">A partir de quando?</h2>
+              <p className="text-xs text-stone-500 mt-1 truncate" title={pendingCusto.titulo}>
+                {pendingCusto.titulo} — novo custo: {fmtBRL(pendingCusto.custo_unitario)}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                { id: 'hoje', label: 'A partir de hoje', desc: 'Afeta apenas vendas daqui em diante' },
+                { id: 'data', label: 'Data específica', desc: 'Escolha a data de início' },
+                { id: 'sempre', label: 'Desde sempre', desc: 'Recalcula todo o histórico com este custo' },
+              ].map(op => (
+                <label
+                  key={op.id}
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                    vigenteTipo === op.id
+                      ? 'border-sky-500/60 bg-sky-500/10'
+                      : 'border-stone-700 hover:border-stone-600'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="vigente_tipo"
+                    value={op.id}
+                    checked={vigenteTipo === op.id}
+                    onChange={() => setVigenteTipo(op.id)}
+                    className="mt-0.5 accent-sky-500"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-stone-200">{op.label}</p>
+                    <p className="text-xs text-stone-500">{op.desc}</p>
+                  </div>
+                </label>
+              ))}
+
+              {vigenteTipo === 'data' && (
+                <input
+                  type="date"
+                  value={vigenteData}
+                  onChange={e => setVigenteData(e.target.value)}
+                  max={new Date().toISOString().slice(0, 10)}
+                  className="w-full bg-stone-800 border border-stone-600 rounded-lg px-3 py-2 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                />
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={handleCancelarVigencia}
+                className="flex-1 px-4 py-2 rounded-xl border border-stone-700 text-sm text-stone-400 hover:bg-stone-800 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmarVigencia}
+                disabled={vigenteTipo === 'data' && !vigenteData}
+                className="flex-1 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-sm font-medium text-white transition-colors"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
