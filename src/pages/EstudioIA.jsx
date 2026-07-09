@@ -788,7 +788,7 @@ export default function EstudioIA() {
     <div className="flex flex-col min-h-screen bg-stone-950">
       <Header title="Estúdio IA" />
 
-      <div className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
+      <div className="flex-1 p-4 md:p-6 w-full">
 
         {/* ── Cabeçalho da página ── */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
@@ -977,7 +977,7 @@ export default function EstudioIA() {
                   Nada encontrado para "{buscaHist}".
                 </p>
               ) : (
-                <div className="space-y-1 -mx-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {historicoFiltrado.map(h => {
                     const n = h.num_produtos || 0
                     return (
@@ -987,26 +987,22 @@ export default function EstudioIA() {
                         tabIndex={0}
                         onClick={() => abrirEstudo(h.id, { termo: h.termo || h.link, criadoEm: h.created_at })}
                         onKeyDown={e => { if (e.key === 'Enter') abrirEstudo(h.id, { termo: h.termo || h.link, criadoEm: h.created_at }) }}
-                        className="group w-full text-left flex items-center gap-3 rounded-xl px-3 py-3 border border-transparent hover:bg-stone-800/60 hover:border-stone-700/60 transition-colors cursor-pointer"
+                        className="group flex flex-col gap-2 text-left rounded-xl px-4 py-3.5 border border-stone-800 bg-stone-800/20 hover:bg-stone-800/60 hover:border-stone-700 transition-colors cursor-pointer"
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="text-stone-200 text-sm font-medium truncate">
-                              {h.termo || h.link || 'Análise'}
-                            </span>
-                            <span className="text-stone-500 text-xs shrink-0">{fmtDataHist(h.created_at)}</span>
-                          </div>
-                          <div className="flex items-center gap-2.5 mt-1 min-w-0">
-                            <span className="text-emerald-400 text-xs flex items-center gap-1 shrink-0">
-                              <CheckCircle2 size={11} />
-                              Concluída{n > 0 && ` · ${n} anúncio${n !== 1 ? 's' : ''}`}
-                            </span>
-                            {h.persona && (
-                              <span className="text-stone-500 text-xs truncate">{h.persona}</span>
-                            )}
-                          </div>
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-stone-200 text-sm font-medium leading-snug truncate">
+                            {h.termo || h.link || 'Análise'}
+                          </span>
+                          <ChevronRight size={14} className="text-stone-600 group-hover:text-stone-400 transition-colors shrink-0 mt-0.5" />
                         </div>
-                        <ChevronRight size={14} className="text-stone-600 group-hover:text-stone-400 transition-colors shrink-0" />
+                        <span className="text-emerald-400 text-xs flex items-center gap-1 shrink-0">
+                          <CheckCircle2 size={11} />
+                          Concluída{n > 0 && ` · ${n} anúncio${n !== 1 ? 's' : ''}`}
+                        </span>
+                        {h.persona && (
+                          <span className="text-stone-500 text-xs truncate">{h.persona}</span>
+                        )}
+                        <span className="text-stone-600 text-[11px] mt-auto pt-1">{fmtDataHist(h.created_at)}</span>
                       </div>
                     )
                   })}
