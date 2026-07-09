@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import Header from '../components/Header'
 import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 
 // Ferramentas de IA — blocos da oferta direcionada (metodologia de persona).
 // Cada bloco gera UMA coisa por vez; 'persona' é o bloco principal e guia os demais.
@@ -150,6 +151,8 @@ function statsPreco(produtos) {
 }
 
 export default function EstudioIA() {
+  const { activeAccount } = useAuth()
+
   // ── Busca (termo OU link de anúncio, mesmo input) ─────────────────
   const [termo, setTermo]         = useState('')
   const [buscando, setBuscando]   = useState(false)
@@ -177,17 +180,23 @@ export default function EstudioIA() {
   const [copiado, setCopiado] = useState('')
   const workspaceRef = useRef(null)
 
-  // Carrega o histórico de estudos ao montar
+  // Carrega o histórico de estudos ao montar e sempre que a conta ativa mudar
+  // (o histórico é por conta_ml — trocar de loja no seletor precisa recarregar
+  // e fechar qualquer workspace aberto, que pertence à conta anterior).
   useEffect(() => {
     carregarHistorico()
+    fecharWorkspace()
+    setMercadoAtual(null)
+    setFeedback(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [activeAccount])
 
   async function carregarHistorico() {
+    if (!activeAccount) return
     setCarregandoHist(true)
     setErroHistorico('')
     try {
-      const data = await api.estudio.historico(100)
+      const data = await api.estudio.historico(100, activeAccount)
       setHistorico(data.estudos || [])
     } catch (err) {
       // Histórico é best-effort — não bloqueia a página, mas um aviso
@@ -211,7 +220,7 @@ export default function EstudioIA() {
 
     const isLink = t.startsWith('http')
     try {
-      const data = await api.estudio.buscar(isLink ? { link: t } : { termo: t })
+      const data = await api.estudio.buscar({ ...(isLink ? { link: t } : { termo: t }), conta_ml: activeAccount })
       const lista = data.produtos || []
       if (!lista.length) {
         setErroBusca('Nenhum anúncio encontrado para essa busca. Tente outro termo ou cole o link de um anúncio do ML.')
@@ -265,7 +274,7 @@ export default function EstudioIA() {
     })
     setTimeout(() => workspaceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
     try {
-      const { estudo } = await api.estudio.get(id)
+      const { estudo } = await api.estudio.get(id, activeAccount)
       const produtos = Array.isArray(estudo.produtos_analisados) ? estudo.produtos_analisados : []
       setWorkspace({
         estudoId: estudo.id,
@@ -322,7 +331,7 @@ export default function EstudioIA() {
     setGerandoBloco(blocoId)
     setErrosBloco(prev => ({ ...prev, [blocoId]: '' }))
     try {
-      const payload = { bloco: blocoId }
+      const payload = { bloco: blocoId, conta_ml: activeAccount }
       if (workspace.estudoId) payload.estudo_id = workspace.estudoId
       if (workspace.termo) payload.termo = workspace.termo
       // Gera usando APENAS os anúncios selecionados como referência
@@ -353,7 +362,7 @@ export default function EstudioIA() {
     setSalvandoBloco(blocoId)
     setErrosBloco(prev => ({ ...prev, [blocoId]: '' }))
     try {
-      const data = await api.estudio.salvarConteudo(workspace.estudoId, blocos[blocoId], blocoId)
+      const data = await api.estudio.salvarConteudo(workspace.estudoId, blocos[blocoId], blocoId, activeAccount)
       const c = normalizarBlocoLocal(blocoId, data.conteudo)
       setBlocos(prev => ({ ...prev, [blocoId]: c }))
       setBlocosOriginais(prev => ({ ...prev, [blocoId]: JSON.parse(JSON.stringify(c)) }))

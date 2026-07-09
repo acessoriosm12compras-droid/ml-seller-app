@@ -184,14 +184,16 @@ export const api = {
 
   estudio: {
     buscar: (params) => request(`/api/estudio/buscar?${new URLSearchParams(params)}`),
-    historico: (limit = 20) => request(`/api/estudio/historico?limit=${limit}`),
-    get: (id) => request(`/api/estudio/${id}`),
+    historico: (limit = 20, conta_ml) =>
+      request(`/api/estudio/historico?${new URLSearchParams({ limit, ...(conta_ml ? { conta_ml } : {}) })}`),
+    get: (id, conta_ml) =>
+      request(`/api/estudio/${id}${conta_ml ? `?${new URLSearchParams({ conta_ml })}` : ''}`),
     gerarConteudo: (data) =>
       request('/api/estudio/conteudo', { method: 'POST', body: JSON.stringify(data) }),
-    salvarConteudo: (id, conteudo, bloco) =>
+    salvarConteudo: (id, conteudo, bloco, conta_ml) =>
       request(`/api/estudio/${id}/conteudo`, {
         method: 'PATCH',
-        body: JSON.stringify(bloco ? { bloco, conteudo } : { conteudo }),
+        body: JSON.stringify({ ...(bloco ? { bloco, conteudo } : { conteudo }), ...(conta_ml ? { conta_ml } : {}) }),
       }),
   },
 }
