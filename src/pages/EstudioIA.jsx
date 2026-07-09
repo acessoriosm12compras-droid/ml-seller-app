@@ -161,6 +161,7 @@ export default function EstudioIA() {
   const [historico, setHistorico]   = useState([])
   const [buscaHist, setBuscaHist]   = useState('')
   const [carregandoHist, setCarregandoHist] = useState(false)
+  const [erroHistorico, setErroHistorico] = useState('')
 
   // ── Workspace da análise (substitui a lista quando aberto) ────────
   const [workspace, setWorkspace] = useState(null)
@@ -184,11 +185,15 @@ export default function EstudioIA() {
 
   async function carregarHistorico() {
     setCarregandoHist(true)
+    setErroHistorico('')
     try {
       const data = await api.estudio.historico(100)
       setHistorico(data.estudos || [])
-    } catch {
-      /* histórico é best-effort — silencioso */
+    } catch (err) {
+      // Histórico é best-effort — não bloqueia a página, mas um aviso
+      // discreto evita mascarar falha real (ex.: erro de DB) como "sem histórico".
+      console.warn('[EstudioIA] falha ao carregar histórico:', err)
+      setErroHistorico('Não foi possível carregar o histórico agora. Tente recarregar a página.')
     } finally {
       setCarregandoHist(false)
     }
@@ -951,8 +956,12 @@ export default function EstudioIA() {
               ) : historico.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center py-12 gap-2">
                   <FileSearch size={28} className="text-stone-600" />
-                  <p className="text-stone-400 text-sm font-medium">Nenhuma análise ainda</p>
-                  <p className="text-stone-500 text-xs">Pesquise um produto acima — a análise é criada e salva automaticamente.</p>
+                  <p className="text-stone-400 text-sm font-medium">
+                    {erroHistorico ? 'Não foi possível carregar o histórico' : 'Nenhuma análise ainda'}
+                  </p>
+                  <p className={erroHistorico ? 'text-amber-400 text-xs' : 'text-stone-500 text-xs'}>
+                    {erroHistorico || 'Pesquise um produto acima — a análise é criada e salva automaticamente.'}
+                  </p>
                 </div>
               ) : historicoFiltrado.length === 0 ? (
                 <p className="text-stone-500 text-xs text-center py-8">

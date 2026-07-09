@@ -18,11 +18,11 @@ const NAV = [
   { to: '/custos-produtos', label: 'Custos',         icon: Settings },
   { to: '/reposicao',       label: 'Reposição',      icon: ShoppingCart },
   { to: '/inventario',      label: 'Inventário',     icon: Package },
-  { to: '/configuracoes',   label: 'Configurações',  icon: SlidersHorizontal },
 ]
 
 const NAV_ADMIN = [
-  { to: '/admin/usuarios', label: 'Vendedores', icon: Users },
+  { to: '/admin/usuarios', label: 'Vendedores',    icon: Users },
+  { to: '/configuracoes',  label: 'Configurações', icon: SlidersHorizontal },
 ]
 
 const FIN_NAV = [

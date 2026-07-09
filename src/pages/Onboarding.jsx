@@ -18,9 +18,20 @@ export default function Onboarding() {
   }, [])
 
   useEffect(() => {
-    if (searchParams.get('oauth') === 'success') {
+    const oauth = searchParams.get('oauth')
+    if (oauth === 'success') {
       setSuccess(true)
       setTimeout(() => navigate('/dashboard', { replace: true }), 2500)
+    } else if (oauth === 'erro') {
+      const motivo = searchParams.get('motivo')
+      const conta = searchParams.get('conta')
+      if (motivo === 'nome_em_uso') {
+        setError(
+          `Já existe uma conta chamada "${conta}" vinculada a outro usuário. Escolha um nome diferente.`
+        )
+      } else {
+        setError('Não foi possível vincular a conta. Tente novamente.')
+      }
     }
   }, [searchParams, navigate])
 
