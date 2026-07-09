@@ -124,7 +124,7 @@ export default function Inventario() {
               <p className="text-lg font-semibold text-sky-400">{formatBRL(data.venda_prevista_total)}</p>
             </div>
             <div className="bg-stone-900 border border-stone-800 rounded-xl px-4 py-3 flex flex-col gap-0.5">
-              <p className="text-xs text-stone-500">Líquido Previsto (~70% da venda)</p>
+              <p className="text-xs text-stone-500">Líquido Previsto (após taxa ML, imposto e custo)</p>
               <p className="text-lg font-semibold text-blue-400">{formatBRL(data.liquido_previsto_total)}</p>
             </div>
             {data.total_inativos_sem_decisao > 0 && (
