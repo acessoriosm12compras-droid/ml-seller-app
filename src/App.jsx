@@ -35,6 +35,7 @@ import ContasReceber from './pages/financeiro/ContasReceber'
 import ContasCorrentes from './pages/financeiro/ContasCorrentes'
 import RegrasCategorização from './pages/financeiro/RegrasCategorização'
 import Boletos from './pages/Boletos'
+import NotasFiscais from './pages/NotasFiscais'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -87,6 +88,7 @@ export default function App() {
                 <Route path="financeiro/contas-correntes" element={<ContasCorrentes />} />
                 <Route path="financeiro/regras" element={<RegrasCategorização />} />
                 <Route path="boletos" element={<Boletos />} />
+                <Route path="financeiro/notas-fiscais" element={<NotasFiscais />} />
                 <Route
                   path="admin/usuarios"
                   element={

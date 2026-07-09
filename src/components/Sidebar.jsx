@@ -6,7 +6,7 @@ import {
   LayoutDashboard, PieChart,
   ShoppingBag, Settings, Package, SlidersHorizontal, Megaphone, Sparkles, LogOut,
   ShoppingCart, Users, ChevronDown, ChevronUp,
-  Wallet, ArrowDownCircle, ArrowUpCircle, Building2, TrendingUp, GitMerge, Receipt, Tag, FileText,
+  Wallet, ArrowDownCircle, ArrowUpCircle, Building2, TrendingUp, GitMerge, Receipt, Tag, FileText, FileCheck2,
 } from 'lucide-react'
 
 const NAV = [
@@ -34,6 +34,7 @@ const FIN_NAV = [
   { to: '/movimentacoes',               label: 'Movimentos',        icon: Receipt },
   { to: '/financeiro/regras',           label: 'Regras',            icon: Tag },
   { to: '/boletos',                     label: 'Boletos MP',        icon: FileText },
+  { to: '/financeiro/notas-fiscais',    label: 'NF/Fiscal',         icon: FileCheck2 },
 ]
 
 const FIN_PREFIXES = ['/financeiro', '/fluxo-caixa', '/conciliacao', '/movimentacoes', '/boletos']

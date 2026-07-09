@@ -196,4 +196,9 @@ export const api = {
         body: JSON.stringify({ ...(bloco ? { bloco, conteudo } : { conteudo }), ...(conta_ml ? { conta_ml } : {}) }),
       }),
   },
+
+  notasFiscais: {
+    listar: (params) => request(`/api/notas-fiscais?${new URLSearchParams(params)}`),
+    status: (params = {}) => request(`/api/notas-fiscais/status?${new URLSearchParams(params)}`),
+  },
 }
