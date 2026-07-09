@@ -145,11 +145,11 @@ function Tabela({ titulo, icon: Icon, cor, boletos, tipo, totalLabel }) {
 }
 
 export default function Boletos() {
-  const { token } = useAuth()
+  const { getToken } = useAuth()
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['boletos'],
-    queryFn: () => fetchBoletos(token, {}),
+    queryFn: () => fetchBoletos(getToken(), {}),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   })
