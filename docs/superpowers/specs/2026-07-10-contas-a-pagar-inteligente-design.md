@@ -21,8 +21,9 @@ Essa tela passa a ser o lugar pra **controlar e planejar** despesas (o que preci
 - Upload de PDF → extração via IA (OpenAI, já usado no Estúdio IA) → formulário pré-preenchido pra revisão → confirmação → salva.
 - Lançamento manual (sem PDF), com os mesmos campos.
 - Marcação de status (a pagar / pago / vencido) e data de vencimento.
-- Fluxo de Caixa passa a somar a partir dela, no lugar de `despesas_fixas_mensais` (ver "Migração" — essa parte é uma troca direta e segura, a tabela antiga nunca teve dado).
-- **`fechamento_despesas` (usada hoje no Fechamento, alimentada pela sincronização bancária da Conta Simples, com 135 lançamentos reais entre YUSO e M12) fica intocada** — Contas a Pagar não mexe nela, pra não contar a mesma despesa duas vezes (uma vez como "paguei o boleto" em Contas a Pagar, outra vez como "saiu do banco" via Conta Simples).
+- Fluxo de Caixa passa a somar a partir dela, no lugar de `despesas_fixas_mensais` (troca direta e segura, a tabela antiga nunca teve dado).
+- **Fechamento**: a seção de despesas é simplificada — as duas linhas separadas de hoje ("Custos Fixos" e "Despesas Variáveis", reflexo de serem duas tabelas diferentes por baixo) viram **uma lista única de despesas do mês, agrupada por categoria**. O total passa a somar `contas_a_pagar` (tudo daqui pra frente) + `fechamento_despesas` (histórico congelado — ver "Migração"), então meses antigos continuam corretos e não há necessidade de migrar dado nenhum.
+- **Substituição da planilha externa**: hoje o controle de "Despesas Variáveis" é feito 100% numa planilha fora do sistema (confirmado com o usuário — nem a sincronização da Conta Simples nem o lançamento manual no Fechamento estão em uso). Contas a Pagar passa a ser o lugar único pra isso, dentro do sistema.
 
 **Fora do escopo (não pedido agora):**
 - Pagamento efetivo (integração bancária pra pagar o boleto direto pelo sistema) — só controle/registro.
@@ -76,24 +77,26 @@ Categorias (lista fixa, reaproveitando as já usadas na versão mockada + as cit
 - Botão "Subir PDF" abre seletor de arquivo → chama `/extrair` → abre o mesmo modal de lançamento manual já existente, mas com os campos pré-preenchidos pela sugestão da IA (usuário revisa, edita se quiser, confirma).
 - Lista de lançamentos com filtro por status e por competência (mês), total por categoria.
 
-### Migração — corrigida após revisão técnica (achado crítico)
+### Migração — corrigida duas vezes durante o brainstorm (histórico abaixo, decisão final no fim)
 
-A primeira versão deste spec assumia, errado, que tanto `Fechamento.jsx` quanto `FluxoCaixa.jsx` liam só `despesas_fixas_mensais`. Não é bem assim — cada tela tem sua própria fonte hoje:
+**Rodada 1 (revisão técnica)**: a primeira versão deste spec assumia, errado, que tanto `Fechamento.jsx` quanto `FluxoCaixa.jsx` liam só `despesas_fixas_mensais`. Não é bem assim:
+- **`FluxoCaixa.jsx`**: lê só `despesas_fixas_mensais` (`fluxo_caixa_service.py::get_despesas_fixas_total`). Essa tabela tem **zero linhas em todas as contas** (confirmado por query direta: `SELECT conta_ml, COUNT(*) FROM despesas_fixas_mensais GROUP BY conta_ml` não retornou nenhuma linha).
+- **`Fechamento.jsx`**: lê **duas** fontes — `despesas_fixas_mensais` (linha "Custos Fixos", vazia) **e** `fechamento_despesas` (linha "Despesas Variáveis", `routes/fechamento.py`), essa última **com dado real**: 117 lançamentos da YUSO (dez/25–jun/26) e 18 da M12 (abr–mai/26), historicamente alimentada por lançamento manual e pela sincronização bancária da Conta Simples (dedupe por `ext_id`).
 
-- **`FluxoCaixa.jsx`**: lê só `despesas_fixas_mensais` (`fluxo_caixa_service.py::get_despesas_fixas_total`). Essa tabela tem **zero linhas em todas as contas** (confirmado por query direta no banco: `SELECT conta_ml, COUNT(*) FROM despesas_fixas_mensais GROUP BY conta_ml` não retornou nenhuma linha). Troca segura e direta: Fluxo de Caixa passa a somar `contas_a_pagar` no lugar dela, sem nada pra migrar de verdade.
-- **`Fechamento.jsx`**: lê **duas** fontes — `despesas_fixas_mensais` (linha "Custos Fixos", vazia, mesma troca segura acima) **e** `fechamento_despesas` (linha "Despesas Variáveis", `routes/fechamento.py`), essa última **com dado real**: 117 lançamentos da YUSO (dez/25–jun/26) e 18 da M12 (abr–mai/26), alimentada tanto por lançamento manual quanto pela sincronização bancária automática da Conta Simples (dedupe por `ext_id`).
+**Rodada 2 (conversa com o usuário)**: perguntado diretamente, o usuário confirmou que **a Conta Simples não é mais usada**, e que o lançamento manual de despesas variáveis no Fechamento também não — hoje esse controle é feito **100% numa planilha fora do sistema**. Ou seja, `fechamento_despesas` está congelada: não recebe nenhum dado novo, nem automático nem manual, desde que pararam de usar a Conta Simples. O risco de contagem duplicada da Rodada 1 (uma despesa entrando tanto por `contas_a_pagar` quanto por sincronização bancária) não existe mais daqui pra frente, porque não há mais nada alimentando `fechamento_despesas`.
 
-**Decisão**: `contas_a_pagar` **não substitui** `fechamento_despesas` — ela fica exatamente como está, sem nenhuma mudança nesta fase. Motivo: `fechamento_despesas` representa dinheiro que **de fato saiu do banco** (confirmado, inclusive automaticamente via Conta Simples); `contas_a_pagar` representa contas **a controlar/planejar** (podem estar pagas ou não, e nem toda conta paga necessariamente passa pela Conta Simples). Se `contas_a_pagar` também alimentasse o total do Fechamento, uma conta paga apareceria duas vezes ali (uma vez como "marquei como paga" em Contas a Pagar, outra vez como "saiu do banco" em `fechamento_despesas`).
+**Decisão final**: `contas_a_pagar` vira a fonte única de despesa nova a partir de agora, substituindo a planilha. A seção de despesas do Fechamento (ver "Escopo" — unificada numa lista só) soma:
+- `fechamento_despesas` — **read-only**, só o histórico já existente (dez/25–jun/26), nunca recebe registro novo daqui pra frente.
+- `contas_a_pagar` — tudo a partir da entrada em produção desta feature.
 
-Então, na prática:
-- A tela "Contas a Pagar" é uma ferramenta de controle/planejamento, útil por si só (ver o que vence, o que já foi pago), mas **não altera o número final de "Despesas Variáveis" do Fechamento** — esse continua vindo só de `fechamento_despesas`.
-- A linha "Custos Fixos" do Fechamento passa a vir de `contas_a_pagar` no lugar da (vazia) `despesas_fixas_mensais`.
-- Não é necessário nenhum script de migração de dados — ambas as trocas de fonte partem de tabelas vazias.
+Como `fechamento_despesas` para de crescer, não há sobreposição possível entre as duas fontes — a soma é segura sem precisar de um "corte" explícito de data. Não é necessário script de migração de dados (nenhuma das duas fontes tem overlap a resolver).
 
-**Nota sobre a data usada pra agrupar**: `vencimento` é a data usada pro Fluxo de Caixa (quando o dinheiro sai de verdade). Pro Fechamento, usa-se `competencia` (ver "Modelo de dados") — é o campo que representa o mês de referência da despesa pra fins contábeis (relevante pro regime de competência do Lucro Real), capturado desde o lançamento porque não dá pra preencher isso retroativamente depois.
+O botão manual de "adicionar despesa" que hoje existe na seção Despesas Variáveis do Fechamento (grava em `fechamento_despesas`) é removido — o lançamento novo passa a ser feito só pela tela Contas a Pagar.
+
+**Nota sobre a data usada pra agrupar**: `vencimento` é a data usada pro Fluxo de Caixa (quando o dinheiro sai de verdade). Pro Fechamento, usa-se `competencia` (ver "Modelo de dados") — o mês de referência contábil da despesa (relevante pro regime de competência do Lucro Real), capturado desde o lançamento porque não dá pra preencher isso retroativamente depois.
 
 ## Testes
 
-- Backend: parsing do PDF (fixture de PDF real com texto extraível), detecção de PDF sem texto (imagem escaneada) pulando a chamada de IA, prompt/extração da IA (mock da chamada ao OpenAI, testando o schema forçado), fallback quando a extração falha ou dá timeout (retorna sugestão vazia, nunca 5xx), parser de valor tolerante a formato brasileiro (com casos de teste tipo `"1.234,56"`), validação de tamanho/tipo de arquivo no upload, CRUD da tabela `contas_a_pagar`, soma correta por `competencia` pro Fechamento e por `vencimento` pro Fluxo de Caixa — confirmando que `fechamento_despesas` não é tocado em nenhum desses cálculos.
+- Backend: parsing do PDF (fixture de PDF real com texto extraível), detecção de PDF sem texto (imagem escaneada) pulando a chamada de IA, prompt/extração da IA (mock da chamada ao OpenAI, testando o schema forçado), fallback quando a extração falha ou dá timeout (retorna sugestão vazia, nunca 5xx), parser de valor tolerante a formato brasileiro (com casos de teste tipo `"1.234,56"`), validação de tamanho/tipo de arquivo no upload, CRUD da tabela `contas_a_pagar`, soma correta por `competencia` pro Fechamento (`contas_a_pagar` + `fechamento_despesas` histórico) e por `vencimento` pro Fluxo de Caixa — com um teste específico confirmando que nenhuma escrita nova é feita em `fechamento_despesas` (só leitura).
 - Frontend: fluxo de upload → preview (com campos vindos da IA visualmente marcados) → confirmação (mock da chamada `/extrair`), fluxo manual sem PDF, filtro por status/competência.
 - Verificação manual: subir um PDF real de conta de luz e conferir se os campos sugeridos batem com o documento; conferir que o total de "Despesas Variáveis" do Fechamento não muda com um lançamento novo em Contas a Pagar (só "Custos Fixos" muda).
