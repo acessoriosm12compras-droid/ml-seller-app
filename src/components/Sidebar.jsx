@@ -6,7 +6,7 @@ import {
   LayoutDashboard, PieChart,
   ShoppingBag, Settings, Package, SlidersHorizontal, Megaphone, Sparkles, LogOut,
   ShoppingCart, Users, ChevronDown, ChevronUp,
-  Wallet, ArrowDownCircle, ArrowUpCircle, Building2, TrendingUp, GitMerge, Receipt, Tag, FileText, FileCheck2,
+  Wallet, ArrowUpCircle, TrendingUp, GitMerge, Receipt, Tag, FileText, FileCheck2,
 } from 'lucide-react'
 
 const NAV = [
@@ -27,8 +27,6 @@ const NAV_ADMIN = [
 
 const FIN_NAV = [
   { to: '/financeiro/contas-pagar',     label: 'Contas a Pagar',   icon: ArrowUpCircle },
-  { to: '/financeiro/contas-receber',   label: 'Contas a Receber', icon: ArrowDownCircle },
-  { to: '/financeiro/contas-correntes', label: 'Contas Correntes', icon: Building2 },
   { to: '/fluxo-caixa',                 label: 'Fluxo de Caixa',   icon: TrendingUp },
   { to: '/conciliacao',                 label: 'Conciliação',       icon: GitMerge },
   { to: '/movimentacoes',               label: 'Movimentos',        icon: Receipt },
