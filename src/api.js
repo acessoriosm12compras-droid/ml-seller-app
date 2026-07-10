@@ -150,12 +150,6 @@ export const api = {
       update: (id, data, params = {}) => request(`/api/fechamento/montagem/${id}?${new URLSearchParams(params)}`, { method: 'PUT', body: JSON.stringify(data) }),
       delete: (id, params = {}) => request(`/api/fechamento/montagem/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
     },
-    despesas: {
-      list: (params) => request(`/api/fechamento/despesas?${new URLSearchParams(params)}`),
-      create: (data, params = {}) => request(`/api/fechamento/despesas?${new URLSearchParams(params)}`, { method: 'POST', body: JSON.stringify(data) }),
-      update: (id, data, params = {}) => request(`/api/fechamento/despesas/${id}?${new URLSearchParams(params)}`, { method: 'PUT', body: JSON.stringify(data) }),
-      delete: (id, params = {}) => request(`/api/fechamento/despesas/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
-    },
     despesasUnificadas: (params) => request(`/api/fechamento/despesas-unificadas?${new URLSearchParams(params)}`),
   },
 
