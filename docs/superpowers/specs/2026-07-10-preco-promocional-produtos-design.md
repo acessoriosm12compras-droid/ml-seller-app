@@ -138,8 +138,14 @@ Ela quer ver **uma linha só por produto**.
 
 **Dentro (duas implementações paralelas, backend — mesma razão da Parte 1):**
 - `ml_client.buscar_anuncios_ativos()`: extrair o SKU real (`attributes` →
-  item com `id == "SELLER_SKU"` → `value_name`) e `catalog_product_id`
-  (já lido em outro campo hoje, `search_id` — reaproveitar) de cada item.
+  item com `id == "SELLER_SKU"` → `value_name`) e `catalog_product_id` de
+  cada item. **Atenção:** não reaproveitar o campo `search_id` que já existe
+  ali — `search_id = catalog_product_id if catalogo else body["id"]`
+  (`ml_client.py:600`), ou seja, só é igual a `catalog_product_id` pro
+  membro de catálogo do par; o membro normal carrega o próprio MLB nesse
+  campo, o que quebraria o fallback de agrupamento (os dois nunca
+  bateriam). Extrair `body.get("catalog_product_id")` direto, num campo
+  novo e separado do `search_id`.
 - `routes/inventario.py::_buscar_inventario`: mesma extração, independente
   (SKU + `catalog_listing`, que hoje não é lido ali — conferir e adicionar).
 - **Função de agrupamento compartilhada** (novo módulo pequeno, ex.
