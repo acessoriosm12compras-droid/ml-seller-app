@@ -313,12 +313,19 @@ export default function CustosProdutos() {
                     >
                       <td className="px-4 py-3">
                         <p className="text-stone-200 truncate max-w-xs">{p.titulo}</p>
-                        <p className="text-stone-600 text-xs">{p.item_id}</p>
+                        <p className="text-stone-600 text-xs">{p.sku || p.item_id}</p>
                       </td>
 
-                      {/* Preço atual do anúncio no ML */}
+                      {/* Preço atual do anúncio no ML — riscado + promocional quando há promoção ativa */}
                       <td className="px-4 py-3 text-right">
-                        <span className="text-stone-300 font-medium">{fmtBRL(p.preco_venda)}</span>
+                        {p.preco_original != null && p.preco_original > p.preco_venda ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-stone-600 text-xs line-through">{fmtBRL(p.preco_original)}</span>
+                            <span className="text-emerald-400 font-medium">{fmtBRL(p.preco_venda)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-stone-300 font-medium">{fmtBRL(p.preco_venda)}</span>
+                        )}
                       </td>
 
                       {/* Custo editável */}
