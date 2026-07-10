@@ -256,7 +256,16 @@ export default function Inventario() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-stone-500 font-mono">{item.sku_interno || <span className="text-stone-700">—</span>}</td>
-                      <td className="px-4 py-3 text-right text-sky-400">{formatBRL(item.preco)}</td>
+                      <td className="px-4 py-3 text-right">
+                        {item.preco_original != null && item.preco_original > item.preco ? (
+                          <div className="flex flex-col items-end">
+                            <span className="text-stone-600 text-xs line-through">{formatBRL(item.preco_original)}</span>
+                            <span className="text-sky-400 font-medium">{formatBRL(item.preco)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sky-400">{formatBRL(item.preco)}</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right text-stone-400">{item.custo_unitario !== null ? formatBRL(item.custo_unitario) : <span className="text-stone-600">—</span>}</td>
                       <td className={`px-4 py-3 text-right text-base ${estoqueColor}`}>
                         {item.estoque?.toLocaleString('pt-BR')}
