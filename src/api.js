@@ -173,6 +173,13 @@ export const api = {
     remove: (id) => request(`/api/despesas-fixas/${id}`, { method: 'DELETE' }),
   },
 
+  contasAPagar: {
+    listar: (params = {}) => request(`/api/contas-a-pagar?${new URLSearchParams(params)}`),
+    criar: (data) => request('/api/contas-a-pagar', { method: 'POST', body: JSON.stringify(data) }),
+    atualizar: (id, data) => request(`/api/contas-a-pagar/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    remover: (id) => request(`/api/contas-a-pagar/${id}`, { method: 'DELETE' }),
+  },
+
   ads: (params) =>
     request(`/api/ads/campanhas?${new URLSearchParams(params)}`),
 

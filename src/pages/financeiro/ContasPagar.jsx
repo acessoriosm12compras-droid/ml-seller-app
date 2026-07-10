@@ -1,9 +1,14 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronUp, DollarSign } from 'lucide-react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Plus, Upload, Trash2, CheckCircle2, Loader2 } from 'lucide-react'
 import Header from '../../components/Header'
+import EditAccountBanner from '../../components/EditAccountBanner'
 import { useAuth } from '../../context/AuthContext'
+import { api } from '../../api'
 
-const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
+const CATEGORIAS = ['Luz', 'Água', 'Gás', 'Internet', 'Fornecedor', 'Folha de Pagamento', 'Aluguel', 'Marketing / Ads', 'Logística', 'Contador', 'Impostos', 'Outros']
 
 function formatBRL(v) {
   const n = parseFloat(v)
@@ -30,204 +35,159 @@ function KpiCard({ label, value, sub, accent = 'sky' }) {
   )
 }
 
-const CATEGORIAS = ['Fornecedor','Folha de Pagamento','Aluguel','Marketing / Ads','Logística','Contador','Impostos','Outros']
-const STATUS_OPTS = ['A pagar','Pago','Vencido']
-
-const defaultInputs = {
-  fornecedor1: '', fornecedor1Nome: 'Principal fornecedor ML',
-  fornecedor2: '', fornecedor3: '', comprasMes: '',
-  aluguel: '', folha: '', ads: '', logistica: '',
-  softwares: '', contador: '', impostos: '', outras: '',
-}
-
-const defaultModal = { descricao: '', valor: '', vencimento: '', categoria: 'Fornecedor', status: 'A pagar' }
+const defaultForm = { descricao: '', categoria: 'Outros', valor: '', vencimento: '', competencia: '', status: 'a_pagar' }
 
 export default function ContasPagar() {
-  const { activeAccount } = useAuth()
-  const now = new Date()
-  const [anoMes, setAnoMes] = useState(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`)
-  const [showInputs, setShowInputs] = useState(false)
-  const [inputs, setInputs] = useState(defaultInputs)
-  const [lancamentos, setLancamentos] = useState([])
+  const { activeAccount, editAccount, getToken } = useAuth()
+  const queryClient = useQueryClient()
   const [showModal, setShowModal] = useState(false)
-  const [modal, setModal] = useState(defaultModal)
-  const [saved, setSaved] = useState(false)
+  const [form, setForm] = useState(defaultForm)
+  const [camposIA, setCamposIA] = useState({}) // { campo: true } pros campos que vieram da IA
+  const [enviandoPdf, setEnviandoPdf] = useState(false)
+  const [erroUpload, setErroUpload] = useState(null)
 
-  const storageKey = `fin_cp_${activeAccount || 'default'}_${anoMes}`
+  const params = activeAccount ? { conta_ml: activeAccount } : {}
 
-  useEffect(() => {
+  const listaQ = useQuery({
+    queryKey: ['contas-a-pagar', activeAccount],
+    queryFn: () => api.contasAPagar.listar(params),
+    enabled: !!activeAccount,
+  })
+
+  const criarM = useMutation({
+    mutationFn: (data) => api.contasAPagar.criar({ ...data, conta_ml: editAccount }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', activeAccount] })
+      setShowModal(false)
+      setForm(defaultForm)
+      setCamposIA({})
+    },
+  })
+
+  const atualizarM = useMutation({
+    mutationFn: ({ id, data }) => api.contasAPagar.atualizar(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', activeAccount] }),
+  })
+
+  const removerM = useMutation({
+    mutationFn: (id) => api.contasAPagar.remover(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', activeAccount] }),
+  })
+
+  async function handleUploadPdf(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setEnviandoPdf(true)
+    setErroUpload(null)
     try {
-      const raw = localStorage.getItem(storageKey)
-      if (raw) {
-        const d = JSON.parse(raw)
-        setInputs(d.inputs || defaultInputs)
-        setLancamentos(d.lancamentos || [])
+      const body = new FormData()
+      body.append('arquivo', file)
+      if (editAccount) body.append('conta_ml', editAccount)
+      const resp = await fetch(`${BASE}/api/contas-a-pagar/extrair`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+        body,
+      })
+      const data = await resp.json()
+      if (!resp.ok) throw new Error(data.erro || `HTTP ${resp.status}`)
+
+      if (data.extraido) {
+        setForm({
+          descricao: data.descricao || '',
+          categoria: data.categoria || 'Outros',
+          valor: data.valor ?? '',
+          vencimento: data.vencimento || '',
+          competencia: data.competencia || '',
+          status: 'a_pagar',
+        })
+        setCamposIA({
+          descricao: !!data.descricao,
+          categoria: !!data.categoria,
+          valor: data.valor != null,
+          vencimento: !!data.vencimento,
+          competencia: !!data.competencia,
+        })
       } else {
-        setInputs(defaultInputs)
-        setLancamentos([])
+        setForm(defaultForm)
+        setCamposIA({})
+        setErroUpload('Não consegui ler esse PDF automaticamente (provavelmente é uma imagem escaneada) — preencha manualmente.')
       }
-    } catch {}
-  }, [storageKey])
-
-  function save(newInputs, newLanc) {
-    localStorage.setItem(storageKey, JSON.stringify({ inputs: newInputs, lancamentos: newLanc }))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+      setShowModal(true)
+    } catch (err) {
+      setErroUpload(err.message)
+    } finally {
+      setEnviandoPdf(false)
+    }
   }
 
-  function handleInputChange(k, v) {
-    const ni = { ...inputs, [k]: v }
-    setInputs(ni)
-    save(ni, lancamentos)
-  }
-
-  function addLancamento() {
-    if (!modal.descricao || !modal.valor) return
-    const nl = [...lancamentos, { ...modal, id: Date.now() }]
-    setLancamentos(nl)
-    save(inputs, nl)
-    setModal(defaultModal)
-    setShowModal(false)
-  }
-
-  function removeLancamento(id) {
-    const nl = lancamentos.filter(l => l.id !== id)
-    setLancamentos(nl)
-    save(inputs, nl)
-  }
-
-  function toggleStatus(id) {
-    const nl = lancamentos.map(l => {
-      if (l.id !== id) return l
-      const idx = STATUS_OPTS.indexOf(l.status)
-      return { ...l, status: STATUS_OPTS[(idx + 1) % STATUS_OPTS.length] }
-    })
-    setLancamentos(nl)
-    save(inputs, nl)
-  }
-
-  const totalFornecedores = [inputs.fornecedor1, inputs.fornecedor2, inputs.fornecedor3, inputs.comprasMes]
-    .reduce((acc, v) => acc + (parseFloat(v) || 0), 0)
-
-  const totalFixos = [inputs.aluguel, inputs.folha, inputs.ads, inputs.logistica,
-    inputs.softwares, inputs.contador, inputs.impostos, inputs.outras]
-    .reduce((acc, v) => acc + (parseFloat(v) || 0), 0)
-
-  const totalPeriodo = lancamentos.reduce((acc, l) => acc + (parseFloat(l.valor) || 0), 0)
+  const contas = listaQ.data?.contas || []
 
   const hoje = new Date()
-  const em7dias = lancamentos.filter(l => {
-    if (l.status === 'Pago') return false
-    const d = new Date(l.vencimento + 'T00:00:00')
+  const emAbertoContas = contas.filter(c => c.status !== 'pago')
+  const totalEmAberto = emAbertoContas.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
+  const em7dias = emAbertoContas.filter(c => {
+    if (!c.vencimento) return false
+    const d = new Date(c.vencimento + 'T00:00:00')
     const diff = (d - hoje) / 86400000
     return diff >= 0 && diff <= 7
-  }).reduce((acc, l) => acc + (parseFloat(l.valor) || 0), 0)
-
-  const pagas = lancamentos.filter(l => l.status === 'Pago').reduce((acc, l) => acc + (parseFloat(l.valor) || 0), 0)
-  const emAberto = lancamentos.filter(l => l.status !== 'Pago').reduce((acc, l) => acc + (parseFloat(l.valor) || 0), 0)
-
-  const [ano, mesN] = anoMes.split('-')
-  const mesLabel = `${MESES[parseInt(mesN)-1]} ${ano}`
-
-  const statusColor = s => ({
-    'Pago': 'text-emerald-400 bg-emerald-400/10',
-    'Vencido': 'text-red-400 bg-red-400/10',
-    'A pagar': 'text-amber-400 bg-amber-400/10',
-  }[s] || 'text-stone-400')
+  }).reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
+  const totalPagas = contas.filter(c => c.status === 'pago').reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
+  const totalVencidas = emAbertoContas.filter(c => c.vencimento && new Date(c.vencimento) < hoje)
+    .reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <Header title="Contas a Pagar" />
       <main className="flex-1 p-3 sm:p-6 space-y-6 overflow-auto">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-stone-500">Mês/Ano</label>
-            <input type="month" value={anoMes} onChange={e => setAnoMes(e.target.value)}
-              className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500" />
-          </div>
-          <button onClick={() => setShowInputs(s => !s)}
-            className="flex items-center gap-1.5 text-xs bg-stone-800 hover:bg-stone-700 text-stone-300 px-3 py-1.5 rounded-lg transition-colors">
-            {showInputs ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            {showInputs ? 'Recolher' : 'Editar inputs'}
+        <EditAccountBanner />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => { setForm(defaultForm); setCamposIA({}); setErroUpload(null); setShowModal(true) }}
+            className="flex items-center gap-1.5 text-xs bg-sky-700 hover:bg-sky-600 text-white px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <Plus size={13} /> Lançar manual
           </button>
-          <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 text-xs bg-sky-700 hover:bg-sky-600 text-white px-3 py-1.5 rounded-lg transition-colors">
-            <Plus size={13} /> Novo lançamento
-          </button>
-          {saved && <span className="text-xs text-emerald-400">✓ Salvo</span>}
+          <label
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${enviandoPdf ? 'opacity-60 cursor-wait bg-stone-800 border border-stone-700 text-stone-400' : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25'}`}
+          >
+            {enviandoPdf ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+            {enviandoPdf ? 'Lendo PDF...' : 'Subir PDF'}
+            <input type="file" accept="application/pdf" className="hidden" onChange={handleUploadPdf} disabled={enviandoPdf} />
+          </label>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <KpiCard label="A pagar no período" value={formatBRL(totalPeriodo)} sub="Informe os valores abaixo" accent="rose" />
-          <KpiCard label="Vencendo em 7 dias" value={formatBRL(em7dias)} sub="Próximos vencimentos" accent="amber" />
-          <KpiCard label="Pagas no período" value={formatBRL(pagas)} sub="Títulos liquidados" accent="emerald" />
-          <KpiCard label="Total em aberto" value={formatBRL(emAberto)} sub="Pendente de pagamento" accent="red" />
-        </div>
-
-        {showInputs && (
-          <div className="bg-stone-900 border border-stone-800 rounded-xl p-4 space-y-4">
-            <h3 className="text-sm font-semibold text-stone-300">Fornecedores e despesas fixas — {mesLabel}</h3>
-            <div>
-              <p className="text-xs text-stone-500 font-medium mb-2 uppercase tracking-wider">Fornecedores</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { k: 'fornecedor1', label: 'Fornecedor principal', ph: 'Principal fornecedor ML' },
-                  { k: 'fornecedor2', label: 'Fornecedor 2', ph: '' },
-                  { k: 'fornecedor3', label: 'Fornecedor 3', ph: '' },
-                  { k: 'comprasMes', label: 'Compras do mês', ph: 'Total pedidos realizados' },
-                ].map(({ k, label, ph }) => (
-                  <div key={k}>
-                    <label className="text-xs text-stone-500">{label}</label>
-                    <div className="flex items-center mt-1 bg-stone-800 border border-stone-700 rounded-lg px-3 focus-within:border-sky-500">
-                      <span className="text-stone-500 text-xs mr-1">R$</span>
-                      <input type="number" step="0.01" placeholder={ph} value={inputs[k]} onChange={e => handleInputChange(k, e.target.value)}
-                        className="flex-1 bg-transparent py-2 text-sm text-stone-200 outline-none" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-xs text-stone-500 font-medium mb-2 uppercase tracking-wider">Despesas Fixas Mensais</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { k: 'aluguel', label: 'Aluguel / Infraestrutura' },
-                  { k: 'folha', label: 'Folha de Pagamento' },
-                  { k: 'ads', label: 'Mercado Ads / Marketing' },
-                  { k: 'logistica', label: 'Logística / Frete próprio' },
-                  { k: 'softwares', label: 'Softwares / Ferramentas' },
-                  { k: 'contador', label: 'Contador / Consultoria' },
-                  { k: 'impostos', label: 'Impostos / Taxas' },
-                  { k: 'outras', label: 'Outras despesas' },
-                ].map(({ k, label }) => (
-                  <div key={k}>
-                    <label className="text-xs text-stone-500">{label}</label>
-                    <div className="flex items-center mt-1 bg-stone-800 border border-stone-700 rounded-lg px-2 focus-within:border-sky-500">
-                      <span className="text-stone-500 text-xs mr-1">R$</span>
-                      <input type="number" step="0.01" value={inputs[k]} onChange={e => handleInputChange(k, e.target.value)}
-                        className="flex-1 bg-transparent py-1.5 text-sm text-stone-200 outline-none" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-stone-500 border-t border-stone-800 pt-2">
-                <span>Total fixos: <span className="text-amber-400 font-semibold">{formatBRL(totalFixos)}</span></span>
-                <span>Total fornecedores: <span className="text-sky-400 font-semibold">{formatBRL(totalFornecedores)}</span></span>
-              </div>
-            </div>
+        {erroUpload && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-300">
+            {erroUpload}
           </div>
         )}
 
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <KpiCard label="Total em aberto" value={formatBRL(totalEmAberto)} sub="Pendente de pagamento" accent="rose" />
+          <KpiCard label="Vencendo em 7 dias" value={formatBRL(em7dias)} sub="Próximos vencimentos" accent="amber" />
+          <KpiCard label="Vencidas" value={formatBRL(totalVencidas)} sub="Atenção — já passou do prazo" accent="red" />
+          <KpiCard label="Pagas" value={formatBRL(totalPagas)} sub="Títulos liquidados" accent="emerald" />
+        </div>
+
         <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-stone-800 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-stone-300">Contas a Pagar — {mesLabel}</h2>
-            <span className="text-xs text-stone-500">{lancamentos.length} lançamento(s)</span>
+            <h2 className="text-sm font-semibold text-stone-300">Contas a Pagar</h2>
+            <span className="text-xs text-stone-500">{contas.length} lançamento(s)</span>
           </div>
-          {lancamentos.length === 0 ? (
+
+          {listaQ.isLoading && (
+            <div className="px-4 py-8 text-center text-xs text-stone-500">Carregando...</div>
+          )}
+
+          {!listaQ.isLoading && contas.length === 0 && (
             <div className="px-4 py-8 text-center text-xs text-stone-500">
-              Nenhuma conta lançada. Preencha os inputs acima ou clique em "+ Novo lançamento".
+              Nenhuma conta lançada. Clique em "Lançar manual" ou suba o PDF da conta.
             </div>
-          ) : (
+          )}
+
+          {!listaQ.isLoading && contas.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
@@ -241,25 +201,40 @@ export default function ContasPagar() {
                   </tr>
                 </thead>
                 <tbody>
-                  {lancamentos.map(l => (
-                    <tr key={l.id} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
-                      <td className="px-3 py-2.5 text-stone-300">{l.descricao}</td>
-                      <td className="px-3 py-2.5 text-stone-400">{l.categoria}</td>
-                      <td className="px-3 py-2.5 text-right text-stone-200 font-medium">{formatBRL(l.valor)}</td>
-                      <td className="px-3 py-2.5 text-center text-stone-400">{l.vencimento || '—'}</td>
-                      <td className="px-3 py-2.5 text-center">
-                        <button onClick={() => toggleStatus(l.id)}
-                          className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(l.status)}`}>
-                          {l.status}
-                        </button>
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <button onClick={() => removeLancamento(l.id)} className="text-stone-600 hover:text-red-400 transition-colors">
-                          <Trash2 size={13} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {contas.map((c) => {
+                    const vencido = c.status === 'a_pagar' && c.vencimento && new Date(c.vencimento) < hoje
+                    return (
+                      <tr key={c.id} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
+                        <td className="px-3 py-2.5 text-stone-300">{c.descricao}</td>
+                        <td className="px-3 py-2.5 text-stone-400">{c.categoria}</td>
+                        <td className="px-3 py-2.5 text-right text-stone-200 font-medium">{formatBRL(c.valor)}</td>
+                        <td className="px-3 py-2.5 text-center text-stone-400">{c.vencimento || '—'}</td>
+                        <td className="px-3 py-2.5 text-center">
+                          {c.status === 'pago'
+                            ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-emerald-400 bg-emerald-400/10"><CheckCircle2 size={11} /> Pago</span>
+                            : vencido
+                              ? <span className="px-2 py-0.5 rounded-full text-xs font-medium text-red-400 bg-red-400/10">Vencido</span>
+                              : <span className="px-2 py-0.5 rounded-full text-xs font-medium text-amber-400 bg-amber-400/10">A pagar</span>}
+                        </td>
+                        <td className="px-3 py-2.5 text-center">
+                          <div className="flex items-center justify-center gap-3">
+                            {c.status !== 'pago' && (
+                              <button
+                                onClick={() => atualizarM.mutate({ id: c.id, data: { status: 'pago' } })}
+                                className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                                title="Marcar como pago"
+                              >
+                                Marcar pago
+                              </button>
+                            )}
+                            <button onClick={() => removerM.mutate(c.id)} className="text-stone-600 hover:text-red-400 transition-colors" title="Excluir">
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -270,46 +245,87 @@ export default function ContasPagar() {
       {showModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-stone-900 border border-stone-700 rounded-xl p-5 w-full max-w-sm space-y-4">
-            <h3 className="text-sm font-semibold text-stone-200 flex items-center gap-2">
-              <DollarSign size={15} className="text-sky-400" /> Novo Lançamento
-            </h3>
+            <div>
+              <h3 className="text-sm font-semibold text-stone-200">Lançar conta</h3>
+              {Object.values(camposIA).some(Boolean) && (
+                <p className="text-xs text-emerald-400 mt-1">✨ Campos sugeridos pela IA — confira antes de salvar (marcados abaixo)</p>
+              )}
+            </div>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-stone-500">Descrição</label>
-                <input value={modal.descricao} onChange={e => setModal(m => ({...m, descricao: e.target.value}))}
-                  className="mt-1 w-full bg-stone-800 border border-stone-700 focus:border-sky-500 outline-none text-stone-200 text-sm rounded-lg px-3 py-2" />
+                <label className="text-xs text-stone-500 flex items-center gap-1">
+                  Descrição {camposIA.descricao && <span className="text-emerald-400">✨</span>}
+                </label>
+                <input
+                  value={form.descricao}
+                  onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                  className={`mt-1 w-full border outline-none text-stone-200 text-sm rounded-lg px-3 py-2 ${camposIA.descricao ? 'bg-emerald-500/5 border-emerald-500/40 focus:border-emerald-400' : 'bg-stone-800 border-stone-700 focus:border-sky-500'}`}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-stone-500">Valor (R$)</label>
-                  <input type="number" step="0.01" value={modal.valor} onChange={e => setModal(m => ({...m, valor: e.target.value}))}
-                    className="mt-1 w-full bg-stone-800 border border-stone-700 focus:border-sky-500 outline-none text-stone-200 text-sm rounded-lg px-3 py-2" />
+                  <label className="text-xs text-stone-500 flex items-center gap-1">
+                    Valor (R$) {camposIA.valor && <span className="text-emerald-400">✨</span>}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={form.valor}
+                    onChange={(e) => setForm({ ...form, valor: e.target.value })}
+                    className={`mt-1 w-full border outline-none text-stone-200 text-sm rounded-lg px-3 py-2 ${camposIA.valor ? 'bg-emerald-500/5 border-emerald-500/40 focus:border-emerald-400' : 'bg-stone-800 border-stone-700 focus:border-sky-500'}`}
+                  />
                 </div>
                 <div>
-                  <label className="text-xs text-stone-500">Vencimento</label>
-                  <input type="date" value={modal.vencimento} onChange={e => setModal(m => ({...m, vencimento: e.target.value}))}
-                    className="mt-1 w-full bg-stone-800 border border-stone-700 focus:border-sky-500 outline-none text-stone-200 text-sm rounded-lg px-3 py-2" />
+                  <label className="text-xs text-stone-500 flex items-center gap-1">
+                    Vencimento {camposIA.vencimento && <span className="text-emerald-400">✨</span>}
+                  </label>
+                  <input
+                    type="date"
+                    value={form.vencimento}
+                    onChange={(e) => setForm({ ...form, vencimento: e.target.value })}
+                    className={`mt-1 w-full border outline-none text-stone-200 text-sm rounded-lg px-3 py-2 ${camposIA.vencimento ? 'bg-emerald-500/5 border-emerald-500/40 focus:border-emerald-400' : 'bg-stone-800 border-stone-700 focus:border-sky-500'}`}
+                  />
                 </div>
               </div>
               <div>
-                <label className="text-xs text-stone-500">Categoria</label>
-                <select value={modal.categoria} onChange={e => setModal(m => ({...m, categoria: e.target.value}))}
-                  className="mt-1 w-full bg-stone-800 border border-stone-700 focus:border-sky-500 outline-none text-stone-200 text-sm rounded-lg px-3 py-2">
-                  {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
-                </select>
+                <label className="text-xs text-stone-500 flex items-center gap-1">
+                  Competência (AAAA-MM) {camposIA.competencia && <span className="text-emerald-400">✨</span>}
+                </label>
+                <input
+                  type="text"
+                  placeholder="AAAA-MM"
+                  value={form.competencia}
+                  onChange={(e) => setForm({ ...form, competencia: e.target.value })}
+                  className={`mt-1 w-full border outline-none text-stone-200 text-sm rounded-lg px-3 py-2 ${camposIA.competencia ? 'bg-emerald-500/5 border-emerald-500/40 focus:border-emerald-400' : 'bg-stone-800 border-stone-700 focus:border-sky-500'}`}
+                />
               </div>
               <div>
-                <label className="text-xs text-stone-500">Status</label>
-                <select value={modal.status} onChange={e => setModal(m => ({...m, status: e.target.value}))}
-                  className="mt-1 w-full bg-stone-800 border border-stone-700 focus:border-sky-500 outline-none text-stone-200 text-sm rounded-lg px-3 py-2">
-                  {STATUS_OPTS.map(s => <option key={s}>{s}</option>)}
+                <label className="text-xs text-stone-500 flex items-center gap-1">
+                  Categoria {camposIA.categoria && <span className="text-emerald-400">✨</span>}
+                </label>
+                <select
+                  value={form.categoria}
+                  onChange={(e) => setForm({ ...form, categoria: e.target.value })}
+                  className={`mt-1 w-full border outline-none text-stone-200 text-sm rounded-lg px-3 py-2 ${camposIA.categoria ? 'bg-emerald-500/5 border-emerald-500/40 focus:border-emerald-400' : 'bg-stone-800 border-stone-700 focus:border-sky-500'}`}
+                >
+                  {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
                 </select>
               </div>
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={addLancamento} className="flex-1 bg-sky-700 hover:bg-sky-600 text-white text-sm py-2 rounded-lg transition-colors">Salvar</button>
-              <button onClick={() => { setShowModal(false); setModal(defaultModal) }}
-                className="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm py-2 rounded-lg transition-colors">Cancelar</button>
+              <button
+                onClick={() => criarM.mutate(form)}
+                disabled={criarM.isPending || !form.descricao || !form.valor}
+                className="flex-1 bg-sky-700 hover:bg-sky-600 disabled:opacity-40 text-white text-sm py-2 rounded-lg transition-colors"
+              >
+                {criarM.isPending ? 'Salvando...' : 'Confirmar e salvar'}
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm py-2 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
