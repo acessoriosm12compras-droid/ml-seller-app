@@ -124,16 +124,17 @@ export default function ContasPagar() {
   const contas = listaQ.data?.contas || []
 
   const hoje = new Date()
+  const hojeSemHora = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())
   const emAbertoContas = contas.filter(c => c.status !== 'pago')
   const totalEmAberto = emAbertoContas.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
   const em7dias = emAbertoContas.filter(c => {
     if (!c.vencimento) return false
     const d = new Date(c.vencimento + 'T00:00:00')
-    const diff = (d - hoje) / 86400000
+    const diff = (d - hojeSemHora) / 86400000
     return diff >= 0 && diff <= 7
   }).reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
   const totalPagas = contas.filter(c => c.status === 'pago').reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
-  const totalVencidas = emAbertoContas.filter(c => c.vencimento && new Date(c.vencimento + 'T00:00:00') < hoje)
+  const totalVencidas = emAbertoContas.filter(c => c.vencimento && new Date(c.vencimento + 'T00:00:00') < hojeSemHora)
     .reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
 
   return (
@@ -202,7 +203,7 @@ export default function ContasPagar() {
                 </thead>
                 <tbody>
                   {contas.map((c) => {
-                    const vencido = c.status === 'a_pagar' && c.vencimento && new Date(c.vencimento + 'T00:00:00') < hoje
+                    const vencido = c.status === 'a_pagar' && c.vencimento && new Date(c.vencimento + 'T00:00:00') < hojeSemHora
                     return (
                       <tr key={c.id} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
                         <td className="px-3 py-2.5 text-stone-300">{c.descricao}</td>
