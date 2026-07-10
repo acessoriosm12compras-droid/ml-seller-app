@@ -133,7 +133,7 @@ export default function ContasPagar() {
     return diff >= 0 && diff <= 7
   }).reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
   const totalPagas = contas.filter(c => c.status === 'pago').reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
-  const totalVencidas = emAbertoContas.filter(c => c.vencimento && new Date(c.vencimento) < hoje)
+  const totalVencidas = emAbertoContas.filter(c => c.vencimento && new Date(c.vencimento + 'T00:00:00') < hoje)
     .reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0)
 
   return (
@@ -202,7 +202,7 @@ export default function ContasPagar() {
                 </thead>
                 <tbody>
                   {contas.map((c) => {
-                    const vencido = c.status === 'a_pagar' && c.vencimento && new Date(c.vencimento) < hoje
+                    const vencido = c.status === 'a_pagar' && c.vencimento && new Date(c.vencimento + 'T00:00:00') < hoje
                     return (
                       <tr key={c.id} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
                         <td className="px-3 py-2.5 text-stone-300">{c.descricao}</td>
