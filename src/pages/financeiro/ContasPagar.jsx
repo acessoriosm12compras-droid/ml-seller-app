@@ -46,18 +46,18 @@ export default function ContasPagar() {
   const [enviandoPdf, setEnviandoPdf] = useState(false)
   const [erroUpload, setErroUpload] = useState(null)
 
-  const params = activeAccount ? { conta_ml: activeAccount } : {}
+  const params = editAccount ? { conta_ml: editAccount } : {}
 
   const listaQ = useQuery({
-    queryKey: ['contas-a-pagar', activeAccount],
+    queryKey: ['contas-a-pagar', editAccount],
     queryFn: () => api.contasAPagar.listar(params),
-    enabled: !!activeAccount,
+    enabled: !!editAccount,
   })
 
   const criarM = useMutation({
     mutationFn: (data) => api.contasAPagar.criar({ ...data, conta_ml: editAccount }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', activeAccount] })
+      queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', editAccount] })
       setShowModal(false)
       setForm(defaultForm)
       setCamposIA({})
@@ -66,12 +66,12 @@ export default function ContasPagar() {
 
   const atualizarM = useMutation({
     mutationFn: ({ id, data }) => api.contasAPagar.atualizar(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', activeAccount] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', editAccount] }),
   })
 
   const removerM = useMutation({
     mutationFn: (id) => api.contasAPagar.remover(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', activeAccount] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', editAccount] }),
   })
 
   async function handleUploadPdf(e) {
