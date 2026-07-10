@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Upload, Trash2, CheckCircle2, Loader2 } from 'lucide-react'
+import { Plus, Upload, Trash2, CheckCircle2, Loader2, Pencil } from 'lucide-react'
 import Header from '../../components/Header'
 import EditAccountBanner from '../../components/EditAccountBanner'
 import { useAuth } from '../../context/AuthContext'
@@ -42,6 +42,7 @@ export default function ContasPagar() {
   const queryClient = useQueryClient()
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState(defaultForm)
+  const [editingId, setEditingId] = useState(null)
   const [camposIA, setCamposIA] = useState({}) // { campo: true } pros campos que vieram da IA
   const [enviandoPdf, setEnviandoPdf] = useState(false)
   const [erroUpload, setErroUpload] = useState(null)
@@ -66,8 +67,28 @@ export default function ContasPagar() {
 
   const atualizarM = useMutation({
     mutationFn: ({ id, data }) => api.contasAPagar.atualizar(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', editAccount] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contas-a-pagar', editAccount] })
+      setShowModal(false)
+      setForm(defaultForm)
+      setCamposIA({})
+      setEditingId(null)
+    },
   })
+
+  function abrirEdicao(c) {
+    setEditingId(c.id)
+    setForm({
+      descricao: c.descricao || '',
+      categoria: c.categoria || 'Outros',
+      valor: c.valor ?? '',
+      vencimento: c.vencimento || '',
+      competencia: c.competencia || '',
+      status: c.status || 'a_pagar',
+    })
+    setCamposIA({})
+    setShowModal(true)
+  }
 
   const removerM = useMutation({
     mutationFn: (id) => api.contasAPagar.remover(id),
@@ -145,7 +166,7 @@ export default function ContasPagar() {
 
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => { setForm(defaultForm); setCamposIA({}); setErroUpload(null); setShowModal(true) }}
+            onClick={() => { setEditingId(null); setForm(defaultForm); setCamposIA({}); setErroUpload(null); setShowModal(true) }}
             className="flex items-center gap-1.5 text-xs bg-sky-700 hover:bg-sky-600 text-white px-3 py-1.5 rounded-lg transition-colors"
           >
             <Plus size={13} /> Lançar manual
@@ -192,13 +213,13 @@ export default function ContasPagar() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-stone-800">
-                    <th className="px-3 py-2.5 text-left text-stone-500 font-medium">Descrição</th>
-                    <th className="px-3 py-2.5 text-left text-stone-500 font-medium">Categoria</th>
-                    <th className="px-3 py-2.5 text-right text-stone-500 font-medium">Valor</th>
-                    <th className="px-3 py-2.5 text-center text-stone-500 font-medium">Vencimento</th>
-                    <th className="px-3 py-2.5 text-center text-stone-500 font-medium">Status</th>
-                    <th className="px-3 py-2.5 text-center text-stone-500 font-medium"></th>
+                  <tr className="bg-stone-950/60 border-b border-stone-700">
+                    <th className="px-3 py-2.5 text-left text-stone-400 font-semibold uppercase tracking-wide text-[10px]">Descrição</th>
+                    <th className="px-3 py-2.5 text-left text-stone-400 font-semibold uppercase tracking-wide text-[10px]">Categoria</th>
+                    <th className="px-3 py-2.5 text-right text-stone-400 font-semibold uppercase tracking-wide text-[10px]">Valor</th>
+                    <th className="px-3 py-2.5 text-center text-stone-400 font-semibold uppercase tracking-wide text-[10px]">Vencimento</th>
+                    <th className="px-3 py-2.5 text-center text-stone-400 font-semibold uppercase tracking-wide text-[10px]">Status</th>
+                    <th className="px-3 py-2.5 text-center text-stone-400 font-semibold uppercase tracking-wide text-[10px]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -228,6 +249,9 @@ export default function ContasPagar() {
                                 Marcar pago
                               </button>
                             )}
+                            <button onClick={() => abrirEdicao(c)} className="text-stone-600 hover:text-sky-400 transition-colors" title="Editar">
+                              <Pencil size={13} />
+                            </button>
                             <button onClick={() => removerM.mutate(c.id)} className="text-stone-600 hover:text-red-400 transition-colors" title="Excluir">
                               <Trash2 size={13} />
                             </button>
@@ -247,7 +271,7 @@ export default function ContasPagar() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-stone-900 border border-stone-700 rounded-xl p-5 w-full max-w-sm space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-stone-200">Lançar conta</h3>
+              <h3 className="text-sm font-semibold text-stone-200">{editingId ? 'Editar conta' : 'Lançar conta'}</h3>
               {Object.values(camposIA).some(Boolean) && (
                 <p className="text-xs text-emerald-400 mt-1">✨ Campos sugeridos pela IA — confira antes de salvar (marcados abaixo)</p>
               )}
@@ -315,14 +339,14 @@ export default function ContasPagar() {
             </div>
             <div className="flex gap-2 pt-1">
               <button
-                onClick={() => criarM.mutate(form)}
-                disabled={criarM.isPending || !form.descricao || !form.valor}
+                onClick={() => editingId ? atualizarM.mutate({ id: editingId, data: form }) : criarM.mutate(form)}
+                disabled={criarM.isPending || atualizarM.isPending || !form.descricao || !form.valor}
                 className="flex-1 bg-sky-700 hover:bg-sky-600 disabled:opacity-40 text-white text-sm py-2 rounded-lg transition-colors"
               >
-                {criarM.isPending ? 'Salvando...' : 'Confirmar e salvar'}
+                {criarM.isPending || atualizarM.isPending ? 'Salvando...' : editingId ? 'Salvar alterações' : 'Confirmar e salvar'}
               </button>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setEditingId(null) }}
                 className="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 text-sm py-2 rounded-lg transition-colors"
               >
                 Cancelar
