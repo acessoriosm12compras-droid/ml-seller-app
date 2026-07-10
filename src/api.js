@@ -156,14 +156,7 @@ export const api = {
       update: (id, data, params = {}) => request(`/api/fechamento/despesas/${id}?${new URLSearchParams(params)}`, { method: 'PUT', body: JSON.stringify(data) }),
       delete: (id, params = {}) => request(`/api/fechamento/despesas/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
     },
-    contaSimples: {
-      status: () => request('/api/fechamento/contasimples/status'),
-      sync: (mes_ano, conta_ml) =>
-        request(`/api/fechamento/contasimples/sync${conta_ml ? `?conta_ml=${encodeURIComponent(conta_ml)}` : ''}`, {
-          method: 'POST',
-          body: JSON.stringify({ mes_ano }),
-        }),
-    },
+    despesasUnificadas: (params) => request(`/api/fechamento/despesas-unificadas?${new URLSearchParams(params)}`),
   },
 
   despesasFixas: {

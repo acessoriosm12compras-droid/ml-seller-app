@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
-import { Plus, Trash2, Check, X, Pencil, CalendarRange, XCircle } from 'lucide-react'
+import { Plus, Trash2, Check, X, Pencil, CalendarRange, XCircle, ExternalLink } from 'lucide-react'
 
 function formatBRL(v) {
   if (v === null || v === undefined || v === '') return '—'
@@ -68,19 +69,21 @@ function StatusBadge({ value }) {
 }
 
 // ── Generic section component ─────────────────────────────────────────────────
-function Section({ title, columns, rows, isLoading, onAdd, onSave, onDelete, newRow, setNewRow, editMap, setEdit, headerExtra, banner }) {
+function Section({ title, columns, rows, isLoading, onAdd, onSave, onDelete, newRow, setNewRow, editMap, setEdit, headerExtra, banner, hideAddButton, renderActions }) {
   return (
     <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-stone-800">
         <h2 className="text-sm font-semibold text-stone-300">{title}</h2>
         <div className="flex flex-wrap items-center gap-2">
           {headerExtra}
-          <button
-            onClick={onAdd}
-            className="flex items-center gap-1.5 text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg transition-colors"
-          >
-            <Plus size={13} /> Adicionar
-          </button>
+          {!hideAddButton && (
+            <button
+              onClick={onAdd}
+              className="flex items-center gap-1.5 text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Plus size={13} /> Adicionar
+            </button>
+          )}
         </div>
       </div>
 
@@ -136,12 +139,12 @@ function Section({ title, columns, rows, isLoading, onAdd, onSave, onDelete, new
 
             {/* Existing rows */}
             {rows.map(row => {
-              const editing = editMap[row.id]
+              const editing = renderActions ? null : editMap[row.id]
               return (
                 <tr
                   key={row.id}
-                  className="group border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors cursor-pointer"
-                  onClick={() => !editing && setEdit(row.id, row)}
+                  className={`group border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors ${renderActions ? '' : 'cursor-pointer'}`}
+                  onClick={renderActions ? undefined : () => !editing && setEdit(row.id, row)}
                 >
                   {columns.map(c => (
                     <td key={c.key} className={`px-3 py-2.5 ${c.align === 'right' ? 'text-right' : ''}`}>
@@ -173,7 +176,9 @@ function Section({ title, columns, rows, isLoading, onAdd, onSave, onDelete, new
                     </td>
                   ))}
                   <td className="px-3 py-2" onClick={e => e.stopPropagation()}>
-                    {editing ? (
+                    {renderActions ? (
+                      renderActions(row)
+                    ) : editing ? (
                       <div className="flex gap-1">
                         <button onClick={() => onSave(row.id, editing)} className="text-emerald-400 hover:text-emerald-300"><Check size={14} /></button>
                         <button onClick={() => setEdit(row.id, null)} className="text-stone-600 hover:text-stone-400"><X size={14} /></button>
@@ -204,13 +209,12 @@ function Section({ title, columns, rows, isLoading, onAdd, onSave, onDelete, new
 // ── Donut chart ───────────────────────────────────────────────────────────────
 const CHART_COLORS = ['#38bdf8', '#a78bfa', '#fbbf24', '#fb7185', '#34d399']
 
-function CostChart({ totalCompras, totalFretes, totalMontagem, totalDespesas, totalFixas }) {
+function CostChart({ totalCompras, totalFretes, totalMontagem, totalDespesas }) {
   const data = [
-    { name: 'Compras',      value: totalCompras },
-    { name: 'Fretes',       value: totalFretes },
-    { name: 'Montagem',     value: totalMontagem },
-    { name: 'Despesas',     value: totalDespesas },
-    { name: 'Custos Fixos', value: totalFixas },
+    { name: 'Compras',  value: totalCompras },
+    { name: 'Fretes',   value: totalFretes },
+    { name: 'Montagem', value: totalMontagem },
+    { name: 'Despesas', value: totalDespesas },
   ].filter(d => d.value > 0)
 
   const total = data.reduce((s, d) => s + d.value, 0)
@@ -298,25 +302,20 @@ export default function Fechamento() {
   const accountParams = activeAccount ? { conta_ml: activeAccount } : {}
 
   // Queries
-  const comprasQ  = useQuery({ queryKey: ['fechamento-compras',  mesAno, activeAccount], queryFn: () => api.fechamento.compras.list({ mes_ano: mesAno, ...accountParams }) })
-  const fretesQ   = useQuery({ queryKey: ['fechamento-fretes',   mesAno, activeAccount], queryFn: () => api.fechamento.fretes.list({ mes_ano: mesAno, ...accountParams }) })
-  const montagemQ = useQuery({ queryKey: ['fechamento-montagem', mesAno, activeAccount], queryFn: () => api.fechamento.montagem.list({ mes_ano: mesAno, ...accountParams }) })
-  const despesasQ = useQuery({ queryKey: ['fechamento-despesas', mesAno, activeAccount], queryFn: () => api.fechamento.despesas.list({ mes_ano: mesAno, ...accountParams }) })
-  const fixasQ    = useQuery({ queryKey: ['despesas-fixas', mesAno, activeAccount], queryFn: () => api.despesasFixas.list({ mes_ano: mesAno, ...accountParams }) })
+  const comprasQ     = useQuery({ queryKey: ['fechamento-compras',  mesAno, activeAccount], queryFn: () => api.fechamento.compras.list({ mes_ano: mesAno, ...accountParams }) })
+  const fretesQ      = useQuery({ queryKey: ['fechamento-fretes',   mesAno, activeAccount], queryFn: () => api.fechamento.fretes.list({ mes_ano: mesAno, ...accountParams }) })
+  const montagemQ    = useQuery({ queryKey: ['fechamento-montagem', mesAno, activeAccount], queryFn: () => api.fechamento.montagem.list({ mes_ano: mesAno, ...accountParams }) })
+  const despesasUnifQ = useQuery({ queryKey: ['despesas-unificadas', mesAno, activeAccount], queryFn: () => api.fechamento.despesasUnificadas({ competencia: mesAno, ...accountParams }) })
 
   // Edit maps
   const [comprasEdit,  setComprasEditMap]  = useState({})
   const [fretesEdit,   setFretesEditMap]   = useState({})
   const [montagemEdit, setMontagemEditMap] = useState({})
-  const [despesasEdit, setDespesasEditMap] = useState({})
-  const [fixasEdit,    setFixasEditMap]    = useState({})
 
   // New row drafts
   const [newCompra,   setNewCompra]   = useState(null)
   const [newFrete,    setNewFrete]    = useState(null)
   const [newMontagem, setNewMontagem] = useState(null)
-  const [newDespesa,  setNewDespesa]  = useState(null)
-  const [newFixa,     setNewFixa]     = useState(null)
 
   function makeSetEdit(setMap) {
     return (id, val) => setMap(m => ({ ...m, [id]: val }))
@@ -325,15 +324,11 @@ export default function Fechamento() {
   const setComprasEdit  = makeSetEdit(setComprasEditMap)
   const setFretesEdit   = makeSetEdit(setFretesEditMap)
   const setMontagemEdit = makeSetEdit(setMontagemEditMap)
-  const setDespesasEdit = makeSetEdit(setDespesasEditMap)
-  const setFixasEdit    = makeSetEdit(setFixasEditMap)
 
   // Mutations — top-level (Rules of Hooks)
   const invCompras  = () => qc.invalidateQueries({ queryKey: ['fechamento-compras',  mesAno, activeAccount] })
   const invFretes   = () => qc.invalidateQueries({ queryKey: ['fechamento-fretes',   mesAno, activeAccount] })
   const invMontagem = () => qc.invalidateQueries({ queryKey: ['fechamento-montagem', mesAno, activeAccount] })
-  const invDespesas = () => qc.invalidateQueries({ queryKey: ['fechamento-despesas', mesAno, activeAccount] })
-  const invFixas    = () => qc.invalidateQueries({ queryKey: ['despesas-fixas',      mesAno, activeAccount] })
 
   const saveCompra = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.compras.update(id, data, accountParams)  : api.fechamento.compras.create({ ...data, mes_ano: mesAno }, accountParams),  onSuccess: invCompras })
   const delCompra  = useMutation({ mutationFn: (id) => api.fechamento.compras.delete(id, accountParams),  onSuccess: invCompras })
@@ -341,18 +336,6 @@ export default function Fechamento() {
   const delFrete   = useMutation({ mutationFn: (id) => api.fechamento.fretes.delete(id, accountParams),   onSuccess: invFretes })
   const saveMontag = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.montagem.update(id, data, accountParams) : api.fechamento.montagem.create({ ...data, mes_ano: mesAno }, accountParams), onSuccess: invMontagem })
   const delMontag  = useMutation({ mutationFn: (id) => api.fechamento.montagem.delete(id, accountParams), onSuccess: invMontagem })
-  const saveDesp   = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.despesas.update(id, data, accountParams) : api.fechamento.despesas.create({ ...data, mes_ano: mesAno }, accountParams), onSuccess: invDespesas })
-  const delDesp    = useMutation({ mutationFn: (id) => api.fechamento.despesas.delete(id, accountParams), onSuccess: invDespesas })
-  const saveFixa   = useMutation({ mutationFn: ({ id, data }) => id ? api.despesasFixas.update(id, { ...data }) : api.despesasFixas.create({ ...data, mes_ano: mesAno, ...accountParams }), onSuccess: invFixas })
-  const delFixa    = useMutation({ mutationFn: (id) => api.despesasFixas.remove(id), onSuccess: invFixas })
-
-  // Conta Simples sync (Despesas)
-  const csStatusQ = useQuery({ queryKey: ['contasimples-status'], queryFn: () => api.fechamento.contaSimples.status() })
-  const csConfigurado = csStatusQ.data?.configurado === true
-  const syncCS = useMutation({
-    mutationFn: () => api.fechamento.contaSimples.sync(mesAno, activeAccount),
-    onSuccess: invDespesas,
-  })
 
   function handleSave(saveMut, setEditFn, setNew) {
     return (id, data) => {
@@ -418,47 +401,41 @@ export default function Fechamento() {
       render: v => formatBRL(v), color: () => 'text-amber-400 font-semibold' },
   ]
 
-  const despesasCols = [
-    { key: 'data',      label: 'Data',     type: 'date' },
+  const despesasUnifCols = [
+    { key: 'categoria', label: 'Categoria',
+      render: v => v || <span className="text-stone-700">—</span> },
     { key: 'descricao', label: 'Descrição' },
     { key: 'valor',     label: 'Valor', type: 'number', align: 'right',
       render: v => formatBRL(v), color: () => 'text-rose-400 font-semibold' },
-    { key: 'status',    label: 'Status', type: 'select',
-      color: v => statusColor(v) },
-  ]
-
-  const fixasCols = [
-    { key: 'categoria',  label: 'Categoria' },
-    { key: 'descricao',  label: 'Descrição' },
-    { key: 'valor',      label: 'Valor', type: 'number', align: 'right',
-      render: v => formatBRL(v), color: () => 'text-emerald-400 font-semibold' },
+    { key: 'origem',    label: 'Origem',
+      render: v => v === 'contas_a_pagar'
+        ? <span className="text-[10px] bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full px-2 py-0.5">Contas a Pagar</span>
+        : <span className="text-[10px] bg-stone-800 text-stone-500 border border-stone-700 rounded-full px-2 py-0.5">Histórico</span> },
   ]
 
   // Raw data
   const comprasAll  = comprasQ.data  || []
   const fretesAll   = fretesQ.data   || []
   const montagemAll = montagemQ.data || []
-  const despesasAll = despesasQ.data || []
-  const fixasData   = fixasQ.data    || {}
-  const fixasAll    = fixasData.itens || []
-  const fixasCopiaDe = fixasData.copiado_de || null
 
-  // Filtered (used for display and totals; fixas não têm data, sempre exibidas completas)
+  // Filtered (used for display and totals; despesas unificadas misturam origens sem
+  // um campo de data consistente — data para fechamento_despesas, vencimento para
+  // contas_a_pagar — então, como já ocorria com os antigos custos fixos, são
+  // sempre exibidas/totalizadas completas, sem filtro de data)
   const compras  = filterByDate(comprasAll,  dateFrom, dateTo)
   const fretes   = filterByDate(fretesAll,   dateFrom, dateTo)
   const montagem = filterByDate(montagemAll, dateFrom, dateTo)
-  const despesas = filterByDate(despesasAll, dateFrom, dateTo)
+  const despesasUnificadas = despesasUnifQ.data?.despesas || []
 
   const totalCompras  = totalOf(compras,  'valor_total')
   const totalFretes   = totalOf(fretes,   'total')
   const totalMontagem = totalOf(montagem, 'valor')
-  const totalDespesas = totalOf(despesas, 'valor')
-  const totalFixas    = fixasData.total || totalOf(fixasAll, 'valor')
-  const totalGeral    = totalCompras + totalFretes + totalMontagem + totalDespesas + totalFixas
+  const totalDespesasUnificado = despesasUnifQ.data?.total || 0
+  const totalGeral    = totalCompras + totalFretes + totalMontagem + totalDespesasUnificado
 
-  const isLoading = comprasQ.isLoading || fretesQ.isLoading || montagemQ.isLoading || despesasQ.isLoading || fixasQ.isLoading
-  const apiError = comprasQ.error || fretesQ.error || montagemQ.error || despesasQ.error || fixasQ.error
-  const refetchAll = () => { comprasQ.refetch(); fretesQ.refetch(); montagemQ.refetch(); despesasQ.refetch(); fixasQ.refetch() }
+  const isLoading = comprasQ.isLoading || fretesQ.isLoading || montagemQ.isLoading || despesasUnifQ.isLoading
+  const apiError = comprasQ.error || fretesQ.error || montagemQ.error || despesasUnifQ.error
+  const refetchAll = () => { comprasQ.refetch(); fretesQ.refetch(); montagemQ.refetch(); despesasUnifQ.refetch() }
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -473,7 +450,7 @@ export default function Fechamento() {
             <input
               type="month"
               value={mesAno}
-              onChange={e => { setMesAno(e.target.value); clearFilter(); syncCS.reset() }}
+              onChange={e => { setMesAno(e.target.value); clearFilter() }}
               className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
           </div>
@@ -538,12 +515,8 @@ export default function Fechamento() {
               <p className="text-xl font-bold text-amber-400">{formatBRL(totalMontagem)}</p>
             </div>
             <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-rose-500 rounded-xl p-4">
-              <p className="text-xs text-stone-500">Despesas Variáveis</p>
-              <p className="text-xl font-bold text-rose-400">{formatBRL(totalDespesas)}</p>
-            </div>
-            <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-teal-500 rounded-xl p-4">
-              <p className="text-xs text-stone-500">Custos Fixos</p>
-              <p className="text-xl font-bold text-teal-400">{formatBRL(totalFixas)}</p>
+              <p className="text-xs text-stone-500">Despesas</p>
+              <p className="text-xl font-bold text-rose-400">{formatBRL(totalDespesasUnificado)}</p>
             </div>
             <div className="bg-stone-900 border border-stone-800 border-l-4 border-l-emerald-500 rounded-xl p-4 col-span-2 sm:col-span-3">
               <p className="text-xs text-stone-500">
@@ -553,7 +526,7 @@ export default function Fechamento() {
               <p className="text-2xl font-bold text-emerald-400">{formatBRL(totalGeral)}</p>
               {hasFilter && (
                 <p className="text-xs text-stone-600 mt-0.5">
-                  {compras.length + fretes.length + montagem.length + despesas.length} registros no intervalo
+                  {compras.length + fretes.length + montagem.length} registros no intervalo
                 </p>
               )}
             </div>
@@ -564,8 +537,7 @@ export default function Fechamento() {
             totalCompras={totalCompras}
             totalFretes={totalFretes}
             totalMontagem={totalMontagem}
-            totalDespesas={totalDespesas}
-            totalFixas={totalFixas}
+            totalDespesas={totalDespesasUnificado}
           />
         </div>
 
@@ -614,71 +586,29 @@ export default function Fechamento() {
           onDelete={handleDelete(delMontag)}
         />
 
-        {/* Despesas Variáveis */}
+        {/* Despesas (unificado: contas_a_pagar editável + fechamento_despesas histórico) */}
         <Section
-          title={`Despesas Variáveis${despesas.length ? ` · ${despesas.length} registros` : ''}`}
-          columns={despesasCols}
-          rows={despesas}
-          isLoading={despesasQ.isLoading}
-          editMap={despesasEdit}
-          setEdit={setDespesasEdit}
-          newRow={newDespesa}
-          setNewRow={setNewDespesa}
-          onAdd={() => setNewDespesa({ data: '', descricao: '', valor: '', status: 'PENDENTE' })}
-          onSave={handleSave(saveDesp, setDespesasEdit, setNewDespesa)}
-          onDelete={handleDelete(delDesp)}
+          title={`Despesas${despesasUnificadas.length ? ` · ${despesasUnificadas.length} registros` : ''}`}
+          columns={despesasUnifCols}
+          rows={despesasUnificadas}
+          isLoading={despesasUnifQ.isLoading}
+          hideAddButton
+          renderActions={(row) => row.editavel ? (
+            <Link
+              to="/financeiro/contas-pagar"
+              className="flex items-center gap-1 text-[11px] text-sky-400 hover:text-sky-300 whitespace-nowrap"
+              title="Editar em Contas a Pagar"
+            >
+              Editar em Contas a Pagar <ExternalLink size={11} />
+            </Link>
+          ) : null}
           headerExtra={
-            <div className="flex items-center gap-2">
-              {csStatusQ.data && !csConfigurado && (
-                <span className="text-[10px] text-stone-500">Configure CS_API_KEY e CS_API_SECRET no backend</span>
-              )}
-              <button
-                onClick={() => syncCS.mutate()}
-                disabled={!csConfigurado || syncCS.isPending}
-                className="flex items-center gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 disabled:bg-stone-800 disabled:text-stone-500 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-lg transition-colors"
-              >
-                {syncCS.isPending ? 'Sincronizando...' : '⬇️ Sincronizar Conta Simples'}
-              </button>
-            </div>
-          }
-          banner={
-            syncCS.isError ? (
-              <div className="px-4 py-2 text-xs text-red-400 bg-red-500/10 border-b border-stone-800">
-                Erro ao sincronizar: {syncCS.error.message}
-              </div>
-            ) : syncCS.isSuccess ? (
-              <div className="px-4 py-2 text-xs text-emerald-400 bg-emerald-500/10 border-b border-stone-800">
-                {syncCS.data.importados ?? 0} despesas importadas · {syncCS.data.duplicados ?? 0} já existiam
-                {syncCS.data.avisos?.length > 0 && (
-                  <span className="text-amber-400"> · {syncCS.data.avisos.join(' · ')}</span>
-                )}
-              </div>
-            ) : null
-          }
-        />
-
-        {/* Custos Fixos Mensais */}
-        <Section
-          title={`Custos Fixos${fixasAll.length ? ` · ${fixasAll.length} registros` : ''}`}
-          columns={fixasCols}
-          rows={fixasAll}
-          isLoading={fixasQ.isLoading}
-          editMap={fixasEdit}
-          setEdit={setFixasEdit}
-          newRow={newFixa}
-          setNewRow={setNewFixa}
-          onAdd={() => setNewFixa({ categoria: '', descricao: '', valor: '' })}
-          onSave={handleSave(saveFixa, setFixasEdit, setNewFixa)}
-          onDelete={handleDelete(delFixa)}
-          banner={
-            fixasCopiaDe ? (
-              <div className="px-4 py-2 text-xs text-teal-400 bg-teal-500/10 border-b border-stone-800 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 bg-teal-500/20 border border-teal-500/30 rounded-full px-2 py-0.5 text-[11px] font-medium">
-                  Copiado de {fixasCopiaDe}
-                </span>
-                <span className="text-stone-500">Edite os valores que mudaram neste mês.</span>
-              </div>
-            ) : null
+            <Link
+              to="/financeiro/contas-pagar"
+              className="flex items-center gap-1.5 text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Plus size={13} /> Nova despesa em Contas a Pagar
+            </Link>
           }
         />
 
