@@ -426,10 +426,10 @@ export default function Dashboard() {
 
         </div>
 
-        {/* ── Top 15 produtos vendidos ── */}
+        {/* ── Produtos vendidos ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-stone-800">Top 15 produtos vendidos</h2>
+            <h2 className="text-sm font-semibold text-stone-800">Produtos vendidos</h2>
             <Link
               to="/custos-produtos"
               className="text-xs text-stone-500 hover:text-sky-400 transition-colors"

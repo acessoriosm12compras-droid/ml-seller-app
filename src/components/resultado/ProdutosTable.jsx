@@ -45,12 +45,12 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
 
   function handleExport() {
     const headers = [
-      'ID ML', 'Produto', 'Preço Médio', 'Custo Unitário', 'Unidades',
+      'SKU', 'Produto', 'Preço Médio', 'Custo Unitário', 'Unidades',
       'Total Faturado', 'Representatividade %', 'Lucro', 'Margem %',
       'Custo ADS', 'Lucro pós ADS', 'MPA %',
     ]
     const rows = sorted.map((p) => [
-      p.ml_item_id,
+      p.sku || p.ml_item_id,
       p.titulo,
       fmtNum(p.preco_medio),
       fmtNum(p.custo_unitario),
@@ -126,7 +126,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                 {/* Produto */}
                 <td className="px-4 py-3">
                   <p className="text-stone-800 truncate max-w-[200px]">{p.titulo}</p>
-                  <p className="text-stone-400 text-xs">{p.ml_item_id}</p>
+                  <p className="text-stone-400 text-xs">{p.sku || p.ml_item_id}</p>
                 </td>
                 {/* Preço Médio */}
                 <td className="px-4 py-3 text-right text-stone-700">
