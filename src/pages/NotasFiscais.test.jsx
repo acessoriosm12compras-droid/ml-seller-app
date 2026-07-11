@@ -76,6 +76,32 @@ test('mostra estado vazio (não branco/erro) quando não há notas, e trocar "Ti
   expect(main.innerHTML.length).toBeGreaterThan(0)
 })
 
+test('escolher um mês filtra por data_de/data_ate (primeiro e último dia do mês) e "Limpar mês" reseta', async () => {
+  const { api } = await import('../api')
+  const { container, queryByText } = renderPage()
+
+  await act(async () => { await new Promise(r => setTimeout(r, 50)) })
+
+  const inputMes = container.querySelector('input[type="month"]')
+  expect(inputMes).toBeTruthy()
+
+  fireEvent.change(inputMes, { target: { value: '2026-06' } })
+  await act(async () => { await new Promise(r => setTimeout(r, 50)) })
+
+  const ultimaChamada = api.notasFiscais.listar.mock.calls.at(-1)[0]
+  expect(ultimaChamada.data_de).toBe('2026-06-01')
+  expect(ultimaChamada.data_ate).toBe('2026-06-30')
+
+  expect(queryByText('Limpar mês')).toBeTruthy()
+  fireEvent.click(queryByText('Limpar mês'))
+  await act(async () => { await new Promise(r => setTimeout(r, 50)) })
+
+  expect(inputMes.value).toBe('')
+  const chamadaFinal = api.notasFiscais.listar.mock.calls.at(-1)[0]
+  expect(chamadaFinal.data_de).toBeUndefined()
+  expect(chamadaFinal.data_ate).toBeUndefined()
+})
+
 test('conta sem certificado configurado (J12) mostra aviso e não renderiza o filtro/tabela', async () => {
   const { supabase } = await import('../lib/supabase')
   supabase.auth.getSession.mockResolvedValueOnce(sessionFor('J12'))

@@ -31,12 +31,23 @@ function CertificadoBanner({ certificadosVencendo }) {
   )
 }
 
+function mesParaIntervalo(mes) {
+  if (!mes) return {}
+  const [ano, mesNum] = mes.split('-').map(Number)
+  const ultimoDia = new Date(ano, mesNum, 0).getDate()
+  return {
+    data_de: `${mes}-01`,
+    data_ate: `${mes}-${String(ultimoDia).padStart(2, '0')}`,
+  }
+}
+
 export default function NotasFiscais() {
   const { activeAccount } = useAuth()
   const [tipo, setTipo] = useState('')
+  const [mes, setMes] = useState('')
 
   const accountParams = activeAccount ? { conta_ml: activeAccount } : {}
-  const params = { ...accountParams, ...(tipo ? { tipo } : {}) }
+  const params = { ...accountParams, ...(tipo ? { tipo } : {}), ...mesParaIntervalo(mes) }
 
   const { data: statusData, isError: statusError } = useQuery({
     queryKey: ['notas-fiscais-status', activeAccount],
@@ -44,7 +55,7 @@ export default function NotasFiscais() {
   })
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['notas-fiscais', activeAccount, tipo],
+    queryKey: ['notas-fiscais', activeAccount, tipo, mes],
     queryFn: () => api.notasFiscais.listar(params),
   })
 
@@ -64,7 +75,7 @@ export default function NotasFiscais() {
           </div>
         ) : (
           <>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <select
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value)}
@@ -74,6 +85,22 @@ export default function NotasFiscais() {
                 <option value="entrada">Compras (entrada)</option>
                 <option value="saida">Vendas (saída)</option>
               </select>
+
+              <input
+                type="month"
+                value={mes}
+                onChange={(e) => setMes(e.target.value)}
+                className="rounded-lg border border-stone-300 px-3 py-1.5 text-sm"
+              />
+
+              {mes && (
+                <button
+                  onClick={() => setMes('')}
+                  className="text-xs text-stone-500 hover:text-stone-700 underline"
+                >
+                  Limpar mês
+                </button>
+              )}
             </div>
 
             {isLoading && (
