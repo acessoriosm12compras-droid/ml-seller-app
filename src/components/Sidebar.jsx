@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
 import {
   LayoutDashboard, PieChart,
-  ShoppingBag, Settings, Package, SlidersHorizontal, Megaphone, Sparkles, LogOut,
+  Settings, Package, SlidersHorizontal, Megaphone, Sparkles, LogOut,
   ShoppingCart, Users, ChevronDown, ChevronUp,
   Wallet, ArrowUpCircle, TrendingUp, GitMerge, Receipt, Tag, FileText, FileCheck2,
 } from 'lucide-react'
@@ -12,7 +12,6 @@ import {
 const NAV = [
   { to: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard },
   { to: '/curva-abc',       label: 'Curva ABC',      icon: PieChart },
-  { to: '/pedidos',         label: 'Pedidos',        icon: ShoppingBag },
   { to: '/ads',             label: 'Mercado Ads',    icon: Megaphone },
   { to: '/estudio-ia',      label: 'Estúdio IA',     icon: Sparkles },
   { to: '/custos-produtos', label: 'Custos',         icon: Settings },
