@@ -128,9 +128,17 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                   <p className="text-stone-800 truncate max-w-[200px]">{p.titulo}</p>
                   <p className="text-stone-400 text-xs">{p.sku || p.ml_item_id}</p>
                 </td>
-                {/* Preço Médio */}
+                {/* Preço Médio (histórico do período) + preço vigente hoje, se tiver promoção ativa */}
                 <td className="px-4 py-3 text-right text-stone-700">
                   {formatBRL(p.preco_medio)}
+                  {p.preco_original != null && p.preco_atual != null && p.preco_original > p.preco_atual && (
+                    <div className="text-xs mt-0.5 whitespace-nowrap">
+                      <span className="text-stone-400">hoje: </span>
+                      <span className="line-through text-stone-400">{formatBRL(p.preco_original)}</span>
+                      {' '}
+                      <span className="text-emerald-600 font-medium">{formatBRL(p.preco_atual)}</span>
+                    </div>
+                  )}
                 </td>
                 {/* Custo Unit. */}
                 <td className="px-4 py-3 text-right">
