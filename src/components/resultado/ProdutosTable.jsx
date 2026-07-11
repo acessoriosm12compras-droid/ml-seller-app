@@ -125,8 +125,23 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
               <tr key={p.ml_item_id} className="border-b border-stone-100 hover:bg-stone-50">
                 {/* Produto */}
                 <td className="px-4 py-3">
-                  <p className="text-stone-800 truncate max-w-[200px]">{p.titulo}</p>
-                  <p className="text-stone-400 text-xs">{p.sku || p.ml_item_id}</p>
+                  <div className="flex items-center gap-2">
+                    {p.foto_capa ? (
+                      <img
+                        src={p.foto_capa}
+                        alt=""
+                        className="w-9 h-9 rounded object-cover shrink-0 border border-stone-200"
+                        loading="lazy"
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded shrink-0 bg-stone-100 border border-stone-200" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-stone-800 truncate max-w-[200px]">{p.titulo}</p>
+                      <p className="text-stone-400 text-xs">{p.sku || p.ml_item_id}</p>
+                    </div>
+                  </div>
                 </td>
                 {/* Preço Médio (histórico do período) + preço vigente hoje, se tiver promoção ativa */}
                 <td className="px-4 py-3 text-right text-stone-700">
