@@ -175,15 +175,16 @@ export default function Gerenciamento() {
                   <th className="px-4 py-3 text-left text-stone-500">SKU Interno</th>
                   <th className="px-4 py-3 text-right text-stone-500">Custo Unit.</th>
                   <th className="px-4 py-3 text-center text-stone-500">Status</th>
+                  <th className="px-4 py-3 text-center text-stone-500">Rebate ML</th>
                   <th className="px-4 py-3 text-center text-stone-500">Ação</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading && (
-                  <tr><td colSpan={5} className="px-4 py-10 text-center text-stone-600">Carregando anúncios…</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-10 text-center text-stone-600">Carregando anúncios…</td></tr>
                 )}
                 {!isLoading && anuncios.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-10 text-center text-stone-600">Nenhum anúncio encontrado.</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-10 text-center text-stone-600">Nenhum anúncio encontrado.</td></tr>
                 )}
                 {anuncios.map(a => (
                   <tr key={a.ml_item_id} className="border-b border-stone-800/50 hover:bg-stone-800/30 transition-colors">
@@ -198,6 +199,15 @@ export default function Gerenciamento() {
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400">✓ Associado</span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400">⚠ Sem custo</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {a.rebate_meli_percent !== null && a.rebate_meli_percent !== undefined ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-sky-500/10 text-sky-400">
+                          ML cobre {a.rebate_meli_percent}%
+                        </span>
+                      ) : (
+                        <span className="text-stone-600">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
