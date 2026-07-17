@@ -140,6 +140,11 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                     <div className="min-w-0">
                       <p className="text-stone-800 truncate max-w-[200px]">{p.titulo}</p>
                       <p className="text-stone-400 text-xs">{p.sku || p.ml_item_id}</p>
+                      {p.rebate_meli_percent !== null && p.rebate_meli_percent !== undefined && (
+                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] bg-sky-500/10 text-sky-600">
+                          🔵 ML cobre {p.rebate_meli_percent}%
+                        </span>
+                      )}
                     </div>
                   </div>
                 </td>
