@@ -175,7 +175,7 @@ export default function Gerenciamento() {
                   <th className="px-4 py-3 text-left text-stone-500">SKU Interno</th>
                   <th className="px-4 py-3 text-right text-stone-500">Custo Unit.</th>
                   <th className="px-4 py-3 text-center text-stone-500">Status</th>
-                  <th className="px-4 py-3 text-center text-stone-500">Rebate ML</th>
+                  <th className="px-4 py-3 text-center text-stone-500">SUBS. ML</th>
                   <th className="px-4 py-3 text-center text-stone-500">Ação</th>
                 </tr>
               </thead>

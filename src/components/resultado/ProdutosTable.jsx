@@ -37,6 +37,7 @@ const COLUMNS = [
   { key: 'custo_ads', label: 'Custo ADS', align: 'right' },
   { key: 'lucro_pos_ads', label: 'Lucro pós ADS', align: 'right' },
   { key: 'mpa', label: 'MPA', align: 'center' },
+  { key: 'rebate_meli_percent', label: 'SUBS. ML', align: 'center' },
 ]
 
 export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
@@ -47,7 +48,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
     const headers = [
       'SKU', 'Produto', 'Preço Médio', 'Custo Unitário', 'Unidades',
       'Total Faturado', 'Representatividade %', 'Lucro', 'Margem %',
-      'Custo ADS', 'Lucro pós ADS', 'MPA %',
+      'Custo ADS', 'Lucro pós ADS', 'MPA %', 'SUBS. ML %',
     ]
     const rows = sorted.map((p) => [
       p.sku || p.ml_item_id,
@@ -62,6 +63,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
       fmtNum(p.custo_ads),
       fmtNum(p.lucro_pos_ads),
       fmtNum(p.mpa),
+      fmtNum(p.rebate_meli_percent),
     ])
     downloadCSV(`${titulo}-${todayStr()}.csv`, headers, rows)
   }
@@ -140,11 +142,6 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                     <div className="min-w-0">
                       <p className="text-stone-800 truncate max-w-[200px]">{p.titulo}</p>
                       <p className="text-stone-400 text-xs">{p.sku || p.ml_item_id}</p>
-                      {p.rebate_meli_percent !== null && p.rebate_meli_percent !== undefined && (
-                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] bg-sky-500/10 text-sky-600">
-                          🔵 ML cobre {p.rebate_meli_percent}%
-                        </span>
-                      )}
                     </div>
                   </div>
                 </td>
@@ -224,6 +221,16 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                     ? <span className="text-stone-400">—</span>
                     : <MargemBadge value={p.mpa} />
                   }
+                </td>
+                {/* SUBS. ML */}
+                <td className="px-4 py-3 text-center">
+                  {p.rebate_meli_percent !== null && p.rebate_meli_percent !== undefined ? (
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium text-sky-600 bg-sky-500/10">
+                      {p.rebate_meli_percent}%
+                    </span>
+                  ) : (
+                    <span className="text-stone-400">—</span>
+                  )}
                 </td>
               </tr>
             ))}

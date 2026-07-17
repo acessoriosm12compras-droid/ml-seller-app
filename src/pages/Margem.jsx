@@ -51,6 +51,7 @@ export default function Margem() {
                   <th className="text-right px-4 py-3 font-medium">ADS</th>
                   <th className="text-center px-4 py-3 font-medium">Margem s/ ADS</th>
                   <th className="text-center px-4 py-3 font-medium">Margem c/ ADS</th>
+                  <th className="text-center px-4 py-3 font-medium">SUBS. ML</th>
                 </tr>
               </thead>
               <tbody>
@@ -59,11 +60,6 @@ export default function Margem() {
                     <td className="px-4 py-3">
                       <p className="text-stone-200 truncate max-w-xs">{p.titulo}</p>
                       <p className="text-stone-600 text-xs">{p.ml_item_id} · {p.qtd_vendida} un</p>
-                      {p.rebate_meli_percent !== null && p.rebate_meli_percent !== undefined && (
-                        <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] bg-sky-500/10 text-sky-400">
-                          🔵 ML cobre {p.rebate_meli_percent}%
-                        </span>
-                      )}
                     </td>
                     <td className="px-4 py-3 text-right text-stone-300">{formatBRL(p.faturamento)}</td>
                     <td className="px-4 py-3 text-right text-stone-400">{formatBRL(p.custo_total)}</td>
@@ -71,6 +67,15 @@ export default function Margem() {
                     <td className="px-4 py-3 text-right text-orange-400">{formatBRL(p.gasto_ads)}</td>
                     <td className="px-4 py-3 text-center"><MargemBadge value={p.margem_sem_ads} /></td>
                     <td className="px-4 py-3 text-center"><MargemBadge value={p.margem_pos_ads} /></td>
+                    <td className="px-4 py-3 text-center">
+                      {p.rebate_meli_percent !== null && p.rebate_meli_percent !== undefined ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-sky-500/10 text-sky-400">
+                          {p.rebate_meli_percent}%
+                        </span>
+                      ) : (
+                        <span className="text-stone-600">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
