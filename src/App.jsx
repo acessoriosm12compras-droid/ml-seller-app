@@ -89,6 +89,8 @@ export default function App() {
                 <Route path="financeiro/regras" element={<RegrasCategorização />} />
                 <Route path="boletos" element={<Boletos />} />
                 <Route path="financeiro/notas-fiscais" element={<NotasFiscais />} />
+                {/* Atalho curto pra compartilhar com o time */}
+                <Route path="fiscal" element={<Navigate to="/financeiro/notas-fiscais" replace />} />
                 <Route
                   path="admin/usuarios"
                   element={
