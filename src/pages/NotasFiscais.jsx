@@ -35,7 +35,7 @@ function StatusBadge({ nota }) {
   if (nota.status === 'cancelada') {
     return <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">Cancelada</span>
   }
-  if (nota.manifestacao_status === 'xml_completo') {
+  if (nota.xml_disponivel) {
     return <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-600">Completa</span>
   }
   return <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-600">Aguardando SEFAZ</span>
@@ -195,7 +195,7 @@ export default function NotasFiscais() {
                         <td className="px-4 py-2"><StatusBadge nota={n} /></td>
                         <td className="px-4 py-2 font-mono text-xs text-stone-500">{n.chave_acesso}</td>
                         <td className="px-4 py-2">
-                          <DownloadXmlButton chaveAcesso={n.chave_acesso} disponivel={n.manifestacao_status === 'xml_completo'} />
+                          <DownloadXmlButton chaveAcesso={n.chave_acesso} disponivel={n.xml_disponivel} />
                         </td>
                       </tr>
                     ))}
