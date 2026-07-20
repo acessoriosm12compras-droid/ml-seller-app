@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, FileCheck2 } from 'lucide-react'
+import { AlertTriangle, FileCheck2, Download, Loader2 } from 'lucide-react'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../api'
@@ -28,6 +28,49 @@ function CertificadoBanner({ certificadosVencendo }) {
         ))}
       </div>
     </div>
+  )
+}
+
+function StatusBadge({ nota }) {
+  if (nota.status === 'cancelada') {
+    return <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">Cancelada</span>
+  }
+  if (nota.manifestacao_status === 'xml_completo') {
+    return <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-600">Completa</span>
+  }
+  return <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-600">Aguardando SEFAZ</span>
+}
+
+function DownloadXmlButton({ chaveAcesso, disponivel }) {
+  const [baixando, setBaixando] = useState(false)
+  const [erro, setErro] = useState(false)
+
+  if (!disponivel) {
+    return <span className="text-xs text-stone-300" title="XML ainda não liberado pela SEFAZ">—</span>
+  }
+
+  async function handleClick() {
+    setBaixando(true)
+    setErro(false)
+    try {
+      await api.notasFiscais.baixarXml(chaveAcesso)
+    } catch {
+      setErro(true)
+    } finally {
+      setBaixando(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={baixando}
+      title={erro ? 'Falha ao baixar — tente de novo' : 'Baixar XML'}
+      className={`inline-flex items-center gap-1 text-xs ${erro ? 'text-red-500' : 'text-sky-600 hover:text-sky-700'} disabled:opacity-50`}
+    >
+      {baixando ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+      {erro ? 'Erro' : 'XML'}
+    </button>
   )
 }
 
@@ -134,7 +177,9 @@ export default function NotasFiscais() {
                       <th className="px-4 py-2">Tipo</th>
                       <th className="px-4 py-2">Conta</th>
                       <th className="px-4 py-2">Valor</th>
+                      <th className="px-4 py-2">Status</th>
                       <th className="px-4 py-2">Chave de acesso</th>
+                      <th className="px-4 py-2">Download</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -147,7 +192,11 @@ export default function NotasFiscais() {
                         </td>
                         <td className="px-4 py-2">{n.conta_ml}</td>
                         <td className="px-4 py-2">{formatBRL(n.valor_total)}</td>
+                        <td className="px-4 py-2"><StatusBadge nota={n} /></td>
                         <td className="px-4 py-2 font-mono text-xs text-stone-500">{n.chave_acesso}</td>
+                        <td className="px-4 py-2">
+                          <DownloadXmlButton chaveAcesso={n.chave_acesso} disponivel={n.manifestacao_status === 'xml_completo'} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -194,5 +194,23 @@ export const api = {
   notasFiscais: {
     listar: (params) => request(`/api/notas-fiscais?${new URLSearchParams(params)}`),
     status: (params = {}) => request(`/api/notas-fiscais/status?${new URLSearchParams(params)}`),
+    baixarXml: async (chaveAcesso) => {
+      const token = _getToken()
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const res = await fetch(`${BASE}/api/notas-fiscais/${chaveAcesso}/xml`, { headers })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw Object.assign(new Error(err.error || `HTTP ${res.status}`), { status: res.status })
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${chaveAcesso}.xml`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    },
   },
 }
