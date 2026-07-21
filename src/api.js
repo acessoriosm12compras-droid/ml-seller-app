@@ -189,6 +189,11 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify({ ...(bloco ? { bloco, conteudo } : { conteudo }), ...(conta_ml ? { conta_ml } : {}) }),
       }),
+    remover: (ids, conta_ml) =>
+      request(`/api/estudio${conta_ml ? `?${new URLSearchParams({ conta_ml })}` : ''}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ ids }),
+      }),
   },
 
   notasFiscais: {

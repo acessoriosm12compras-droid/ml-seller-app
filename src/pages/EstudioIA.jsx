@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import {
   Search, Sparkles, Copy, Check, Loader2, ExternalLink, Zap, Clock,
   TrendingUp, Trophy, CheckCircle2, ChevronRight, ArrowLeft, FileSearch,
-  Wand2, X, Save, Package, Eye, Star,
+  Wand2, X, Save, Package, Eye, Star, Trash2,
 } from 'lucide-react'
 import Header from '../components/Header'
 import { api } from '../api'
@@ -165,6 +165,9 @@ export default function EstudioIA() {
   const [buscaHist, setBuscaHist]   = useState('')
   const [carregandoHist, setCarregandoHist] = useState(false)
   const [erroHistorico, setErroHistorico] = useState('')
+  const [selecionadosHist, setSelecionadosHist] = useState(new Set())
+  const [confirmandoExclusaoHist, setConfirmandoExclusaoHist] = useState(false)
+  const [excluindoHist, setExcluindoHist] = useState(false)
 
   // ── Workspace da análise (substitui a lista quando aberto) ────────
   const [workspace, setWorkspace] = useState(null)
@@ -205,6 +208,42 @@ export default function EstudioIA() {
       setErroHistorico('Não foi possível carregar o histórico agora. Tente recarregar a página.')
     } finally {
       setCarregandoHist(false)
+    }
+  }
+
+  function toggleSelecionadoHist(id) {
+    setSelecionadosHist(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+    setConfirmandoExclusaoHist(false)
+  }
+
+  function selecionarTodosHist() {
+    setSelecionadosHist(new Set(historicoFiltrado.map(h => h.id)))
+    setConfirmandoExclusaoHist(false)
+  }
+
+  function limparSelecaoHist() {
+    setSelecionadosHist(new Set())
+    setConfirmandoExclusaoHist(false)
+  }
+
+  async function excluirSelecionadosHist() {
+    if (selecionadosHist.size === 0) return
+    setExcluindoHist(true)
+    try {
+      await api.estudio.remover([...selecionadosHist], activeAccount)
+      setHistorico(prev => prev.filter(h => !selecionadosHist.has(h.id)))
+      setSelecionadosHist(new Set())
+      setConfirmandoExclusaoHist(false)
+    } catch (err) {
+      console.warn('[EstudioIA] falha ao excluir análises:', err)
+      setErroHistorico('Não foi possível excluir as análises selecionadas. Tente de novo.')
+    } finally {
+      setExcluindoHist(false)
     }
   }
 
@@ -956,6 +995,54 @@ export default function EstudioIA() {
               )}
             </div>
 
+            {historico.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <button
+                  onClick={selecionarTodosHist}
+                  disabled={selecionadosHist.size === historicoFiltrado.length}
+                  className="text-[11px] text-stone-400 hover:text-stone-200 bg-stone-800 border border-stone-700 hover:border-stone-600 rounded-lg px-2.5 py-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Selecionar todos
+                </button>
+                <button
+                  onClick={limparSelecaoHist}
+                  disabled={selecionadosHist.size === 0}
+                  className="text-[11px] text-stone-400 hover:text-stone-200 bg-stone-800 border border-stone-700 hover:border-stone-600 rounded-lg px-2.5 py-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Limpar seleção
+                </button>
+                {selecionadosHist.size > 0 && (
+                  confirmandoExclusaoHist ? (
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-stone-400 text-[11px]">Excluir {selecionadosHist.size} análise{selecionadosHist.size !== 1 ? 's' : ''}?</span>
+                      <button
+                        onClick={excluirSelecionadosHist}
+                        disabled={excluindoHist}
+                        className="text-[11px] text-white bg-red-600 hover:bg-red-500 rounded-lg px-2.5 py-1 transition-colors disabled:opacity-60"
+                      >
+                        {excluindoHist ? 'Excluindo...' : 'Confirmar'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmandoExclusaoHist(false)}
+                        disabled={excluindoHist}
+                        className="text-[11px] text-stone-400 hover:text-stone-200 bg-stone-800 border border-stone-700 rounded-lg px-2.5 py-1 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmandoExclusaoHist(true)}
+                      className="flex items-center gap-1.5 text-[11px] text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/20 hover:border-red-500/40 rounded-lg px-2.5 py-1 transition-colors"
+                    >
+                      <Trash2 size={11} />
+                      Excluir {selecionadosHist.size} selecionada{selecionadosHist.size !== 1 ? 's' : ''}
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+
             <div className="mt-4">
               {carregandoHist && historico.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 gap-2">
@@ -980,6 +1067,7 @@ export default function EstudioIA() {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {historicoFiltrado.map(h => {
                     const n = h.num_produtos || 0
+                    const marcado = selecionadosHist.has(h.id)
                     return (
                       <div
                         key={h.id}
@@ -987,11 +1075,32 @@ export default function EstudioIA() {
                         tabIndex={0}
                         onClick={() => abrirEstudo(h.id, { termo: h.termo || h.link, criadoEm: h.created_at })}
                         onKeyDown={e => { if (e.key === 'Enter') abrirEstudo(h.id, { termo: h.termo || h.link, criadoEm: h.created_at }) }}
-                        className="group flex flex-col gap-2 text-left rounded-xl px-4 py-3.5 border border-stone-800 bg-stone-800/20 hover:bg-stone-800/60 hover:border-stone-700 transition-colors cursor-pointer"
+                        className={`group flex flex-col gap-2 text-left rounded-xl px-4 py-3.5 border transition-colors cursor-pointer ${
+                          marcado
+                            ? 'bg-stone-800/60 border-violet-500/40'
+                            : 'border-stone-800 bg-stone-800/20 hover:bg-stone-800/60 hover:border-stone-700'
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <span className="text-stone-200 text-sm font-medium leading-snug truncate">
-                            {h.termo || h.link || 'Análise'}
+                          <span className="flex items-start gap-2 min-w-0">
+                            <span
+                              role="checkbox"
+                              aria-checked={marcado}
+                              tabIndex={0}
+                              title={marcado ? 'Desmarcar' : 'Selecionar'}
+                              onClick={e => { e.stopPropagation(); toggleSelecionadoHist(h.id) }}
+                              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleSelecionadoHist(h.id) } }}
+                              className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                                marcado
+                                  ? 'bg-violet-500 border-violet-400 text-white'
+                                  : 'bg-stone-900 border-stone-600 hover:border-stone-500'
+                              }`}
+                            >
+                              {marcado && <Check size={11} strokeWidth={3} />}
+                            </span>
+                            <span className="text-stone-200 text-sm font-medium leading-snug truncate">
+                              {h.termo || h.link || 'Análise'}
+                            </span>
                           </span>
                           <ChevronRight size={14} className="text-stone-600 group-hover:text-stone-400 transition-colors shrink-0 mt-0.5" />
                         </div>
