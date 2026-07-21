@@ -20,6 +20,16 @@ function valorSubsidioMl(p) {
   return (p.preco_original - p.preco_atual) * (p.rebate_meli_percent / 100)
 }
 
+// MPA recalculado somando o subsídio ML realmente recebido no período
+// (valor por unidade × unidades vendidas) ao Lucro pós ADS, na mesma base
+// de cálculo do MPA (÷ faturamento). Sem promoção ativa, o subsídio conta
+// como 0 e o valor fica igual ao MPA normal — nunca null nesse caso.
+function mpaComSubsidio(p) {
+  if (p.lucro_pos_ads == null || !p.total_faturado) return null
+  const subsidioTotal = (valorSubsidioMl(p) || 0) * (p.unidades || 0)
+  return ((p.lucro_pos_ads + subsidioTotal) / p.total_faturado) * 100
+}
+
 function MargemBadge({ value }) {
   if (value === null || value === undefined) return <span className="text-stone-400">—</span>
   const [cls, bg] = value >= 30
@@ -46,6 +56,7 @@ const COLUMNS = [
   { key: 'custo_ads', label: 'Custo ADS', align: 'right' },
   { key: 'lucro_pos_ads', label: 'Lucro pós ADS', align: 'right' },
   { key: 'mpa', label: 'MPA', align: 'center' },
+  { key: 'mpa_com_subsidio', label: 'MPA + Subsídio', align: 'center' },
   { key: 'rebate_meli_percent', label: 'SUBS. ML (R$)', align: 'center' },
 ]
 
@@ -57,7 +68,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
     const headers = [
       'SKU', 'Produto', 'Preço Médio', 'Custo Unitário', 'Unidades',
       'Total Faturado', 'Representatividade %', 'Lucro', 'Margem %',
-      'Custo ADS', 'Lucro pós ADS', 'MPA %', 'SUBS. ML (R$)',
+      'Custo ADS', 'Lucro pós ADS', 'MPA %', 'MPA + Subsídio %', 'SUBS. ML (R$)',
     ]
     const rows = sorted.map((p) => [
       p.sku || p.ml_item_id,
@@ -72,6 +83,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
       fmtNum(p.custo_ads),
       fmtNum(p.lucro_pos_ads),
       fmtNum(p.mpa),
+      fmtNum(p.mpa_com_subsidio),
       fmtNum(valorSubsidioMl(p)),
     ])
     downloadCSV(`${titulo}-${todayStr()}.csv`, headers, rows)
@@ -86,7 +98,9 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
     }
   }
 
-  const sorted = [...produtos].sort((a, b) => {
+  const comDerivados = produtos.map((p) => ({ ...p, mpa_com_subsidio: mpaComSubsidio(p) }))
+
+  const sorted = [...comDerivados].sort((a, b) => {
     const av = a[sortKey]
     const bv = b[sortKey]
     if (av === null || av === undefined) return 1
@@ -229,6 +243,14 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                   {p.mpa === null || p.mpa === undefined
                     ? <span className="text-stone-400">—</span>
                     : <MargemBadge value={p.mpa} />
+                  }
+                </td>
+                {/* MPA + Subsídio — mesma conta do MPA, somando ao Lucro pós ADS
+                    o subsídio ML realmente recebido no período (por unidade × unidades) */}
+                <td className="px-4 py-3 text-center">
+                  {p.mpa_com_subsidio === null || p.mpa_com_subsidio === undefined
+                    ? <span className="text-stone-400">—</span>
+                    : <MargemBadge value={p.mpa_com_subsidio} />
                   }
                 </td>
                 {/* SUBS. ML — valor por unidade que a ML banca na promoção ativa */}
