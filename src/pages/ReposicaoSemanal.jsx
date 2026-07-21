@@ -75,6 +75,44 @@ function EditableCell({ value, onSave, prefix = '', suffix = '', type = 'number'
   )
 }
 
+function SemanasCoberturaEditor({ value, onSave, salvando }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(String(value))
+
+  function commit() {
+    const parsed = parseInt(draft, 10)
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 52 && parsed !== value) onSave(parsed)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <input
+        type="number"
+        min={1}
+        max={52}
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false) }}
+        autoFocus
+        className="w-14 bg-stone-700 border border-sky-500 rounded px-1.5 py-0.5 text-sm text-stone-100 focus:outline-none"
+      />
+    )
+  }
+
+  return (
+    <button
+      onClick={() => { setDraft(String(value)); setEditing(true) }}
+      disabled={salvando}
+      title="Clique para editar — quantas semanas usar no cálculo (seu, não fixo pro sistema)"
+      className="underline decoration-dotted underline-offset-2 hover:text-sky-100 transition-colors disabled:opacity-50"
+    >
+      {salvando ? 'salvando...' : `${value} semana${value !== 1 ? 's' : ''}`}
+    </button>
+  )
+}
+
 export default function ReposicaoSemanal() {
   const { activeAccount, editAccount } = useAuth()
   const queryClient = useQueryClient()
@@ -90,6 +128,16 @@ export default function ReposicaoSemanal() {
   const mutation = useMutation({
     mutationFn: (payload) => api.reposicao.atualizarEstoqueMinimo({ conta_ml: editAccount, ...payload }),
     onSuccess: () => queryClient.invalidateQueries(['reposicao', activeAccount]),
+  })
+
+  const [erroSemanas, setErroSemanas] = useState('')
+  const semanasMutation = useMutation({
+    mutationFn: (semanas) => api.reposicao.atualizarSemanasCobertura(semanas, editAccount),
+    onSuccess: () => {
+      setErroSemanas('')
+      queryClient.invalidateQueries(['reposicao', activeAccount])
+    },
+    onError: (err) => setErroSemanas(err.message || 'Não foi possível salvar.'),
   })
 
   const produtos = data?.produtos || []
@@ -116,7 +164,7 @@ export default function ReposicaoSemanal() {
           <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4">
             <p className="text-xs text-stone-400 mb-1">Total a investir</p>
             <p className="text-xl font-bold text-orange-400">{formatBRL(resumo.total_investimento)}</p>
-            <p className="text-xs text-stone-500 mt-1">base: {resumo.periodo_base || '4 semanas'}</p>
+            <p className="text-xs text-stone-500 mt-1">base: {resumo.periodo_base || '5 semanas'}</p>
           </div>
 
           <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4">
@@ -153,7 +201,14 @@ export default function ReposicaoSemanal() {
           <span className="text-base leading-none mt-0.5">💡</span>
           <span>
             Clique no <strong>custo unitário</strong> ou <strong>estoque mínimo</strong> de qualquer produto para editar inline.
-            Meta de estoque = maior entre o mínimo configurado e 2 semanas de vendas.
+            Meta de estoque = maior entre o mínimo configurado e{' '}
+            <SemanasCoberturaEditor
+              value={resumo.semanas_cobertura ?? 5}
+              onSave={(val) => semanasMutation.mutate(val)}
+              salvando={semanasMutation.isPending}
+            />{' '}
+            de vendas — a média de vendas por semana também é calculada com base nesse mesmo número de semanas passadas.
+            {erroSemanas && <span className="block text-red-400 mt-1">{erroSemanas}</span>}
           </span>
         </div>
 

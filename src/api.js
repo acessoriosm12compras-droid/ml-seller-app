@@ -174,6 +174,11 @@ export const api = {
     semanal: (params) => request(`/api/reposicao/semanal?${new URLSearchParams(params)}`),
     atualizarEstoqueMinimo: (data) =>
       request('/api/reposicao/estoque-minimo', { method: 'PUT', body: JSON.stringify(data) }),
+    atualizarSemanasCobertura: (semanas, conta_ml) =>
+      request(`/api/reposicao/semanas-cobertura?${new URLSearchParams({ conta_ml })}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ semanas }),
+      }),
   },
 
   estudio: {
