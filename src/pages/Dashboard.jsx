@@ -416,7 +416,7 @@ export default function Dashboard() {
               <ArrowUpRight size={18} />
             </div>
             <p className="text-sm" style={{ color: '#ece8ff' }}>
-              Gere persona, pesquisa de mercado e capas a partir dos produtos mais vendidos.
+              Gere persona, pesquisa de mercado e sugestões de prompt para capas a partir dos produtos mais vendidos.
             </p>
             <span className="mt-1 inline-flex items-center gap-2 bg-[#ffffff] text-violet-700 font-semibold text-sm rounded-xl px-4 py-2 w-fit">
               ✨ Analisar um produto

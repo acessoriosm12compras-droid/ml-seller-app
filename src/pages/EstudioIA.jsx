@@ -758,7 +758,7 @@ export default function EstudioIA() {
         {gerandoEste && (
           <div className="flex items-center gap-2 py-2">
             <Loader2 size={14} className="animate-spin text-violet-400" />
-            <p className="text-stone-400 text-xs">Gerando com Gemini...</p>
+            <p className="text-stone-400 text-xs">Gerando com IA...</p>
           </div>
         )}
 
