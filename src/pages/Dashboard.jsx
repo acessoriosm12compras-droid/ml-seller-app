@@ -300,7 +300,7 @@ export default function Dashboard() {
             label="MPA"
             value={k ? formatPct(k.mpa) : '…'}
             valueColor={k ? (k.mpa >= 15 ? 'text-teal-400' : k.mpa >= 0 ? 'text-teal-400' : 'text-red-400') : undefined}
-            info="Lucro pós ADS ÷ Faturamento"
+            info="Lucro pós ADS ÷ Faturamento. Não desconta nem soma o subsídio ML (SUBS. ML) — esse valor é só informativo na tabela de produtos."
             scheme="teal"
           />
         </div>

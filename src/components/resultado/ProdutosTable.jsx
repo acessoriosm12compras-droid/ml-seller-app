@@ -11,6 +11,15 @@ function fmtNum(v) {
   return String(v).replace('.', ',')
 }
 
+// Valor por unidade que a ML banca na promoção ativa — diferença entre o
+// preço riscado e o vigente, multiplicada pelo percentual de subsídio.
+// null quando falta algum dos três dados ou não há desconto ativo agora.
+function valorSubsidioMl(p) {
+  if (p.rebate_meli_percent == null || p.preco_original == null || p.preco_atual == null) return null
+  if (p.preco_original <= p.preco_atual) return null
+  return (p.preco_original - p.preco_atual) * (p.rebate_meli_percent / 100)
+}
+
 function MargemBadge({ value }) {
   if (value === null || value === undefined) return <span className="text-stone-400">—</span>
   const [cls, bg] = value >= 30
@@ -37,7 +46,7 @@ const COLUMNS = [
   { key: 'custo_ads', label: 'Custo ADS', align: 'right' },
   { key: 'lucro_pos_ads', label: 'Lucro pós ADS', align: 'right' },
   { key: 'mpa', label: 'MPA', align: 'center' },
-  { key: 'rebate_meli_percent', label: 'SUBS. ML', align: 'center' },
+  { key: 'rebate_meli_percent', label: 'SUBS. ML (R$)', align: 'center' },
 ]
 
 export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
@@ -48,7 +57,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
     const headers = [
       'SKU', 'Produto', 'Preço Médio', 'Custo Unitário', 'Unidades',
       'Total Faturado', 'Representatividade %', 'Lucro', 'Margem %',
-      'Custo ADS', 'Lucro pós ADS', 'MPA %', 'SUBS. ML %',
+      'Custo ADS', 'Lucro pós ADS', 'MPA %', 'SUBS. ML (R$)',
     ]
     const rows = sorted.map((p) => [
       p.sku || p.ml_item_id,
@@ -63,7 +72,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
       fmtNum(p.custo_ads),
       fmtNum(p.lucro_pos_ads),
       fmtNum(p.mpa),
-      fmtNum(p.rebate_meli_percent),
+      fmtNum(valorSubsidioMl(p)),
     ])
     downloadCSV(`${titulo}-${todayStr()}.csv`, headers, rows)
   }
@@ -222,11 +231,14 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                     : <MargemBadge value={p.mpa} />
                   }
                 </td>
-                {/* SUBS. ML */}
+                {/* SUBS. ML — valor por unidade que a ML banca na promoção ativa */}
                 <td className="px-4 py-3 text-center">
-                  {p.rebate_meli_percent !== null && p.rebate_meli_percent !== undefined ? (
-                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium text-sky-600 bg-sky-500/10">
-                      {p.rebate_meli_percent}%
+                  {valorSubsidioMl(p) !== null ? (
+                    <span
+                      className="inline-block px-2 py-0.5 rounded text-xs font-medium text-sky-600 bg-sky-500/10"
+                      title={`ML banca ${p.rebate_meli_percent}% do desconto de ${formatBRL(p.preco_original - p.preco_atual)}`}
+                    >
+                      {formatBRL(valorSubsidioMl(p))}
                     </span>
                   ) : (
                     <span className="text-stone-400">—</span>
