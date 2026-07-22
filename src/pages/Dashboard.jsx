@@ -7,7 +7,6 @@ import {
 } from 'recharts'
 import {
   DollarSign, TrendingUp, Percent, ShoppingCart,
-  Sparkles, ArrowUpRight,
 } from 'lucide-react'
 import { api } from '../api'
 import Header from '../components/Header'
@@ -379,7 +378,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* ── Coluna lateral: Curva ABC + Estúdio IA ── */}
+        {/* ── Coluna lateral: Curva ABC ── */}
         <div className="flex flex-col gap-4">
           <div className="bg-white border border-stone-200 rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
@@ -405,23 +404,6 @@ export default function Dashboard() {
               <p className="text-stone-500 text-sm py-6 text-center">Sem produtos no período.</p>
             )}
           </div>
-
-          <Link
-            to="/estudio-ia"
-            className="rounded-xl p-5 flex flex-col gap-3 text-white"
-            style={{ background: 'linear-gradient(135deg,#6E5BD6,#9b6ef0)' }}
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2"><Sparkles size={16} /> Estúdio IA</h2>
-              <ArrowUpRight size={18} />
-            </div>
-            <p className="text-sm" style={{ color: '#ece8ff' }}>
-              Gere persona, pesquisa de mercado e sugestões de prompt para capas a partir dos produtos mais vendidos.
-            </p>
-            <span className="mt-1 inline-flex items-center gap-2 bg-[#ffffff] text-violet-700 font-semibold text-sm rounded-xl px-4 py-2 w-fit">
-              ✨ Analisar um produto
-            </span>
-          </Link>
         </div>
 
         </div>
