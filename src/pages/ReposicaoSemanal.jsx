@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import Header from '../components/Header'
@@ -75,41 +75,42 @@ function EditableCell({ value, onSave, prefix = '', suffix = '', type = 'number'
   )
 }
 
-function SemanasCoberturaEditor({ value, onSave, salvando }) {
-  const [editing, setEditing] = useState(false)
+function SemanasCoberturaEditor({ value, onSave, salvando, salvo }) {
   const [draft, setDraft] = useState(String(value))
+
+  // Mantém o campo em sincronia se o valor mudar por fora (ex.: outra aba)
+  useEffect(() => { setDraft(String(value)) }, [value])
 
   function commit() {
     const parsed = parseInt(draft, 10)
-    if (!isNaN(parsed) && parsed >= 1 && parsed <= 52 && parsed !== value) onSave(parsed)
-    setEditing(false)
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 52 && parsed !== value) {
+      onSave(parsed)
+    } else {
+      setDraft(String(value)) // valor inválido — volta pro último valor salvo
+    }
   }
 
-  if (editing) {
-    return (
+  return (
+    <div className="flex flex-wrap items-center gap-2.5 bg-stone-900 border-2 border-sky-500 rounded-xl px-4 py-3">
+      <label htmlFor="semanas-cobertura" className="text-sm text-stone-200 font-semibold">
+        📝 Semanas de cobertura da reposição:
+      </label>
       <input
+        id="semanas-cobertura"
         type="number"
         min={1}
         max={52}
         value={draft}
         onChange={e => setDraft(e.target.value)}
         onBlur={commit}
-        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false) }}
-        autoFocus
-        className="w-14 bg-stone-700 border border-sky-500 rounded px-1.5 py-0.5 text-sm text-stone-100 focus:outline-none"
+        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+        disabled={salvando}
+        className="w-20 bg-stone-800 border-2 border-stone-600 rounded-lg px-3 py-1.5 text-base text-center text-stone-100 font-bold focus:outline-none focus:border-sky-400 disabled:opacity-50"
       />
-    )
-  }
-
-  return (
-    <button
-      onClick={() => { setDraft(String(value)); setEditing(true) }}
-      disabled={salvando}
-      title="Clique para editar — quantas semanas usar no cálculo (seu, não fixo pro sistema)"
-      className="underline decoration-dotted underline-offset-2 hover:text-sky-100 transition-colors disabled:opacity-50"
-    >
-      {salvando ? 'salvando...' : `${value} semana${value !== 1 ? 's' : ''}`}
-    </button>
+      <span className="text-xs text-stone-400">
+        {salvando ? 'salvando...' : salvo ? '✅ salvo' : 'digite um número de 1 a 52 e clique fora do campo'}
+      </span>
+    </div>
   )
 }
 
@@ -131,10 +132,13 @@ export default function ReposicaoSemanal() {
   })
 
   const [erroSemanas, setErroSemanas] = useState('')
+  const [semanasSalvo, setSemanasSalvo] = useState(false)
   const semanasMutation = useMutation({
     mutationFn: (semanas) => api.reposicao.atualizarSemanasCobertura(semanas, editAccount),
     onSuccess: () => {
       setErroSemanas('')
+      setSemanasSalvo(true)
+      setTimeout(() => setSemanasSalvo(false), 2500)
       queryClient.invalidateQueries(['reposicao', activeAccount])
     },
     onError: (err) => setErroSemanas(err.message || 'Não foi possível salvar.'),
@@ -196,19 +200,24 @@ export default function ReposicaoSemanal() {
           </div>
         </div>
 
+        {/* Semanas de cobertura — caixa de edição em destaque, bem visível */}
+        <div>
+          <SemanasCoberturaEditor
+            value={resumo.semanas_cobertura ?? 5}
+            onSave={(val) => semanasMutation.mutate(val)}
+            salvando={semanasMutation.isPending}
+            salvo={semanasSalvo}
+          />
+          {erroSemanas && <p className="text-red-400 text-xs mt-1.5 px-1">{erroSemanas}</p>}
+        </div>
+
         {/* Info sobre edição */}
         <div className="flex items-start gap-2 bg-sky-500/5 border border-sky-500/20 rounded-lg px-4 py-3 text-sm text-sky-300">
           <span className="text-base leading-none mt-0.5">💡</span>
           <span>
             Clique no <strong>custo unitário</strong> ou <strong>estoque mínimo</strong> de qualquer produto para editar inline.
-            Meta de estoque = maior entre o mínimo configurado e{' '}
-            <SemanasCoberturaEditor
-              value={resumo.semanas_cobertura ?? 5}
-              onSave={(val) => semanasMutation.mutate(val)}
-              salvando={semanasMutation.isPending}
-            />{' '}
-            de vendas — a média de vendas por semana também é calculada com base nesse mesmo número de semanas passadas.
-            {erroSemanas && <span className="block text-red-400 mt-1">{erroSemanas}</span>}
+            Meta de estoque = maior entre o mínimo configurado e o número de semanas configurado acima de vendas —
+            a média de vendas por semana também é calculada com base nesse mesmo número de semanas passadas.
           </span>
         </div>
 
