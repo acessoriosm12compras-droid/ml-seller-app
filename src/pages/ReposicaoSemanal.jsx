@@ -168,7 +168,7 @@ export default function ReposicaoSemanal() {
           <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4">
             <p className="text-xs text-stone-400 mb-1">Total a investir</p>
             <p className="text-xl font-bold text-orange-400">{formatBRL(resumo.total_investimento)}</p>
-            <p className="text-xs text-stone-500 mt-1">base: {resumo.periodo_base || '5 semanas'}</p>
+            <p className="text-xs text-stone-500 mt-1">base: {resumo.periodo_base || 'últimos 7 dias'} × {resumo.meta_cobertura || '5 semanas'}</p>
           </div>
 
           <div className="bg-stone-800/60 border border-stone-700 rounded-xl p-4">
@@ -216,8 +216,10 @@ export default function ReposicaoSemanal() {
           <span className="text-base leading-none mt-0.5">💡</span>
           <span>
             Clique no <strong>custo unitário</strong> ou <strong>estoque mínimo</strong> de qualquer produto para editar inline.
-            Meta de estoque = maior entre o mínimo configurado e o número de semanas configurado acima de vendas —
-            a média de vendas por semana também é calculada com base nesse mesmo número de semanas passadas.
+            <br />
+            <strong>Como a quantidade a comprar é calculada:</strong> soma-se as unidades vendidas nos <strong>últimos 7 dias</strong> (hoje
+            não entra, porque as vendas do dia ainda estão incompletas) e multiplica-se pelas <strong>semanas de cobertura</strong> configuradas
+            acima — esse resultado é a meta de estoque. Meta de estoque = maior entre o estoque mínimo configurado e (vendas dos últimos 7 dias × semanas de cobertura).
           </span>
         </div>
 
