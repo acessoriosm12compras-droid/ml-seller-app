@@ -11,13 +11,16 @@ function fmtNum(v) {
   return String(v).replace('.', ',')
 }
 
-// Valor por unidade que a ML banca na promoção ativa — diferença entre o
-// preço riscado e o vigente, multiplicada pelo percentual de subsídio.
-// null quando falta algum dos três dados ou não há desconto ativo agora.
+// Valor por unidade que a ML banca na promoção ativa — percentual de
+// subsídio sobre o preço riscado (rebate é sobre a tarifa/comissão, que
+// escala com o preço, não sobre o desconto de uma promoção de preço
+// separada; as duas promoções podem rodar ao mesmo tempo sem relação
+// entre si). null quando falta algum dos três dados ou não há desconto
+// ativo agora.
 function valorSubsidioMl(p) {
   if (p.rebate_meli_percent == null || p.preco_original == null || p.preco_atual == null) return null
   if (p.preco_original <= p.preco_atual) return null
-  return (p.preco_original - p.preco_atual) * (p.rebate_meli_percent / 100)
+  return p.preco_original * (p.rebate_meli_percent / 100)
 }
 
 // MPA recalculado somando o subsídio ML realmente recebido no período
@@ -258,7 +261,7 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                   {valorSubsidioMl(p) !== null ? (
                     <span
                       className="inline-block px-2 py-0.5 rounded text-xs font-medium text-sky-600 bg-sky-500/10"
-                      title={`ML banca ${p.rebate_meli_percent}% do desconto de ${formatBRL(p.preco_original - p.preco_atual)}`}
+                      title={`ML reduz ${p.rebate_meli_percent}% da tarifa sobre o preço original de ${formatBRL(p.preco_original)}`}
                     >
                       {formatBRL(valorSubsidioMl(p))}
                     </span>
