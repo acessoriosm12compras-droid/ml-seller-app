@@ -13,6 +13,8 @@ import Header from '../components/Header'
 import ProdutosTable from '../components/resultado/ProdutosTable'
 import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
 import { useAuth } from '../context/AuthContext'
+import MetaVendasCard from '../components/dashboard/MetaVendasCard'
+import ResumoDiaCard from '../components/dashboard/ResumoDiaCard'
 
 function formatBRL(v) {
   if (v === null || v === undefined) return '—'
@@ -210,6 +212,10 @@ export default function Dashboard() {
             </Link>
           </div>
         )}
+
+        {/* ── Meta de Vendas + Resumo do Dia ── */}
+        <MetaVendasCard />
+        <ResumoDiaCard />
 
         {/* ── Linha 1: 4 KPIs principais (estilo hero, com ícone) ── */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
