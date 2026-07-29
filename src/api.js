@@ -181,6 +181,15 @@ export const api = {
       }),
   },
 
+  metas: {
+    get: (params) => request(`/api/metas?${new URLSearchParams(params)}`),
+    save: (data) => request('/api/metas', { method: 'PUT', body: JSON.stringify(data) }),
+  },
+
+  resumoDia: {
+    get: (params) => request(`/api/resumo-dia?${new URLSearchParams(params)}`),
+  },
+
   estudio: {
     buscar: (params) => request(`/api/estudio/buscar?${new URLSearchParams(params)}`),
     historico: (limit = 20, conta_ml) =>
