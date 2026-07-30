@@ -45,19 +45,28 @@ function ProgressBar({ pct, color = 'amber' }) {
   )
 }
 
+// Formata o valor em repouso com separador de milhar (ponto) e decimal
+// (vírgula) — ex: 60000 → "60.000,00" — pra ficar fácil de bater o olho e
+// identificar a meta. Enquanto o usuário digita, o campo mostra o texto cru;
+// parseValorBR já aceita tanto dígitos crus quanto esse formato.
+function formatMilhar(v) {
+  if (v == null) return ''
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 function MetaEditor({ value, onSave, salvando, salvo, somenteLeitura, qtdLojas }) {
-  const [draft, setDraft] = useState(value != null ? String(value) : '')
+  const [draft, setDraft] = useState(value != null ? formatMilhar(value) : '')
   const [erroFormato, setErroFormato] = useState('')
 
   useEffect(() => {
-    setDraft(value != null ? String(value) : '')
+    setDraft(value != null ? formatMilhar(value) : '')
     setErroFormato('')
   }, [value])
 
   function commit() {
     if (somenteLeitura) return
 
-    const original = value != null ? String(value) : ''
+    const original = value != null ? formatMilhar(value) : ''
     if (draft.trim() === original.trim()) {
       setErroFormato('')
       return
