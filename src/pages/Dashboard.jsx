@@ -12,6 +12,7 @@ import { api } from '../api'
 import Header from '../components/Header'
 import ProdutosTable from '../components/resultado/ProdutosTable'
 import LojasIndisponiveisAviso from '../components/LojasIndisponiveisAviso'
+import EditAccountBanner from '../components/EditAccountBanner'
 import { useAuth } from '../context/AuthContext'
 import MetaVendasCard from '../components/dashboard/MetaVendasCard'
 import ResumoDiaCard from '../components/dashboard/ResumoDiaCard'
@@ -198,6 +199,7 @@ export default function Dashboard() {
           </div>
         )}
 
+        <EditAccountBanner />
         <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
 
         {/* ── Alert: products without cost ── */}
