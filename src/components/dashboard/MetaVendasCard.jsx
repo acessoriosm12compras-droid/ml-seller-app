@@ -176,7 +176,11 @@ export default function MetaVendasCard() {
             : `Não foi possível carregar a meta: ${error.message || 'erro desconhecido'}`}
         </div>
       ) : data?.valor_meta == null ? (
-        <p className="text-sm text-stone-400">Defina a meta do mês acima pra acompanhar o progresso aqui.</p>
+        <p className="text-sm text-stone-400">
+          {multiLoja
+            ? 'Nenhuma das lojas selecionadas tem meta deste mês — selecione uma única loja pra definir.'
+            : 'Defina a meta do mês acima pra acompanhar o progresso aqui.'}
+        </p>
       ) : (
         <>
           <div>
