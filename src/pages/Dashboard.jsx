@@ -215,10 +215,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── Meta de Vendas + Resumo do Dia ── */}
-        <MetaVendasCard />
-        <ResumoDiaCard />
-
         {/* ── Linha 1: 4 KPIs principais (estilo hero, com ícone) ── */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <GsKpiCard
@@ -310,6 +306,12 @@ export default function Dashboard() {
             info="Lucro pós ADS ÷ Faturamento. Não desconta nem soma o subsídio ML (SUBS. ML) — esse valor é só informativo na tabela de produtos."
             scheme="teal"
           />
+        </div>
+
+        {/* ── Meta de Vendas + Resumo do Dia ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <MetaVendasCard />
+          <ResumoDiaCard />
         </div>
 
         {/* ── Gráfico de receitas + Curva ABC lado a lado ── */}

@@ -39,7 +39,7 @@ function ProgressBar({ pct, color = 'amber' }) {
   const clamped = Math.max(0, Math.min(100, pct ?? 0))
   const bg = { amber: 'bg-amber-500', sky: 'bg-sky-500' }[color]
   return (
-    <div className="w-full h-2 bg-stone-800 rounded-full overflow-hidden">
+    <div className="w-full h-2 bg-stone-100 border border-stone-200 rounded-full overflow-hidden">
       <div className={`h-full ${bg} rounded-full transition-all`} style={{ width: `${clamped}%` }} />
     </div>
   )
@@ -76,8 +76,8 @@ function MetaEditor({ value, onSave, salvando, salvo, somenteLeitura, qtdLojas }
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2.5 bg-stone-900 border-2 border-amber-500 rounded-xl px-4 py-3">
-        <label htmlFor="meta-mensal" className="text-sm text-stone-200 font-semibold">
+      <div className="flex flex-wrap items-center gap-2.5 bg-amber-50 border-2 border-amber-400 rounded-xl px-4 py-3">
+        <label htmlFor="meta-mensal" className="text-sm text-stone-700 font-semibold">
           🎯 Meta do mês:
         </label>
         <input
@@ -91,15 +91,15 @@ function MetaEditor({ value, onSave, salvando, salvo, somenteLeitura, qtdLojas }
           onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
           disabled={salvando}
           readOnly={somenteLeitura}
-          className={`bg-stone-800 border-2 border-stone-600 rounded-lg px-3 py-1.5 text-base text-right text-stone-100 font-bold focus:outline-none focus:border-amber-400 disabled:opacity-50 ${somenteLeitura ? 'w-40 cursor-not-allowed opacity-70' : 'w-32'}`}
+          className={`bg-white border-2 border-stone-300 rounded-lg px-3 py-1.5 text-base text-right text-stone-800 font-bold focus:outline-none focus:border-amber-400 disabled:opacity-50 ${somenteLeitura ? 'w-40 cursor-not-allowed bg-stone-100 opacity-70' : 'w-32'}`}
         />
-        <span className="text-xs text-stone-400">
+        <span className="text-xs text-stone-500">
           {somenteLeitura
             ? `Meta somada de ${qtdLojas} lojas — selecione uma única loja pra editar.`
             : salvando ? 'salvando...' : salvo ? '✅ salvo' : 'digite o valor em R$ e clique fora do campo'}
         </span>
       </div>
-      {erroFormato && <p className="text-red-400 text-xs mt-1.5 px-1">{erroFormato}</p>}
+      {erroFormato && <p className="text-red-500 text-xs mt-1.5 px-1">{erroFormato}</p>}
     </div>
   )
 }
