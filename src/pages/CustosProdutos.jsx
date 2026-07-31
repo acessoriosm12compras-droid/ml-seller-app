@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Download, Upload, AlertTriangle, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import * as XLSX from 'xlsx'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
@@ -157,24 +158,16 @@ export default function CustosProdutos() {
     })
 
   function handleDownload() {
-    const rows = [
-      ['ml_item_id', 'titulo', 'preco_ml', 'custo_unitario', 'margem_estimada_%'],
-      ...todos.map(p => [
-        p.item_id,
-        `"${(p.titulo ?? '').replace(/"/g, '""')}"`,
-        p.preco_venda ?? '',
-        p.custo_unitario ?? '',
-        p.margem_estimada ?? '',
-      ]),
-    ]
-    const csv = rows.map(r => r.join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `custos_${activeAccount}_${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    const rows = todos.map(p => ({
+      SKU: p.sku ?? '',
+      Título: p.titulo ?? '',
+      'Valor de Venda': p.preco_venda ?? '',
+      'Valor de Custo': p.custo_unitario ?? '',
+    }))
+    const sheet = XLSX.utils.json_to_sheet(rows)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, sheet, 'Custos')
+    XLSX.writeFile(workbook, `custos_${activeAccount}_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
   return (
@@ -199,10 +192,10 @@ export default function CustosProdutos() {
             <button
               onClick={handleDownload}
               disabled={!todos.length}
-              title="Baixar CSV"
+              title="Baixar Excel"
               className="flex items-center gap-1.5 px-3 py-2 bg-stone-800 border border-stone-700 rounded-lg text-sm text-stone-400 hover:text-stone-200 hover:border-stone-600 disabled:opacity-40 transition-colors"
             >
-              <Download size={14} /> CSV
+              <Download size={14} /> Excel
             </button>
             <label
               title="Importar custos de uma planilha .xlsx (por SKU)"
