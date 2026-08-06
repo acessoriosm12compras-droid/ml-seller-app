@@ -4,7 +4,12 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
-import { Plus, Trash2, Check, X, Pencil, CalendarRange, XCircle } from 'lucide-react'
+import { Plus, Trash2, Check, X, Pencil, CalendarRange, XCircle, Search } from 'lucide-react'
+
+const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
 
 function formatBRL(v) {
   if (v === null || v === undefined || v === '') return '—'
@@ -292,6 +297,11 @@ export default function Fechamento() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo,   setDateTo]   = useState('')
 
+  const [anoSel, mesSel] = mesAno.split('-')
+  const anosDisponiveis = Array.from({ length: 4 }, (_, i) => now.getFullYear() - 2 + i)
+  const setMes = (novoMes) => { setMesAno(`${anoSel}-${novoMes}`); clearFilter() }
+  const setAno = (novoAno) => { setMesAno(`${novoAno}-${mesSel}`); clearFilter() }
+
   const hasFilter = dateFrom || dateTo
   const clearFilter = () => { setDateFrom(''); setDateTo('') }
 
@@ -446,12 +456,24 @@ export default function Fechamento() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <label className="text-xs text-stone-500">Mês/Ano</label>
-            <input
-              type="month"
-              value={mesAno}
-              onChange={e => { setMesAno(e.target.value); clearFilter() }}
+            <select
+              value={mesSel}
+              onChange={e => setMes(e.target.value)}
               className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
-            />
+            >
+              {MESES.map((nome, i) => (
+                <option key={nome} value={String(i + 1).padStart(2, '0')}>{nome}</option>
+              ))}
+            </select>
+            <select
+              value={anoSel}
+              onChange={e => setAno(e.target.value)}
+              className="bg-stone-900 border border-stone-700 rounded-lg px-3 py-1.5 text-sm text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
+            >
+              {anosDisponiveis.map(ano => (
+                <option key={ano} value={ano}>{ano}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center gap-2 border-l border-stone-800 pl-3">
@@ -470,6 +492,14 @@ export default function Fechamento() {
               onChange={e => setDateTo(e.target.value)}
               className="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-200 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
+            <span
+              title={hasFilter ? 'Filtro de data aplicado' : 'Escolha uma data pra filtrar'}
+              className={`flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                hasFilter ? 'bg-sky-500/15 text-sky-400' : 'text-stone-600'
+              }`}
+            >
+              <Search size={14} />
+            </span>
             {hasFilter && (
               <button
                 onClick={clearFilter}
@@ -484,7 +514,7 @@ export default function Fechamento() {
 
           {hasFilter && (
             <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full px-2.5 py-0.5">
-              Totais filtrados por data
+              ✓ Filtro aplicado — totais filtrados por data
             </span>
           )}
         </div>
