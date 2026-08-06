@@ -1,12 +1,11 @@
 import { useState, useRef } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
 import {
   LayoutDashboard, PieChart,
   Settings, Package, SlidersHorizontal, Megaphone, Sparkles, LogOut,
-  ShoppingCart, Users, ChevronDown, ChevronUp,
-  Wallet, ArrowUpCircle, TrendingUp, GitMerge, Tag,
+  ShoppingCart, Users,
 } from 'lucide-react'
 
 const NAV = [
@@ -24,24 +23,12 @@ const NAV_ADMIN = [
   { to: '/configuracoes',  label: 'Configurações', icon: SlidersHorizontal },
 ]
 
-const FIN_NAV = [
-  { to: '/financeiro/contas-pagar',     label: 'Contas a Pagar',   icon: ArrowUpCircle },
-  { to: '/fluxo-caixa',                 label: 'Fluxo de Caixa',   icon: TrendingUp },
-  { to: '/conciliacao',                 label: 'Conciliação',       icon: GitMerge },
-  { to: '/financeiro/regras',           label: 'Regras',            icon: Tag },
-]
-
-const FIN_PREFIXES = ['/financeiro', '/fluxo-caixa', '/conciliacao', '/movimentacoes', '/boletos']
-
 const COLLAPSED_W = 60
 const EXPANDED_W  = 200
 
 export default function Sidebar() {
   const { logout, role } = useAuth()
   const isAdmin = role === 'admin'
-  const location = useLocation()
-  const isFinanceiroActive = FIN_PREFIXES.some(p => location.pathname.startsWith(p))
-  const [finOpen, setFinOpen] = useState(isFinanceiroActive)
   const [expanded, setExpanded] = useState(false)
   const timer = useRef(null)
 
@@ -63,13 +50,6 @@ export default function Sidebar() {
     !isActive && expanded ? 'text-ink-muted hover:text-ink hover:bg-app-hover border-l-[3px] border-transparent pl-[7px] pr-2.5' : '',
     !isActive && !expanded? 'text-ink-muted hover:text-ink hover:bg-app-hover' : '',
   ].filter(Boolean).join(' ')
-
-  const subItemCls = (isActive) => [
-    'flex items-center h-8 rounded-lg transition-all duration-150 overflow-hidden w-full',
-    isActive
-      ? 'bg-app-active text-ink font-semibold border-l-[3px] border-accent-text pl-[25px] pr-2.5'
-      : 'text-ink-muted hover:text-ink hover:bg-app-hover border-l-[3px] border-transparent pl-7 pr-2.5',
-  ].join(' ')
 
   /* ── label animado ── */
   const Label = ({ text, size = 'sm', ml = 3 }) => (
@@ -139,39 +119,6 @@ export default function Sidebar() {
             </NavLink>
           ))}
 
-          {/* Financeiro expansível */}
-          <div className="mt-0.5">
-            <button
-              onClick={() => expanded && setFinOpen(o => !o)}
-              title={!expanded ? 'Financeiro' : undefined}
-              className={itemCls(isFinanceiroActive && !finOpen)}
-              style={{ cursor: 'pointer' }}
-            >
-              <Wallet size={16} strokeWidth={1.75} className="shrink-0" style={{ marginLeft: expanded ? '0' : '2px' }} />
-              <Label text="Financeiro" />
-              {expanded && (
-                <span className="ml-auto shrink-0 transition-opacity duration-150" style={{ opacity: expanded ? 1 : 0 }}>
-                  {finOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                </span>
-              )}
-            </button>
-
-            {finOpen && expanded && (
-              <div className="mt-0.5 flex flex-col gap-0.5">
-                {FIN_NAV.map(({ to, label, icon: Icon }) => (
-                  <NavLink key={to} to={to}>
-                    {({ isActive }) => (
-                      <span className={subItemCls(isActive)}>
-                        <Icon size={13} strokeWidth={1.75} className="shrink-0 mr-2.5" />
-                        <span className="text-xs whitespace-nowrap">{label}</span>
-                      </span>
-                    )}
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </div>
-
           {isAdmin && (
             <>
               <div className="my-1 border-t" style={{ borderColor: 'var(--border)' }} />
@@ -208,7 +155,7 @@ export default function Sidebar() {
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch bg-app-sidebar"
         style={{ borderTop: '1px solid var(--border)', height: '56px' }}
       >
-        {[...NAV.slice(0, 4), { to: '/financeiro/contas-pagar', label: 'Financeiro', icon: Wallet }].map(({ to, label, icon: Icon }) => (
+        {NAV.slice(0, 5).map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}

@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/Header'
-import { Plus, Trash2, Check, X, Pencil, CalendarRange, XCircle, ExternalLink } from 'lucide-react'
+import { Plus, Trash2, Check, X, Pencil, CalendarRange, XCircle } from 'lucide-react'
 
 function formatBRL(v) {
   if (v === null || v === undefined || v === '') return '—'
@@ -586,30 +585,14 @@ export default function Fechamento() {
           onDelete={handleDelete(delMontag)}
         />
 
-        {/* Despesas (unificado: contas_a_pagar editável + fechamento_despesas histórico) */}
+        {/* Despesas (fechamento_despesas histórico — somente leitura) */}
         <Section
           title={`Despesas${despesasUnificadas.length ? ` · ${despesasUnificadas.length} registros` : ''}`}
           columns={despesasUnifCols}
           rows={despesasUnificadas}
           isLoading={despesasUnifQ.isLoading}
           hideAddButton
-          renderActions={(row) => row.editavel ? (
-            <Link
-              to="/financeiro/contas-pagar"
-              className="flex items-center gap-1 text-[11px] text-sky-400 hover:text-sky-300 whitespace-nowrap"
-              title="Editar em Contas a Pagar"
-            >
-              Editar em Contas a Pagar <ExternalLink size={11} />
-            </Link>
-          ) : null}
-          headerExtra={
-            <Link
-              to="/financeiro/contas-pagar"
-              className="flex items-center gap-1.5 text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-1.5 rounded-lg transition-colors"
-            >
-              <Plus size={13} /> Nova despesa em Contas a Pagar
-            </Link>
-          }
+          renderActions={() => null}
         />
 
       </main>

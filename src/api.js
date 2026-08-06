@@ -37,14 +37,6 @@ export const api = {
   pedido: (id, params = {}) =>
     request(`/api/pedidos/${id}?${new URLSearchParams(params)}`),
 
-  financeiro: (params) =>
-    request(`/api/financeiro?${new URLSearchParams(params)}`),
-
-  fluxoCaixa: (params) =>
-    request(`/api/fluxo-caixa?${new URLSearchParams(params)}`),
-  salvarFluxoCaixa: (body) =>
-    request('/api/fluxo-caixa', { method: 'PUT', body: JSON.stringify(body) }),
-
   margem: (params) =>
     request(`/api/margem?${new URLSearchParams(params)}`),
 
@@ -73,18 +65,6 @@ export const api = {
     linkAcesso: (id) => request(`/admin/usuarios/${id}/link-acesso`, { method: 'POST' }),
   },
 
-  pluggy: {
-    connectToken: (data) => request('/api/financeiro/pluggy/connect-token', { method: 'POST', body: JSON.stringify(data) }),
-    saveItem: (data) => request('/api/financeiro/pluggy/save-item', { method: 'POST', body: JSON.stringify(data) }),
-    sync: () => request('/api/financeiro/pluggy/sync', { method: 'POST' }),
-    conexoes: () => request('/api/financeiro/pluggy/conexoes'),
-    desconectar: () => request('/api/financeiro/pluggy/desconectar', { method: 'POST' }),
-  },
-
-  conciliacao: (params) => request(`/api/financeiro/conciliacao?${new URLSearchParams(params)}`),
-
-  projecao: (params) => request(`/api/financeiro/projecao?${new URLSearchParams(params)}`),
-
   vendas: (params) => request(`/api/vendas?${new URLSearchParams(params)}`),
 
   graficos: (params) => request(`/api/graficos?${new URLSearchParams(params)}`),
@@ -95,18 +75,6 @@ export const api = {
   },
 
   curvaAbc: (params) => request(`/api/curva-abc?${new URLSearchParams(params)}`),
-
-  movimentacoes: {
-    list: (params) => request(`/api/movimentacoes?${new URLSearchParams(params)}`),
-    create: (data) => request('/api/movimentacoes', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id, data) => request(`/api/movimentacoes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id) => request(`/api/movimentacoes/${id}`, { method: 'DELETE' }),
-  },
-
-  financeiroResumo: {
-    mensal: (params) => request(`/api/financeiro/resumo?${new URLSearchParams(params)}`),
-    anual: (params) => request(`/api/financeiro/resumo/anual?${new URLSearchParams(params)}`),
-  },
 
   gerenciamento: {
     anuncios: (params) => request(`/api/gerenciamento/anuncios?${new URLSearchParams(params)}`),
@@ -153,20 +121,6 @@ export const api = {
     despesasUnificadas: (params) => request(`/api/fechamento/despesas-unificadas?${new URLSearchParams(params)}`),
   },
 
-  despesasFixas: {
-    list: (params) => request(`/api/despesas-fixas?${new URLSearchParams(params)}`),
-    create: (data) => request('/api/despesas-fixas', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id, data) => request(`/api/despesas-fixas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    remove: (id) => request(`/api/despesas-fixas/${id}`, { method: 'DELETE' }),
-  },
-
-  contasAPagar: {
-    listar: (params = {}) => request(`/api/contas-a-pagar?${new URLSearchParams(params)}`),
-    criar: (data) => request('/api/contas-a-pagar', { method: 'POST', body: JSON.stringify(data) }),
-    atualizar: (id, data) => request(`/api/contas-a-pagar/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-    remover: (id) => request(`/api/contas-a-pagar/${id}`, { method: 'DELETE' }),
-  },
-
   ads: (params) =>
     request(`/api/ads/campanhas?${new URLSearchParams(params)}`),
 
@@ -208,28 +162,5 @@ export const api = {
         method: 'DELETE',
         body: JSON.stringify({ ids }),
       }),
-  },
-
-  notasFiscais: {
-    listar: (params) => request(`/api/notas-fiscais?${new URLSearchParams(params)}`),
-    status: (params = {}) => request(`/api/notas-fiscais/status?${new URLSearchParams(params)}`),
-    baixarXml: async (chaveAcesso) => {
-      const token = _getToken()
-      const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      const res = await fetch(`${BASE}/api/notas-fiscais/${chaveAcesso}/xml`, { headers })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw Object.assign(new Error(err.error || `HTTP ${res.status}`), { status: res.status })
-      }
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${chaveAcesso}.xml`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(url)
-    },
   },
 }

@@ -12,29 +12,19 @@ import Margem from './pages/Margem'
 import CustosProdutos from './pages/CustosProdutos'
 import AdminUsuarios from './pages/AdminUsuarios'
 import Resultado from './pages/Resultado'
-import Conciliacao from './pages/Conciliacao'
-import ProjecaoVendas from './pages/ProjecaoVendas'
 import Graficos from './pages/Graficos'
 import Analitico from './pages/Analitico'
 import CurvaAbc from './pages/CurvaAbc'
-import Movimentacoes from './pages/Movimentacoes'
-import FinanceiroResumo from './pages/FinanceiroResumo'
 import Gerenciamento from './pages/Gerenciamento'
 import Inventario from './pages/Inventario'
 import Configuracoes from './pages/Configuracoes'
 import Fechamento from './pages/Fechamento'
-import FluxoCaixa from './pages/FluxoCaixa'
 import Ads from './pages/Ads'
 import EstudioIA from './pages/EstudioIA'
 import Onboarding from './pages/Onboarding'
 import ReposicaoSemanal from './pages/ReposicaoSemanal'
 import DefinirSenha from './pages/DefinirSenha'
 import NotFound from './pages/NotFound'
-import ContasPagar from './pages/financeiro/ContasPagar'
-import ContasReceber from './pages/financeiro/ContasReceber'
-import ContasCorrentes from './pages/financeiro/ContasCorrentes'
-import RegrasCategorização from './pages/financeiro/RegrasCategorização'
-import Boletos from './pages/Boletos'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -62,17 +52,12 @@ export default function App() {
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="pedidos" element={<Pedidos />} />
                 <Route path="pedidos/:id" element={<PedidoDetalhe />} />
-                <Route path="fluxo-caixa" element={<FluxoCaixa />} />
                 <Route path="margem" element={<Margem />} />
                 <Route path="resultado" element={<Resultado />} />
                 <Route path="custos-produtos" element={<CustosProdutos />} />
-                <Route path="conciliacao" element={<Conciliacao />} />
-                <Route path="projecao" element={<ProjecaoVendas />} />
                 <Route path="graficos" element={<Graficos />} />
                 <Route path="analitico" element={<Analitico />} />
                 <Route path="curva-abc" element={<CurvaAbc />} />
-                <Route path="movimentacoes" element={<Movimentacoes />} />
-                <Route path="financeiro-resumo" element={<FinanceiroResumo />} />
                 <Route path="gerenciamento" element={<Gerenciamento />} />
                 <Route path="inventario" element={<Inventario />} />
                 <Route path="configuracoes" element={<Configuracoes />} />
@@ -80,13 +65,6 @@ export default function App() {
                 <Route path="ads" element={<Ads />} />
                 <Route path="estudio-ia" element={<EstudioIA />} />
                 <Route path="reposicao" element={<ReposicaoSemanal />} />
-                {/* Financeiro — seções integradas */}
-                <Route path="financeiro" element={<Navigate to="/financeiro/contas-pagar" replace />} />
-                <Route path="financeiro/contas-pagar" element={<ContasPagar />} />
-                <Route path="financeiro/contas-receber" element={<ContasReceber />} />
-                <Route path="financeiro/contas-correntes" element={<ContasCorrentes />} />
-                <Route path="financeiro/regras" element={<RegrasCategorização />} />
-                <Route path="boletos" element={<Boletos />} />
                 <Route
                   path="admin/usuarios"
                   element={
