@@ -105,7 +105,7 @@ function SemanasCoberturaEditor({ value, onSave, salvando, salvo }) {
         onBlur={commit}
         onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
         disabled={salvando}
-        className="w-20 bg-stone-800 border-2 border-stone-600 rounded-lg px-3 py-1.5 text-base text-center text-stone-100 font-bold focus:outline-none focus:border-sky-400 disabled:opacity-50"
+        className="w-24 bg-stone-800 border-2 border-stone-600 rounded-lg px-3 py-1.5 text-base text-center text-stone-100 font-bold focus:outline-none focus:border-sky-400 disabled:opacity-50"
       />
       <span className="text-xs text-stone-400">
         {salvando ? 'salvando...' : salvo ? '✅ salvo' : 'digite um número de 1 a 52 e clique fora do campo'}

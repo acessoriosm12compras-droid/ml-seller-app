@@ -100,7 +100,7 @@ function MetaEditor({ value, onSave, salvando, salvo, somenteLeitura, qtdLojas }
           onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
           disabled={salvando}
           readOnly={somenteLeitura}
-          className={`bg-white border-2 border-stone-300 rounded-lg px-3 py-1.5 text-base text-right text-stone-800 font-bold focus:outline-none focus:border-amber-400 disabled:opacity-50 ${somenteLeitura ? 'w-40 cursor-not-allowed bg-stone-100 opacity-70' : 'w-32'}`}
+          className={`bg-white border-2 border-stone-300 rounded-lg px-3 py-1.5 text-base text-right text-stone-800 font-bold focus:outline-none focus:border-amber-400 disabled:opacity-50 ${somenteLeitura ? 'w-48 cursor-not-allowed bg-stone-100 opacity-70' : 'w-40'}`}
         />
         <span className="text-xs text-stone-500">
           {somenteLeitura
