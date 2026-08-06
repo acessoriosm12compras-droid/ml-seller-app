@@ -352,3 +352,13 @@ html:not(.dark) .text-purple-400 { color: #7e22ce; }
 .recharts-cartesian-axis-tick text { fill: var(--chart-text); }
 .recharts-tooltip-cursor { fill: var(--hover); stroke: var(--border); }
 .recharts-legend-item-text { color: var(--text-muted); }
+
+/* ── Tamanho de fonte — aumento leve em toda a base (a maioria do texto
+   estava em 12–14px, sensação de letra pequena). Não mexe em text-3xl/
+   text-5xl (só telas de destaque, ex. login). ── */
+:root .text-xs   { font-size: 0.8125rem; line-height: 1.1rem;  } /* 12px → 13px   */
+:root .text-sm   { font-size: 0.9375rem; line-height: 1.4rem;  } /* 14px → 15px   */
+:root .text-base { font-size: 1.0625rem; line-height: 1.6rem;  } /* 16px → 17px   */
+:root .text-lg   { font-size: 1.1875rem; line-height: 1.75rem; } /* 18px → 19px   */
+:root .text-xl   { font-size: 1.3125rem; line-height: 1.85rem; } /* 20px → 21px   */
+:root .text-2xl  { font-size: 1.625rem;  line-height: 2.2rem;  } /* 24px → 26px   */
