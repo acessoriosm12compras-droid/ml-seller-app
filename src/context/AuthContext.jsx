@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
         const meta = session.user?.user_metadata || {}
         // Só inicializa se ainda não há seleção — não sobrescreve a escolha do
         // usuário quando o Supabase re-dispara eventos (refresh de token, re-foco).
-        setActiveAccounts(prev => prev.length ? prev : (meta.conta_ml ? [meta.conta_ml] : []))
+        setActiveAccounts(prev => prev.length ? prev : (meta.conta_ml ? [meta.conta_ml] : ['YUSO']))
       }
       setLoading(false)
     })
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
         const meta = session.user?.user_metadata || {}
         // Só inicializa se ainda não há seleção — não sobrescreve a escolha do
         // usuário quando o Supabase re-dispara eventos (refresh de token, re-foco).
-        setActiveAccounts(prev => prev.length ? prev : (meta.conta_ml ? [meta.conta_ml] : []))
+        setActiveAccounts(prev => prev.length ? prev : (meta.conta_ml ? [meta.conta_ml] : ['YUSO']))
       } else {
         setActiveAccounts([])
         setMlContas(null)
