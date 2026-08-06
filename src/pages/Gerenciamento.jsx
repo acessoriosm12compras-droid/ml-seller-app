@@ -107,7 +107,7 @@ export default function Gerenciamento() {
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <Header title="Gerenciamento" onRefresh={refetch} isLoading={isLoading} />
+      <Header title="Gerenciamento" onRefresh={refetch} isLoading={isLoading} showPeriod={false} />
 
       {modal && (
         <EditModal

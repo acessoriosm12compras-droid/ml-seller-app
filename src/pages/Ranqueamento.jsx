@@ -74,7 +74,7 @@ export default function Ranqueamento() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Ranqueamento" onRefresh={refetch} isLoading={isLoading} />
+      <Header title="Ranqueamento" onRefresh={refetch} isLoading={isLoading} showPeriod={false} />
       <main className="flex-1 p-3 sm:p-6 space-y-4">
         <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
         <div className="flex justify-between items-center">

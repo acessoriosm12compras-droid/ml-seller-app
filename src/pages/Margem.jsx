@@ -23,12 +23,20 @@ function MargemBadge({ value }) {
 export default function Margem() {
   const [params] = useSearchParams()
   const periodo = params.get('periodo') || 'hoje'
+  const de = params.get('de') || ''
+  const ate = params.get('ate') || ''
   const { activeAccount } = useAuth()
 
+  const queryParams = {
+    periodo,
+    conta_ml: activeAccount,
+    ...(periodo === 'custom' && de && ate ? { de, ate } : {}),
+  }
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['margem', periodo, activeAccount],
-    queryFn: () => api.margem({ periodo, conta_ml: activeAccount }),
-    enabled: !!activeAccount,
+    queryKey: ['margem', periodo, de, ate, activeAccount],
+    queryFn: () => api.margem(queryParams),
+    enabled: !!activeAccount && (periodo !== 'custom' || (!!de && !!ate)),
   })
 
   return (

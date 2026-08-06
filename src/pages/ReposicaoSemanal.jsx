@@ -157,7 +157,7 @@ export default function ReposicaoSemanal() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Planejador de Reposição" onRefresh={refetch} isLoading={isLoading} />
+      <Header title="Planejador de Reposição" onRefresh={refetch} isLoading={isLoading} showPeriod={false} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-6">
         <EditAccountBanner />

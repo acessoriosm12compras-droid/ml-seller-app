@@ -73,7 +73,7 @@ export default function Configuracoes() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Configurações" onRefresh={refetch} isLoading={isLoading} />
+      <Header title="Configurações" onRefresh={refetch} isLoading={isLoading} showPeriod={false} />
       <main className="flex-1 p-3 sm:p-6 max-w-2xl space-y-4">
         <div className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-stone-800">

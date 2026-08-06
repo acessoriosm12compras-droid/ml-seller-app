@@ -172,7 +172,7 @@ export default function CustosProdutos() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Header title="Custos por Produto" onRefresh={refetch} isLoading={isLoading} />
+      <Header title="Custos por Produto" onRefresh={refetch} isLoading={isLoading} showPeriod={false} />
       <main className="flex-1 p-3 sm:p-6 space-y-4">
         <EditAccountBanner />
 

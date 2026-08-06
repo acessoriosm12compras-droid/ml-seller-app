@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 
 const CONTAS = ['YUSO', 'LOCITECH', 'J12', 'M12']
 
-export default function Header({ title, onRefresh, isLoading }) {
+export default function Header({ title, onRefresh, isLoading, showPeriod = true }) {
   const { role, activeAccounts, setActiveAccounts } = useAuth()
 
   return (
@@ -22,7 +22,7 @@ export default function Header({ title, onRefresh, isLoading }) {
       </div>
 
       <div className="flex items-center gap-1 ml-auto">
-        <PeriodSelector />
+        {showPeriod && <PeriodSelector />}
         {onRefresh && (
           <button
             onClick={onRefresh}

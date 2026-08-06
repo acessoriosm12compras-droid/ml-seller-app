@@ -825,7 +825,7 @@ export default function EstudioIA() {
 
   return (
     <div className="flex flex-col min-h-screen bg-stone-950">
-      <Header title="Estúdio IA" />
+      <Header title="Estúdio IA" showPeriod={false} />
 
       <div className="flex-1 p-4 md:p-6 w-full">
 

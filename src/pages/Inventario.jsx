@@ -75,7 +75,7 @@ export default function Inventario() {
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <Header title="Inventário" onRefresh={refetch} isLoading={isLoading} />
+      <Header title="Inventário" onRefresh={refetch} isLoading={isLoading} showPeriod={false} />
 
       <main className="flex-1 p-3 sm:p-6 space-y-5 overflow-auto">
         <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
