@@ -46,7 +46,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center mb-4">
             <Logo size={56} />
           </div>
-          <h1 className="text-stone-800 font-bold text-2xl mb-1">Seller ML</h1>
+          <h1 className="text-stone-800 font-bold text-2xl mb-1">Cravelli</h1>
           <p className="text-stone-500 text-sm">Gestão de Vendas — Mercado Livre</p>
         </div>
 

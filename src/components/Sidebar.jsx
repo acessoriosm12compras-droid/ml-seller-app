@@ -98,7 +98,7 @@ export default function Sidebar() {
               transition: 'max-width 200ms ease, opacity 160ms ease, margin-left 200ms ease',
             }}
           >
-            Seller ML
+            Cravelli
           </span>
         </div>
 

@@ -65,7 +65,7 @@ export default function DefinirSenha() {
           <Logo size={36} />
           <h1 className="text-stone-100 text-xl font-semibold">Definir senha</h1>
           <p className="text-stone-400 text-sm text-center">
-            Crie uma senha para acessar o Seller ML.
+            Crie uma senha para acessar o CRM Cravelli.
           </p>
         </div>
 
