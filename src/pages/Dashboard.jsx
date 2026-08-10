@@ -43,7 +43,7 @@ function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Ico
   return (
     <div
       className={`rounded-2xl p-5 flex flex-col gap-2 border ${filled ? 'border-transparent' : 'bg-white border-stone-200'}`}
-      style={filled ? { backgroundColor: '#F6B73C', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : undefined}
+      style={filled ? { backgroundColor: '#6b2436', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : undefined}
     >
       {Icon && (
         <div
@@ -56,7 +56,7 @@ function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Ico
       <div className="flex items-center gap-1.5">
         <p
           className={`text-[11px] font-semibold uppercase tracking-wider truncate ${filled ? '' : 'text-stone-500'}`}
-          style={filled ? { color: '#7a5410' } : undefined}
+          style={filled ? { color: 'rgba(255,255,255,0.75)' } : undefined}
         >
           {label}
         </p>
