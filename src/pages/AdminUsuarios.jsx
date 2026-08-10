@@ -172,7 +172,7 @@ export default function AdminUsuarios() {
                         <button
                           onClick={() => gerarLinkAcesso(u.id)}
                           disabled={row.loading}
-                          className="text-xs text-amber-400 hover:text-amber-300 disabled:opacity-50 transition-colors whitespace-nowrap"
+                          className="text-xs text-[#cc5c78] hover:text-[#d4778f] disabled:opacity-50 transition-colors whitespace-nowrap"
                         >
                           {row.loading ? 'Gerando…' : 'Gerar link'}
                         </button>
