@@ -34,11 +34,11 @@
   --text-faint: #9b9890;
   --text-disabled: #b8b4ac;
 
-  /* acento — ouro rico da marca */
-  --accent: #c97e08;
-  --accent-hover: #b06e06;
-  --accent-text: #a06208;
-  --on-accent: #fff8ee;
+  /* acento — bordô Cravelli */
+  --accent: #6b2436;
+  --accent-hover: #551c2a;
+  --accent-text: #4a1826;
+  --on-accent: #ffffff;
 
   /* semânticas */
   --success: #1a7f4e;
@@ -77,11 +77,11 @@
   --text-faint: #7c7870;
   --text-disabled: #5e5a56;
 
-  /* ouro mais saturado e luminoso no escuro */
-  --accent: #f0a420;
-  --accent-hover: #f5b840;
-  --accent-text: #f5b840;
-  --on-accent: #1a1000;
+  /* bordô mais claro e saturado no escuro */
+  --accent: #cc5c78;
+  --accent-hover: #d4778f;
+  --accent-text: #d4778f;
+  --on-accent: #14120c;
 
   --success: #34d399;
   --danger: #f87171;
