@@ -6,7 +6,7 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import {
-  DollarSign, TrendingUp, Percent, ShoppingCart,
+  DollarSign, TrendingUp, Percent, ShoppingCart, XCircle, Package,
 } from 'lucide-react'
 import { api } from '../api'
 import Header from '../components/Header'
@@ -33,6 +33,7 @@ const TINTS = {
   mint:   { bg: 'rgba(63,174,126,0.14)', fg: '#3FAE7E' },
   lilac:  { bg: 'rgba(139,92,246,0.14)', fg: '#8b5cf6' },
   sky:    { bg: 'rgba(59,130,246,0.14)', fg: '#3b82f6' },
+  rose:   { bg: 'rgba(244,63,94,0.14)', fg: '#f43f5e' },
 }
 
 function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Icon, tint }) {
@@ -305,6 +306,34 @@ export default function Dashboard() {
             valueColor={k ? (k.mpa >= 15 ? 'text-teal-400' : k.mpa >= 0 ? 'text-teal-400' : 'text-red-400') : undefined}
             info="Lucro pós ADS ÷ Faturamento. Não desconta nem soma o subsídio ML (SUBS. ML) — esse valor é só informativo na tabela de produtos."
             scheme="teal"
+          />
+        </div>
+
+        {/* ── Linha 4: Canceladas, Valor cancelado, CMV, CMV % ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <GsKpiCard
+            label="Vendas Canceladas"
+            value={k ? (k.vendas_canceladas ?? '—') : '…'}
+            info="Vendas aprovadas no período que hoje estão canceladas. Como o Mercado Livre não informa a data do cancelamento, este número pode aumentar depois — uma venda antiga que cancelar hoje entra aqui no período em que foi vendida."
+            icon={XCircle}
+            tint="rose"
+          />
+          <GsKpiCard
+            label="Valor Cancelado"
+            value={k ? (k.valor_cancelado != null ? formatBRL(k.valor_cancelado) : '—') : '…'}
+            info="Quanto deixou de entrar. Vai na linha 21 da planilha de fechamento (Cancelamentos / Devoluções)."
+          />
+          <GsKpiCard
+            label="CMV"
+            value={k ? formatBRL(k.cmv) : '…'}
+            info="Custo dos produtos que você vendeu no período. Usa o custo cadastrado hoje em Custos de Produtos, não o custo da época da venda. Vai na linha 32 da planilha."
+            icon={Package}
+            tint="lilac"
+          />
+          <GsKpiCard
+            label="CMV %"
+            value={k && k.faturamento ? formatPct(k.cmv / k.faturamento * 100) : '—'}
+            info="CMV ÷ Faturamento — quanto de cada real vendido foi embora em custo de mercadoria"
           />
         </div>
 
