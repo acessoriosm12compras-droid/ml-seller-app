@@ -332,7 +332,7 @@ export default function Dashboard() {
           />
           <GsKpiCard
             label="CMV %"
-            value={k && k.faturamento ? formatPct(k.cmv / k.faturamento * 100) : '—'}
+            value={!k ? '…' : (k.faturamento ? formatPct(k.cmv / k.faturamento * 100) : '—')}
             info="CMV ÷ Faturamento — quanto de cada real vendido foi embora em custo de mercadoria"
           />
         </div>
