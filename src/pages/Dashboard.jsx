@@ -6,7 +6,7 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import {
-  DollarSign, TrendingUp, Percent, ShoppingCart, XCircle, Package,
+  DollarSign, TrendingUp, Percent, ShoppingCart, XCircle, Package, Receipt,
 } from 'lucide-react'
 import { api } from '../api'
 import Header from '../components/Header'
@@ -313,7 +313,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <GsKpiCard
             label="Vendas Canceladas"
-            value={k ? (k.vendas_canceladas ?? '—') : '…'}
+            value={k ? (k.vendas_canceladas != null ? k.vendas_canceladas.toLocaleString('pt-BR') : '—') : '…'}
             info="Vendas aprovadas no período que hoje estão canceladas. Como o Mercado Livre não informa a data do cancelamento, este número pode aumentar depois — uma venda antiga que cancelar hoje entra aqui no período em que foi vendida."
             icon={XCircle}
             tint="rose"
@@ -322,6 +322,8 @@ export default function Dashboard() {
             label="Valor Cancelado"
             value={k ? (k.valor_cancelado != null ? formatBRL(k.valor_cancelado) : '—') : '…'}
             info="Quanto deixou de entrar. Vai na linha 21 da planilha de fechamento (Cancelamentos / Devoluções)."
+            icon={Receipt}
+            tint="rose"
           />
           <GsKpiCard
             label="CMV"
@@ -334,6 +336,8 @@ export default function Dashboard() {
             label="CMV %"
             value={!k ? '…' : (k.faturamento ? formatPct(k.cmv / k.faturamento * 100) : '—')}
             info="CMV ÷ Faturamento — quanto de cada real vendido foi embora em custo de mercadoria"
+            icon={Percent}
+            tint="lilac"
           />
         </div>
 
