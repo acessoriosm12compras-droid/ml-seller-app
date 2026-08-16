@@ -5,7 +5,7 @@ import Logo from './Logo'
 import {
   LayoutDashboard, PieChart,
   Settings, Package, SlidersHorizontal, Megaphone, Sparkles, LogOut,
-  ShoppingCart, Users,
+  ShoppingCart, Users, ClipboardList,
 } from 'lucide-react'
 
 const NAV = [
@@ -16,6 +16,7 @@ const NAV = [
   { to: '/custos-produtos', label: 'Custos',         icon: Settings },
   { to: '/reposicao',       label: 'Reposição',      icon: ShoppingCart },
   { to: '/inventario',      label: 'Inventário',     icon: Package },
+  { to: '/fechamento-lucro-real', label: 'Lucro Real',    icon: ClipboardList },
 ]
 
 const NAV_ADMIN = [

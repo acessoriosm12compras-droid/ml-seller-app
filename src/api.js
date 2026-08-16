@@ -119,6 +119,11 @@ export const api = {
       delete: (id, params = {}) => request(`/api/fechamento/montagem/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
     },
     despesasUnificadas: (params) => request(`/api/fechamento/despesas-unificadas?${new URLSearchParams(params)}`),
+    lucroReal: (params) => request(`/api/fechamento/lucro-real?${new URLSearchParams(params)}`),
+    estoque: {
+      get: (params) => request(`/api/fechamento/estoque?${new URLSearchParams(params)}`),
+      registrar: (data, params = {}) => request(`/api/fechamento/estoque?${new URLSearchParams(params)}`, { method: 'POST', body: JSON.stringify(data) }),
+    },
   },
 
   ads: (params) =>
