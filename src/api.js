@@ -16,7 +16,9 @@ async function request(path, options = {}) {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw Object.assign(new Error(err.erro || `HTTP ${res.status}`), { status: res.status })
+    // `body` carrega o payload de erro inteiro (ex.: ja_capturado_em do 409
+    // de estoque_mensal) — algumas telas precisam de mais do que a mensagem.
+    throw Object.assign(new Error(err.erro || `HTTP ${res.status}`), { status: res.status, body: err })
   }
   return res.json()
 }
