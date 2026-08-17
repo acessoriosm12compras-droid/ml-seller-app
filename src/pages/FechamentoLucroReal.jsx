@@ -344,9 +344,6 @@ export default function FechamentoLucroReal() {
             {linhas.filter(l => l.parte === parte).map(l => (
               <div key={l.linha} className="border-b border-stone-100 last:border-0 pb-2 last:pb-0">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono bg-stone-100 text-stone-600 rounded px-2 py-1 shrink-0">
-                    linha {l.linha}
-                  </span>
                   <span className="text-sm text-stone-700 flex-1">{l.rotulo}</span>
                   <span className={`text-sm font-semibold ${l.origem === 'indisponivel' ? 'text-stone-400' : 'text-stone-900'}`}>
                     {formatBRL(l.valor)}
@@ -360,9 +357,9 @@ export default function FechamentoLucroReal() {
                     <Copy className="w-4 h-4" />
                   </button>
                 </div>
-                {l.aviso && <p className="text-xs text-stone-500 mt-1 ml-[4.5rem]">{l.aviso}</p>}
+                {l.aviso && <p className="text-xs text-stone-500 mt-1">{l.aviso}</p>}
                 {LINHAS_ORIGEM_FECHAMENTO.has(l.linha) && l.valor === 0 && (
-                  <p className="text-xs text-amber-600 mt-1 ml-[4.5rem]">
+                  <p className="text-xs text-amber-600 mt-1">
                     Pode não ter nada lançado ainda pra este mês na aba Fechamento —
                     zero aqui não distingue "não teve" de "não lancei".
                   </p>
