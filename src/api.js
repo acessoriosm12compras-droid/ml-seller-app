@@ -121,6 +121,12 @@ export const api = {
       delete: (id, params = {}) => request(`/api/fechamento/montagem/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
     },
     despesasUnificadas: (params) => request(`/api/fechamento/despesas-unificadas?${new URLSearchParams(params)}`),
+    despesas: {
+      list: (params) => request(`/api/fechamento/despesas?${new URLSearchParams(params)}`),
+      create: (data, params = {}) => request(`/api/fechamento/despesas?${new URLSearchParams(params)}`, { method: 'POST', body: JSON.stringify(data) }),
+      update: (id, data, params = {}) => request(`/api/fechamento/despesas/${id}?${new URLSearchParams(params)}`, { method: 'PUT', body: JSON.stringify(data) }),
+      delete: (id, params = {}) => request(`/api/fechamento/despesas/${id}?${new URLSearchParams(params)}`, { method: 'DELETE' }),
+    },
     lucroReal: (params) => request(`/api/fechamento/lucro-real?${new URLSearchParams(params)}`),
     estoque: {
       get: (params) => request(`/api/fechamento/estoque?${new URLSearchParams(params)}`),

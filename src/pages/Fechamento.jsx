@@ -320,11 +320,13 @@ export default function Fechamento() {
   const [comprasEdit,  setComprasEditMap]  = useState({})
   const [fretesEdit,   setFretesEditMap]   = useState({})
   const [montagemEdit, setMontagemEditMap] = useState({})
+  const [despesasEdit, setDespesasEditMap] = useState({})
 
   // New row drafts
   const [newCompra,   setNewCompra]   = useState(null)
   const [newFrete,    setNewFrete]    = useState(null)
   const [newMontagem, setNewMontagem] = useState(null)
+  const [newDespesa,  setNewDespesa]  = useState(null)
 
   function makeSetEdit(setMap) {
     return (id, val) => setMap(m => ({ ...m, [id]: val }))
@@ -333,16 +335,20 @@ export default function Fechamento() {
   const setComprasEdit  = makeSetEdit(setComprasEditMap)
   const setFretesEdit   = makeSetEdit(setFretesEditMap)
   const setMontagemEdit = makeSetEdit(setMontagemEditMap)
+  const setDespesasEdit = makeSetEdit(setDespesasEditMap)
 
   // Mutations — top-level (Rules of Hooks)
   const invCompras  = () => qc.invalidateQueries({ queryKey: ['fechamento-compras',  mesAno, activeAccount] })
   const invFretes   = () => qc.invalidateQueries({ queryKey: ['fechamento-fretes',   mesAno, activeAccount] })
   const invMontagem = () => qc.invalidateQueries({ queryKey: ['fechamento-montagem', mesAno, activeAccount] })
+  const invDespesas = () => qc.invalidateQueries({ queryKey: ['despesas-unificadas', mesAno, activeAccount] })
 
   const saveCompra = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.compras.update(id, data, accountParams)  : api.fechamento.compras.create({ ...data, mes_ano: mesAno }, accountParams),  onSuccess: invCompras })
   const delCompra  = useMutation({ mutationFn: (id) => api.fechamento.compras.delete(id, accountParams),  onSuccess: invCompras })
   const saveFrete  = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.fretes.update(id, data, accountParams)   : api.fechamento.fretes.create({ ...data, mes_ano: mesAno }, accountParams),   onSuccess: invFretes })
   const delFrete   = useMutation({ mutationFn: (id) => api.fechamento.fretes.delete(id, accountParams),   onSuccess: invFretes })
+  const saveDespesa = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.despesas.update(id, data, accountParams) : api.fechamento.despesas.create({ ...data, mes_ano: mesAno }, accountParams), onSuccess: invDespesas })
+  const delDespesa  = useMutation({ mutationFn: (id) => api.fechamento.despesas.delete(id, accountParams), onSuccess: invDespesas })
   const saveMontag = useMutation({ mutationFn: ({ id, data }) => id ? api.fechamento.montagem.update(id, data, accountParams) : api.fechamento.montagem.create({ ...data, mes_ano: mesAno }, accountParams), onSuccess: invMontagem })
   const delMontag  = useMutation({ mutationFn: (id) => api.fechamento.montagem.delete(id, accountParams), onSuccess: invMontagem })
 
@@ -411,15 +417,14 @@ export default function Fechamento() {
   ]
 
   const despesasUnifCols = [
+    { key: 'data',      label: 'Data',      type: 'date' },
     { key: 'categoria', label: 'Categoria',
       render: v => v || <span className="text-stone-700">—</span> },
     { key: 'descricao', label: 'Descrição' },
     { key: 'valor',     label: 'Valor', type: 'number', align: 'right',
       render: v => formatBRL(v), color: () => 'text-rose-400 font-semibold' },
-    { key: 'origem',    label: 'Origem',
-      render: v => v === 'contas_a_pagar'
-        ? <span className="text-[10px] bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full px-2 py-0.5">Contas a Pagar</span>
-        : <span className="text-[10px] bg-stone-800 text-stone-500 border border-stone-700 rounded-full px-2 py-0.5">Histórico</span> },
+    { key: 'status',    label: 'Status',  type: 'select',
+      options: ['PENDENTE', 'PAGO'] },
   ]
 
   // Raw data
@@ -615,14 +620,19 @@ export default function Fechamento() {
           onDelete={handleDelete(delMontag)}
         />
 
-        {/* Despesas (fechamento_despesas histórico — somente leitura) */}
+        {/* Despesas variáveis — lançamento manual */}
         <Section
           title={`Despesas${despesasUnificadas.length ? ` · ${despesasUnificadas.length} registros` : ''}`}
           columns={despesasUnifCols}
           rows={despesasUnificadas}
           isLoading={despesasUnifQ.isLoading}
-          hideAddButton
-          renderActions={() => null}
+          editMap={despesasEdit}
+          setEdit={setDespesasEdit}
+          newRow={newDespesa}
+          setNewRow={setNewDespesa}
+          onAdd={() => setNewDespesa({ data: '', categoria: '', descricao: '', valor: '', status: 'PAGO' })}
+          onSave={handleSave(saveDespesa, setDespesasEdit, setNewDespesa)}
+          onDelete={handleDelete(delDespesa)}
         />
 
       </main>
