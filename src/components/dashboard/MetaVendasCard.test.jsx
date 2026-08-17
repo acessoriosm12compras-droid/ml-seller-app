@@ -216,3 +216,52 @@ describe('MetaVendasCard — avisos e erros', () => {
     expect(await screen.findByText(/conta_ml inválida/i)).toBeInTheDocument()
   })
 })
+
+describe('MetaVendasCard — ritmo, atraso e projeção', () => {
+  const COM_META = {
+    valor_meta: 880000, vendido_mes: 416066, pct_mes: 47.28,
+    vendido_hoje: 30019, meta_hoje: 32930, pct_hoje: 91.16,
+    dias_restantes: 15, ritmo_atual: 24474.47, projecao_fim_mes: 758708.59,
+    ideal_hoje: 482580.65, ritmo_necessario: 30928.93, diferenca_ideal: -66514.65,
+  }
+
+  it('diz quanto está atrás do ritmo, em vez de só mostrar o percentual', async () => {
+    umaLoja()
+    metasGet.mockResolvedValue(COM_META)
+    renderCard()
+    expect(await screen.findByText(/atrás do ritmo/i)).toBeInTheDocument()
+  })
+
+  it('mostra o ritmo necessário e o ritmo real lado a lado', async () => {
+    umaLoja()
+    metasGet.mockResolvedValue(COM_META)
+    renderCard()
+    expect(await screen.findByText(/precisa vender/i)).toBeInTheDocument()
+    expect(screen.getByText(/está vendendo/i)).toBeInTheDocument()
+    expect(screen.getByText(/15 dias/)).toBeInTheDocument()
+  })
+
+  it('projeta o fechamento do mês no ritmo atual', async () => {
+    umaLoja()
+    metasGet.mockResolvedValue(COM_META)
+    renderCard()
+    expect(await screen.findByText(/nesse ritmo/i)).toBeInTheDocument()
+    expect(screen.getByText(/86% da meta/)).toBeInTheDocument()
+  })
+
+  it('diz "à frente do ritmo" quando está adiantada', async () => {
+    umaLoja()
+    metasGet.mockResolvedValue({ ...COM_META, diferenca_ideal: 20000 })
+    renderCard()
+    expect(await screen.findByText(/à frente do ritmo/i)).toBeInTheDocument()
+  })
+
+  it('não inventa comparação de ritmo quando o backend não mandou', async () => {
+    umaLoja()
+    metasGet.mockResolvedValue({ ...COM_META, diferenca_ideal: null, projecao_fim_mes: null })
+    renderCard()
+    await screen.findByText(/precisa vender/i)
+    expect(screen.queryByText(/atrás do ritmo/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/nesse ritmo/i)).not.toBeInTheDocument()
+  })
+})
