@@ -26,6 +26,7 @@ import Onboarding from './pages/Onboarding'
 import ReposicaoSemanal from './pages/ReposicaoSemanal'
 import DefinirSenha from './pages/DefinirSenha'
 import NotFound from './pages/NotFound'
+import AvisoNovaVersao from './components/AvisoNovaVersao'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 5 * 60_000 } },
@@ -37,6 +38,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <BrowserRouter>
+            <AvisoNovaVersao />
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/onboarding" element={<Onboarding />} />
