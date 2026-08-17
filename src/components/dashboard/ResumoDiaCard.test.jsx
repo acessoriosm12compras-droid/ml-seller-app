@@ -152,3 +152,43 @@ describe('ResumoDiaCard — a causa ao lado do efeito', () => {
     expect(screen.queryByText(/sem estoque/i)).not.toBeInTheDocument()
   })
 })
+
+describe('ResumoDiaCard — ruptura que já foi reposta', () => {
+  it('explica a queda pelo histórico mesmo com o estoque cheio hoje', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ variacao_reais: -18611, estoque_disponivel: 704,
+                                     dias_sem_estoque: 5 })],
+      janela: JANELA,
+    })
+    renderCard()
+    expect(await screen.findByText(/5 dias sem estoque/i)).toBeInTheDocument()
+  })
+
+  it('usa o singular para um dia só', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ estoque_disponivel: 704, dias_sem_estoque: 1 })],
+      janela: JANELA,
+    })
+    renderCard()
+    expect(await screen.findByText(/1 dia sem estoque/i)).toBeInTheDocument()
+  })
+
+  it('não diz nada quando o histórico não cobre a semana', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ estoque_disponivel: 704, dias_sem_estoque: null })],
+      janela: JANELA,
+    })
+    renderCard()
+    await screen.findByText('Cabo Hdmi 20m')
+    expect(screen.queryByText(/sem estoque/i)).not.toBeInTheDocument()
+  })
+
+  it('prefere a causa da semana ao estado de agora quando os dois existem', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ estoque_disponivel: 0, dias_sem_estoque: 3 })],
+      janela: JANELA,
+    })
+    renderCard()
+    expect(await screen.findByText(/3 dias sem estoque/i)).toBeInTheDocument()
+  })
+})

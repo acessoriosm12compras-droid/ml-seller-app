@@ -28,7 +28,18 @@ function formatDia(iso) {
 // antes era preciso saber isso de cabeça. `undefined`/`null` significa que o
 // estoque não pôde ser apurado — nesse caso nada é dito, porque acusar ruptura
 // por causa de uma falha de rede seria pior do que ficar calado.
-function SeloEstoque({ unidades }) {
+function SeloEstoque({ unidades, diasSemEstoque }) {
+  // Uma ruptura já reposta some da consulta ao vivo (o estoque volta cheio) e é
+  // justamente ela que explica a queda da semana. Por isso o histórico vem antes
+  // do estado atual: o que a linha precisa dizer é a CAUSA.
+  if (diasSemEstoque > 0) {
+    return (
+      <span className="ml-2 align-middle text-[11px] text-red-600 bg-red-500/10 border border-red-500/20 rounded px-1.5 py-0.5 whitespace-nowrap">
+        {diasSemEstoque === 1 ? '1 dia sem estoque' : `${diasSemEstoque} dias sem estoque`}
+      </span>
+    )
+  }
+
   if (unidades === null || unidades === undefined) return null
 
   if (unidades === 0) {
@@ -61,7 +72,7 @@ function LinhaMovimentacao({ item, maior }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm text-stone-800 truncate" title={item.titulo}>
           {item.titulo}
-          <SeloEstoque unidades={item.estoque_disponivel} />
+          <SeloEstoque unidades={item.estoque_disponivel} diasSemEstoque={item.dias_sem_estoque} />
         </p>
         <p className="text-xs text-stone-400 truncate">
           {item.sku ? `${item.sku} · ` : ''}
