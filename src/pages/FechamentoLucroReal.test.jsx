@@ -12,6 +12,8 @@ vi.mock('../context/AuthContext', () => ({
 const lucroReal = vi.fn()
 const estoqueGet = vi.fn()
 const estoqueRegistrar = vi.fn()
+const galpaoGet = vi.fn()
+const galpaoSalvar = vi.fn()
 vi.mock('../api', () => ({
   api: {
     fechamento: {
@@ -19,6 +21,10 @@ vi.mock('../api', () => ({
       estoque: {
         get: (...args) => estoqueGet(...args),
         registrar: (...args) => estoqueRegistrar(...args),
+      },
+      galpao: {
+        get: (...args) => galpaoGet(...args),
+        salvar: (...args) => galpaoSalvar(...args),
       },
     },
   },
@@ -58,17 +64,16 @@ beforeEach(() => {
   lucroReal.mockResolvedValue({ ...RESP_BASE })
   estoqueGet.mockRejectedValue(Object.assign(new Error('Estoque deste mês ainda não foi registrado'), { status: 404, body: {} }))
   estoqueRegistrar.mockResolvedValue({ valor_full: 0, valor_fbm: 0, valor_galpao: 0, valor_total: 0 })
+  galpaoGet.mockRejectedValue(Object.assign(new Error('Galpão deste mês ainda não foi informado'), { status: 404, body: {} }))
+  galpaoSalvar.mockResolvedValue({ mes_ano: '2026-08', valor: 0, observacao: null, atualizado_em: null })
   window.confirm = vi.fn(() => true)
   navigator.clipboard = { writeText: vi.fn() }
 })
 
-describe('FechamentoLucroReal — leitura do valor do galpão já gravado (C3, metade do front)', () => {
-  it('pré-preenche o campo com o valor já gravado neste mês', async () => {
-    estoqueGet.mockReset()
-    estoqueGet.mockResolvedValue({
-      mes_ano: '2026-08', valor_full: 100, valor_fbm: 20, valor_galpao: 333,
-      valor_total: 453, itens_sem_custo: 0,
-    })
+describe('FechamentoLucroReal — contagem do galpão salva separadamente', () => {
+  it('pré-preenche o campo com a contagem já gravada deste mês', async () => {
+    galpaoGet.mockReset()
+    galpaoGet.mockResolvedValue({ mes_ano: '2026-08', valor: 333, observacao: null, atualizado_em: null })
     renderPage()
 
     const input = await screen.findByLabelText(/Galpão/i)
@@ -78,16 +83,16 @@ describe('FechamentoLucroReal — leitura do valor do galpão já gravado (C3, m
   it('deixa o campo vazio quando nada está gravado', async () => {
     renderPage()
     const input = await screen.findByLabelText(/Galpão/i)
-    await waitFor(() => expect(estoqueGet).toHaveBeenCalled())
+    await waitFor(() => expect(galpaoGet).toHaveBeenCalled())
     expect(input.value).toBe('')
   })
 
-  it('não manda valor_galpao quando o campo fica vazio e intocado (nada gravado)', async () => {
+  it('a captura do estoque NUNCA manda valor_galpao — ele vive noutra tabela', async () => {
     renderPage()
-    await waitFor(() => expect(estoqueGet).toHaveBeenCalled())
+    const input = await screen.findByLabelText(/Galpão/i)
+    fireEvent.change(input, { target: { value: '450' } })
 
-    const botao = screen.getByRole('button', { name: /Registrar estoque do mês/i })
-    fireEvent.click(botao)
+    fireEvent.click(screen.getByRole('button', { name: /Capturar estoque do ML/i }))
 
     await waitFor(() => expect(estoqueRegistrar).toHaveBeenCalled())
     const [body] = estoqueRegistrar.mock.calls[0]
@@ -95,37 +100,47 @@ describe('FechamentoLucroReal — leitura do valor do galpão já gravado (C3, m
     expect(body.mes_ano).toBe('2026-08')
   })
 
-  it('manda valor_galpao quando o usuário digita algo', async () => {
+  it('salvar a contagem chama PUT /galpao e não captura o estoque do ML', async () => {
     renderPage()
     const input = await screen.findByLabelText(/Galpão/i)
     fireEvent.change(input, { target: { value: '450' } })
 
-    const botao = screen.getByRole('button', { name: /Registrar estoque do mês/i })
-    fireEvent.click(botao)
+    fireEvent.click(screen.getByRole('button', { name: /Salvar contagem do galpão/i }))
 
-    await waitFor(() => expect(estoqueRegistrar).toHaveBeenCalled())
-    const [body] = estoqueRegistrar.mock.calls[0]
-    expect(body.valor_galpao).toBe(450)
+    await waitFor(() => expect(galpaoSalvar).toHaveBeenCalled())
+    const [body] = galpaoSalvar.mock.calls[0]
+    expect(body).toEqual({ mes_ano: '2026-08', valor: 450 })
+    expect(estoqueRegistrar).not.toHaveBeenCalled()
   })
 
-  it('manda valor_galpao explicito 0 quando o usuário limpa um valor previamente gravado', async () => {
-    estoqueGet.mockReset()
-    estoqueGet.mockResolvedValue({
-      mes_ano: '2026-08', valor_full: 100, valor_fbm: 20, valor_galpao: 333,
-      valor_total: 453, itens_sem_custo: 0,
-    })
+  it('capturar o estoque do ML não salva a contagem do galpão', async () => {
     renderPage()
-
     const input = await screen.findByLabelText(/Galpão/i)
-    await waitFor(() => expect(input.value).toBe('333'))
-    fireEvent.change(input, { target: { value: '' } })
+    fireEvent.change(input, { target: { value: '450' } })
 
-    const botao = screen.getByRole('button', { name: /Registrar estoque do mês/i })
-    fireEvent.click(botao)
+    fireEvent.click(screen.getByRole('button', { name: /Capturar estoque do ML/i }))
 
     await waitFor(() => expect(estoqueRegistrar).toHaveBeenCalled())
-    const [body] = estoqueRegistrar.mock.calls[0]
-    expect(body.valor_galpao).toBe(0)
+    expect(galpaoSalvar).not.toHaveBeenCalled()
+  })
+
+  it('o botão de salvar fica desabilitado enquanto nada foi digitado', async () => {
+    renderPage()
+    await screen.findByLabelText(/Galpão/i)
+    expect(screen.getByRole('button', { name: /Salvar contagem do galpão/i })).toBeDisabled()
+  })
+
+  it('avisa quais lojas já tinham foto e foram puladas na captura', async () => {
+    estoqueRegistrar.mockReset()
+    estoqueRegistrar.mockResolvedValue({
+      valor_full: 0, valor_fbm: 0, valor_total: 0, ja_capturadas: ['M12', 'J12'],
+    })
+    renderPage()
+    await screen.findByLabelText(/Galpão/i)
+
+    fireEvent.click(screen.getByRole('button', { name: /Capturar estoque do ML/i }))
+
+    expect(await screen.findByText(/M12, J12/)).toBeInTheDocument()
   })
 })
 
@@ -141,7 +156,7 @@ describe('FechamentoLucroReal — confirmação antes de sobrescrever (C4, metad
     renderPage()
     await waitFor(() => expect(estoqueGet).toHaveBeenCalled())
 
-    const botao = screen.getByRole('button', { name: /Registrar estoque do mês/i })
+    const botao = screen.getByRole('button', { name: /Capturar estoque do ML/i })
     fireEvent.click(botao)
 
     await waitFor(() => expect(estoqueRegistrar).toHaveBeenCalledTimes(2))
@@ -164,7 +179,7 @@ describe('FechamentoLucroReal — confirmação antes de sobrescrever (C4, metad
     renderPage()
     await waitFor(() => expect(estoqueGet).toHaveBeenCalled())
 
-    const botao = screen.getByRole('button', { name: /Registrar estoque do mês/i })
+    const botao = screen.getByRole('button', { name: /Capturar estoque do ML/i })
     fireEvent.click(botao)
 
     await waitFor(() => expect(window.confirm).toHaveBeenCalled())

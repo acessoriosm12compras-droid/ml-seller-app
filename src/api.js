@@ -126,6 +126,12 @@ export const api = {
       get: (params) => request(`/api/fechamento/estoque?${new URLSearchParams(params)}`),
       registrar: (data, params = {}) => request(`/api/fechamento/estoque?${new URLSearchParams(params)}`, { method: 'POST', body: JSON.stringify(data) }),
     },
+    // Contagem do galpão: por mês e por dono da conta, NÃO por loja — por isso
+    // não leva conta_ml e vive fora de `estoque`.
+    galpao: {
+      get: (params) => request(`/api/fechamento/galpao?${new URLSearchParams(params)}`),
+      salvar: (data) => request('/api/fechamento/galpao', { method: 'PUT', body: JSON.stringify(data) }),
+    },
   },
 
   ads: (params) =>

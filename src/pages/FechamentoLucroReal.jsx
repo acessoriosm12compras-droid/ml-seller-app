@@ -109,29 +109,43 @@ export default function FechamentoLucroReal() {
     retry: false,
   })
 
+  // A contagem do galpão é um fato do NEGÓCIO (por mês e por dono), não de
+  // uma loja: tem endpoint próprio, sem conta_ml, e é salva separadamente da
+  // captura do estoque do ML. São atos diferentes — um é o sistema buscando
+  // um dado, o outro é ela contando na prateleira.
+  const galpaoQuery = useQuery({
+    queryKey: ['galpao-mes', mesAno],
+    queryFn: () => api.fechamento.galpao.get({ mes_ano: mesAno }),
+    enabled: !!activeAccount,
+    retry: false,
+  })
+
   // Pré-preenche com o que já está gravado — nunca uma caixa vazia
   // escondendo um valor que já existe. Sem registro, fica vazia mesmo.
   useEffect(() => {
-    if (estoqueQuery.data?.valor_galpao != null) {
-      setGalpao(String(estoqueQuery.data.valor_galpao))
+    if (galpaoQuery.data?.valor != null) {
+      setGalpao(String(galpaoQuery.data.valor))
     } else {
       setGalpao('')
     }
     setGalpaoTouched(false)
-  }, [mesAno, activeAccount, estoqueQuery.data])
+  }, [mesAno, galpaoQuery.data])
 
-  // Só manda a chave valor_galpao quando há algo a dizer: o campo foi
-  // tocado OU já chegou preenchido (valor pré-carregado do que está
-  // gravado). Vazio e intocado = nada digitado e nada gravado — omitir a
-  // chave é o que faz a blindagem do backend (C3) preservar o que já existe
-  // em vez de zerar.
-  const incluirGalpao = galpaoTouched || galpao !== ''
+  const salvarGalpao = useMutation({
+    mutationFn: () => api.fechamento.galpao.salvar({
+      mes_ano: mesAno,
+      valor: Number(galpao || 0),
+    }),
+    onSuccess: () => {
+      setGalpaoTouched(false)
+      qc.invalidateQueries({ queryKey: ['galpao-mes', mesAno] })
+      qc.invalidateQueries({ queryKey: ['lucro-real', mesAno, activeAccount] })
+    },
+  })
 
-  const montarBodyEstoque = (extra = {}) => {
-    const body = { mes_ano: mesAno, ...extra }
-    if (incluirGalpao) body.valor_galpao = Number(galpao || 0)
-    return body
-  }
+  // A captura do estoque não manda mais nada de galpão — ele vive noutra
+  // tabela e tem seu próprio botão.
+  const montarBodyEstoque = (extra = {}) => ({ mes_ano: mesAno, ...extra })
 
   const registrar = useMutation({
     mutationFn: (body) => api.fechamento.estoque.registrar(body, { conta_ml: activeAccount }),
@@ -195,6 +209,9 @@ export default function FechamentoLucroReal() {
     : null
 
   const itensSemCusto = q.data?.itens_sem_custo || 0
+  // Lojas que já tinham foto do mês e foram puladas na captura — informação
+  // normal, não erro: é o que permite recapturar só a loja que falhou.
+  const jaCapturadas = registrar.data?.ja_capturadas || []
 
   return (
     <div className="space-y-5">
@@ -272,13 +289,37 @@ export default function FechamentoLucroReal() {
             />
           </label>
           <button
+            onClick={() => salvarGalpao.mutate()}
+            disabled={salvarGalpao.isPending || !galpaoTouched}
+            className="px-3 py-2 text-sm rounded-lg border border-stone-300 text-stone-800 disabled:opacity-40"
+          >
+            {salvarGalpao.isPending ? 'Salvando…' : 'Salvar contagem do galpão'}
+          </button>
+          <button
             onClick={onRegistrar}
             disabled={registrar.isPending}
             className="px-3 py-2 text-sm rounded-lg bg-stone-800 text-white disabled:opacity-40"
           >
-            {registrar.isPending ? 'Capturando…' : 'Registrar estoque do mês'}
+            {registrar.isPending ? 'Capturando…' : 'Capturar estoque do ML'}
           </button>
         </div>
+
+        <p className="text-xs text-stone-500">
+          Os dois botões são independentes: salvar a contagem não recaptura o
+          Mercado Livre, e capturar o Mercado Livre não mexe na sua contagem.
+        </p>
+
+        {salvarGalpao.isSuccess && !galpaoTouched && (
+          <p className="text-sm text-emerald-700">Contagem do galpão salva.</p>
+        )}
+        {salvarGalpao.error && (
+          <p className="text-sm text-red-600">{String(salvarGalpao.error.message || salvarGalpao.error)}</p>
+        )}
+        {jaCapturadas.length > 0 && (
+          <p className="text-sm text-stone-600">
+            Já tinham foto deste mês e não foram recapturadas: <strong>{jaCapturadas.join(', ')}</strong>.
+          </p>
+        )}
         {registrar.error && registrar.error.status !== 409 && (
           <p className="text-sm text-red-600">{String(registrar.error.message || registrar.error)}</p>
         )}
