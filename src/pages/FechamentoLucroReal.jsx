@@ -155,6 +155,16 @@ export default function FechamentoLucroReal() {
     },
   })
 
+  // Trocar de mês zera o resultado das duas mutations. Sem isso o "Contagem
+  // salva." de agosto continua na tela enquanto setembro está vazio e nada foi
+  // salvo — e a lista de lojas puladas na captura de agosto aparece como se
+  // fosse de setembro.
+  useEffect(() => {
+    salvarGalpao.reset()
+    registrar.reset()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mesAno])
+
   // Finding C4 (metade do front): 409 = já existe snapshot deste mês.
   // Confirma explicitamente antes de sobrescrever — a captura anterior é
   // perdida e não tem como recuperar depois. Usa mutateAsync + try/catch em
@@ -225,6 +235,7 @@ export default function FechamentoLucroReal() {
       <div className="flex items-center gap-3 flex-wrap">
         <input
           type="month"
+          aria-label="Mês do fechamento"
           value={mesAno}
           onChange={e => setMesAno(e.target.value)}
           className="border border-stone-300 rounded-lg px-3 py-2 text-sm"

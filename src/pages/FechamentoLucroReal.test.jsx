@@ -144,6 +144,24 @@ describe('FechamentoLucroReal — contagem do galpão salva separadamente', () =
   })
 })
 
+describe('FechamentoLucroReal — troca de mês limpa avisos do mês anterior', () => {
+  it('o "contagem salva" some ao trocar de mês', async () => {
+    renderPage()
+    const input = await screen.findByLabelText(/Galpão/i)
+    fireEvent.change(input, { target: { value: '450' } })
+    fireEvent.click(screen.getByRole('button', { name: /Salvar contagem do galpão/i }))
+
+    expect(await screen.findByText(/Contagem do galpão salva/i)).toBeInTheDocument()
+
+    // Trocar de mês: o aviso de agosto não pode seguir na tela enquanto
+    // setembro está vazio e nada foi salvo pra ele.
+    fireEvent.change(screen.getByLabelText(/Mês/i), { target: { value: '2026-09' } })
+    await waitFor(() =>
+      expect(screen.queryByText(/Contagem do galpão salva/i)).not.toBeInTheDocument()
+    )
+  })
+})
+
 describe('FechamentoLucroReal — confirmação antes de sobrescrever (C4, metade do front)', () => {
   it('em 409, pede confirmação citando a data da captura anterior e reenvia com substituir:true', async () => {
     estoqueRegistrar
