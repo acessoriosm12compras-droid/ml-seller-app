@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
@@ -36,7 +36,79 @@ const TINTS = {
   rose:   { bg: 'rgba(244,63,94,0.14)', fg: '#f43f5e' },
 }
 
-function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Icon, tint }) {
+// A conta por trás de cada card. Devolve null quando algum componente é
+// desconhecido — melhor card sem composição do que uma conta com zero
+// fabricado no meio dela (mesma regra que rege o resto do Dashboard).
+function composicoes(k) {
+  if (!k) return {}
+  const has = v => v != null
+  const c = {}
+  if (has(k.n_vendas) && has(k.unidades))
+    c.faturamento = `${k.n_vendas.toLocaleString('pt-BR')} vendas · ${k.unidades.toLocaleString('pt-BR')} unidades`
+  if (has(k.taxas_ml))
+    c.liquido = `Faturamento − ${formatBRL(k.taxas_ml)} de taxas do ML`
+  if (has(k.imposto) && has(k.cmv))
+    c.lucroBruto = `Líquido − ${formatBRL(k.imposto)} de imposto − ${formatBRL(k.cmv)} de CMV`
+  c.margem = 'Lucro bruto ÷ faturamento'
+  c.roi = 'Lucro bruto ÷ CMV'
+  if (has(k.valor_ads))
+    c.lucroPosAds = `Lucro bruto − ${formatBRL(k.valor_ads)} de ADS`
+  c.tacos = 'ADS ÷ faturamento'
+  c.mpa = 'Lucro pós ADS ÷ faturamento'
+  c.cmv = 'Soma de custo unitário × unidades vendidas'
+  c.cmvPct = 'CMV ÷ faturamento'
+  if (has(k.taxa_cancelamento))
+    c.canceladas = `${formatPct(k.taxa_cancelamento)} das vendas do período`
+  return c
+}
+
+function tempoRelativo(iso) {
+  if (!iso) return null
+  const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+  if (min < 1) return 'agora'
+  if (min < 60) return `há ${min} min`
+  const h = Math.round(min / 60)
+  if (h < 24) return `há ${h}h`
+  return `há ${Math.round(h / 24)}d`
+}
+
+// Frescor do dado. Quando um número parece estranho, isto responde a primeira
+// pergunta: ele está errado ou só está velho? Com várias lojas o backend manda
+// a MAIS ATRASADA — é ela que limita a confiança no consolidado.
+function BarraSincronizacao({ sync, onSincronizar, sincronizando }) {
+  if (!sync) return null
+  const nunca = !sync.data_fim
+  const horas = sync.executado_em
+    ? (Date.now() - new Date(sync.executado_em).getTime()) / 3600000
+    : Infinity
+  const alerta = nunca || horas > 24
+  const dataFmt = sync.data_fim
+    ? new Date(sync.data_fim + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+    : null
+  const varias = Object.keys(sync.contas || {}).length > 1
+
+  return (
+    <div className={`rounded-xl border px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap ${
+      alerta ? 'bg-amber-50 border-amber-200' : 'bg-white border-stone-200'}`}>
+      <p className={`text-sm ${alerta ? 'text-amber-800' : 'text-stone-600'}`}>
+        {nunca
+          ? <>Loja <strong>{sync.conta_mais_atrasada}</strong> nunca foi sincronizada — os números não incluem as vendas dela.</>
+          : <>Sincronizado até <strong>{dataFmt}</strong>
+              {sync.executado_em && <> · atualizado {tempoRelativo(sync.executado_em)}</>}
+              {varias && <> · loja mais atrasada: <strong>{sync.conta_mais_atrasada}</strong></>}</>}
+      </p>
+      <button
+        onClick={onSincronizar}
+        disabled={sincronizando}
+        className="text-xs border border-stone-300 text-stone-700 rounded-lg px-3 py-1.5 disabled:opacity-40 shrink-0"
+      >
+        {sincronizando ? 'Sincronizando…' : 'Sincronizar agora'}
+      </button>
+    </div>
+  )
+}
+
+function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Icon, tint, composicao }) {
   const varNum = typeof variacao === 'number' ? variacao : null
   const isPositive = varNum !== null && varNum >= 0
   const t = tint ? TINTS[tint] : null
@@ -68,6 +140,18 @@ function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Ico
       <p className="text-2xl font-bold tracking-tight" style={filled ? { color: '#fff' } : undefined}>
         <span className={filled ? '' : (valueColor ?? 'text-stone-800')}>{value}</span>
       </p>
+      {/* A conta que produziu o número, sempre visível. O ⓘ continua existindo
+          para a explicação longa — aqui vai a composição, não o conceito.
+          Some quando algum componente é desconhecido: melhor não mostrar conta
+          nenhuma do que uma conta com zero fabricado no meio. */}
+      {composicao && (
+        <p
+          className={`text-[11px] leading-snug ${filled ? '' : 'text-stone-500'}`}
+          style={filled ? { color: 'rgba(255,255,255,0.7)' } : undefined}
+        >
+          {composicao}
+        </p>
+      )}
       {varNum !== null && (
         <p
           className={`text-xs flex items-center gap-1 ${filled ? '' : (isPositive ? 'text-emerald-600' : 'text-red-500')}`}
@@ -164,11 +248,17 @@ export default function Dashboard() {
     ...(periodo === 'custom' && de && ate ? { de, ate } : {}),
   }
 
+  const qc = useQueryClient()
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboard', periodo, de, ate, activeAccount],
     queryFn: () => api.dashboard(queryParams),
     enabled: !!activeAccount && (periodo !== 'custom' || (!!de && !!ate)),
   })
+  const sincronizar = useMutation({
+    mutationFn: () => api.sync.trigger({ conta_ml: activeAccount }),
+    onSuccess: () => refetch(),
+  })
+
 
   const k = data?.kpis
 
@@ -184,6 +274,8 @@ export default function Dashboard() {
     ...g,
     label: fmtData(g.data),
   }))
+  const comp = composicoes(k)
+
 
   const semCusto = (data?.top_produtos || []).filter(p => p.custo_unitario === null)
   const abc = calcABC(data?.top_produtos)
@@ -202,6 +294,11 @@ export default function Dashboard() {
 
         <EditAccountBanner />
         <LojasIndisponiveisAviso lojas={data?.lojas_indisponiveis} />
+        <BarraSincronizacao
+          sync={data?.sincronizacao}
+          onSincronizar={() => sincronizar.mutate()}
+          sincronizando={sincronizar.isPending}
+        />
 
         {/* ── Alert: products without cost ── */}
         {semCusto.length > 0 && (
@@ -223,6 +320,7 @@ export default function Dashboard() {
             value={k ? formatBRL(k.faturamento) : '…'}
             variacao={k?.faturamento_variacao}
             info="Soma de unit_price × quantidade de todos os pedidos pagos"
+            composicao={comp.faturamento}
             icon={DollarSign}
             filled
           />
@@ -230,6 +328,7 @@ export default function Dashboard() {
             label="Líq. do Marketplace"
             value={k ? formatBRL(k.liquido_marketplace) : '…'}
             info="Faturamento descontando as taxas cobradas pelo Mercado Livre"
+            composicao={comp.liquido}
             icon={ShoppingCart}
             tint="sky"
           />
@@ -239,6 +338,7 @@ export default function Dashboard() {
             variacao={k?.lucro_variacao}
             valueColor={k ? (k.lucro_bruto >= 0 ? 'text-emerald-600' : 'text-red-500') : undefined}
             info="Líquido do Marketplace menos o custo dos produtos (CMV)"
+            composicao={comp.lucroBruto}
             icon={TrendingUp}
             tint="mint"
           />
@@ -247,6 +347,7 @@ export default function Dashboard() {
             value={k ? formatPct(k.margem) : '…'}
             valueColor={k ? (k.margem >= 0 ? 'text-stone-800' : 'text-red-500') : undefined}
             info="Lucro Bruto ÷ Faturamento"
+            composicao={comp.margem}
             icon={Percent}
             tint="lilac"
           />
@@ -276,6 +377,7 @@ export default function Dashboard() {
             value={k ? formatPct(k.roi) : '…'}
             valueColor={k ? (k.roi >= 30 ? 'text-emerald-400' : k.roi >= 0 ? 'text-emerald-400' : 'text-red-400') : undefined}
             info="Lucro Bruto ÷ CMV"
+            composicao={comp.roi}
             scheme="green"
           />
         </div>
@@ -291,6 +393,7 @@ export default function Dashboard() {
             label="TACoS"
             value={k && k.tacos > 0 ? formatPct(k.tacos) : '—'}
             info="Gasto em ADS ÷ Faturamento"
+            composicao={comp.tacos}
             scheme="rose"
           />
           <GsKpiCard
@@ -298,6 +401,7 @@ export default function Dashboard() {
             value={k ? formatBRL(k.lucro_pos_ads) : '…'}
             valueColor={k ? (k.lucro_pos_ads >= 0 ? 'text-teal-400' : 'text-red-400') : undefined}
             info="Lucro Bruto menos o gasto em ADS"
+            composicao={comp.lucroPosAds}
             scheme="teal"
           />
           <GsKpiCard
@@ -315,6 +419,7 @@ export default function Dashboard() {
             label="Vendas Canceladas"
             value={k ? (k.vendas_canceladas != null ? k.vendas_canceladas.toLocaleString('pt-BR') : '—') : '…'}
             info="Vendas aprovadas no período que hoje estão canceladas. Como o Mercado Livre não informa a data do cancelamento, este número pode aumentar depois — uma venda antiga que cancelar hoje entra aqui no período em que foi vendida."
+            composicao={comp.canceladas}
             icon={XCircle}
             tint="rose"
           />
@@ -329,6 +434,7 @@ export default function Dashboard() {
             label="CMV"
             value={k ? formatBRL(k.cmv) : '…'}
             info="Custo dos produtos que você vendeu no período. Usa o custo cadastrado hoje em Custos de Produtos, não o custo da época da venda. Vai na linha 32 da planilha."
+            composicao={comp.cmv}
             icon={Package}
             tint="lilac"
           />
@@ -336,6 +442,7 @@ export default function Dashboard() {
             label="CMV %"
             value={!k ? '…' : (k.faturamento ? formatPct(k.cmv / k.faturamento * 100) : '—')}
             info="CMV ÷ Faturamento — quanto de cada real vendido foi embora em custo de mercadoria"
+            composicao={comp.cmvPct}
             icon={Percent}
             tint="lilac"
           />
