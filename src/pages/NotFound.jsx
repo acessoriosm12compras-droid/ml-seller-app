@@ -9,7 +9,7 @@ export default function NotFound() {
       </p>
       <Link
         to="/dashboard"
-        className="px-4 py-2 rounded-lg bg-[#6b2436] text-white text-sm font-medium hover:bg-[#551c2a] transition-colors"
+        className="px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--on-accent)] text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors"
       >
         Voltar para o Dashboard
       </Link>

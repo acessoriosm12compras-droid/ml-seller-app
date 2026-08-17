@@ -35,10 +35,13 @@
   --text-disabled: #b8b4ac;
 
   /* acento — bordô Cravelli */
-  --accent: #6b2436;
-  --accent-hover: #551c2a;
-  --accent-text: #4a1826;
-  --on-accent: #ffffff;
+  /* Verde do Painel Financeiro (#73a689). O texto sobre ele é o verde escuro
+     do próprio Painel (--on-accent), não branco: branco sobre esse verde dá
+     contraste 2,3:1 e fica ilegível. */
+  --accent: #73a689;
+  --accent-hover: #88b49c;
+  --accent-text: #3f6b53;
+  --on-accent: #14231a;
 
   /* semânticas */
   --success: #1a7f4e;
@@ -78,10 +81,10 @@
   --text-disabled: #5e5a56;
 
   /* bordô mais claro e saturado no escuro */
-  --accent: #cc5c78;
-  --accent-hover: #d4778f;
-  --accent-text: #d4778f;
-  --on-accent: #14120c;
+  --accent: #73a689;
+  --accent-hover: #88b49c;
+  --accent-text: #88b49c;
+  --on-accent: #14231a;
 
   --success: #34d399;
   --danger: #f87171;

@@ -37,7 +37,7 @@ export function parseValorBR(input) {
 
 function ProgressBar({ pct, color = 'amber' }) {
   const clamped = Math.max(0, Math.min(100, pct ?? 0))
-  const bg = { amber: 'bg-[#6b2436]', sky: 'bg-sky-500' }[color]
+  const bg = { amber: 'bg-[var(--accent)]', sky: 'bg-sky-500' }[color]
   return (
     <div className="w-full h-2 bg-stone-100 border border-stone-200 rounded-full overflow-hidden">
       <div className={`h-full ${bg} rounded-full transition-all`} style={{ width: `${clamped}%` }} />
@@ -85,7 +85,7 @@ function MetaEditor({ value, onSave, salvando, salvo, somenteLeitura, qtdLojas }
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2.5 bg-[#f7ecee] border-2 border-[#6b2436] rounded-xl px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2.5 bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] border-2 border-[var(--accent)] rounded-xl px-4 py-3">
         <label htmlFor="meta-mensal" className="text-sm text-stone-700 font-semibold">
           🎯 Meta do mês:
         </label>
@@ -100,7 +100,7 @@ function MetaEditor({ value, onSave, salvando, salvo, somenteLeitura, qtdLojas }
           onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
           disabled={salvando}
           readOnly={somenteLeitura}
-          className={`bg-white border-2 border-stone-300 rounded-lg px-3 py-1.5 text-base text-right text-stone-800 font-bold focus:outline-none focus:border-[#6b2436] disabled:opacity-50 ${somenteLeitura ? 'w-48 cursor-not-allowed bg-stone-100 opacity-70' : 'w-40'}`}
+          className={`bg-white border-2 border-stone-300 rounded-lg px-3 py-1.5 text-base text-right text-stone-800 font-bold focus:outline-none focus:border-[var(--accent)] disabled:opacity-50 ${somenteLeitura ? 'w-48 cursor-not-allowed bg-stone-100 opacity-70' : 'w-40'}`}
         />
         <span className="text-xs text-stone-500">
           {somenteLeitura
@@ -153,7 +153,7 @@ export default function MetaVendasCard() {
   return (
     <div className="rounded-2xl p-5 bg-white border border-stone-200 flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <Target size={18} className="text-[#6b2436]" />
+        <Target size={18} className="text-[var(--accent-text)]" />
         <h3 className="text-sm font-semibold text-stone-700">Meta de Vendas</h3>
       </div>
 

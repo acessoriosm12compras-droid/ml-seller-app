@@ -116,20 +116,20 @@ function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Ico
   return (
     <div
       className={`rounded-2xl p-5 flex flex-col gap-2 border ${filled ? 'border-transparent' : 'bg-white border-stone-200'}`}
-      style={filled ? { backgroundColor: '#6b2436', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : undefined}
+      style={filled ? { backgroundColor: 'var(--accent)', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : undefined}
     >
       {Icon && (
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center mb-1"
-          style={filled ? { backgroundColor: 'rgba(255,255,255,0.3)' } : { backgroundColor: t?.bg || 'rgba(232,155,22,0.14)' }}
+          style={filled ? { backgroundColor: 'rgba(0,0,0,0.14)' } : { backgroundColor: t?.bg || 'rgba(232,155,22,0.14)' }}
         >
-          <Icon size={18} color={filled ? '#fff' : (t?.fg || '#E89B16')} strokeWidth={2.2} />
+          <Icon size={18} color={filled ? 'var(--on-accent)' : (t?.fg || '#E89B16')} strokeWidth={2.2} />
         </div>
       )}
       <div className="flex items-center gap-1.5">
         <p
           className={`text-[11px] font-semibold uppercase tracking-wider truncate ${filled ? '' : 'text-stone-500'}`}
-          style={filled ? { color: 'rgba(255,255,255,0.75)' } : undefined}
+          style={filled ? { color: 'var(--on-accent)', opacity: 0.75 } : undefined}
         >
           {label}
         </p>
@@ -137,7 +137,7 @@ function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Ico
           <span title={info} className="text-stone-400 cursor-default text-[10px] select-none">ⓘ</span>
         )}
       </div>
-      <p className="text-2xl font-bold tracking-tight" style={filled ? { color: '#fff' } : undefined}>
+      <p className="text-2xl font-bold tracking-tight" style={filled ? { color: 'var(--on-accent)' } : undefined}>
         <span className={filled ? '' : (valueColor ?? 'text-stone-800')}>{value}</span>
       </p>
       {/* A conta que produziu o número, sempre visível. O ⓘ continua existindo
@@ -155,7 +155,7 @@ function GsKpiCard({ label, value, variacao, valueColor, info, filled, icon: Ico
       {varNum !== null && (
         <p
           className={`text-xs flex items-center gap-1 ${filled ? '' : (isPositive ? 'text-emerald-600' : 'text-red-500')}`}
-          style={filled ? { color: '#ffffff' } : undefined}
+          style={filled ? { color: 'var(--on-accent)' } : undefined}
         >
           <span>{isPositive ? '▲' : '▼'}</span>
           <span>{Math.abs(varNum).toFixed(1)}% vs período anterior</span>
