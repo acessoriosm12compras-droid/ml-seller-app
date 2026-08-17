@@ -106,3 +106,49 @@ describe('ResumoDiaCard', () => {
     expect(await screen.findByText(/Dependência externa indisponível/i)).toBeInTheDocument()
   })
 })
+
+describe('ResumoDiaCard — a causa ao lado do efeito', () => {
+  it('marca "sem estoque" na queda causada por ruptura', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ variacao_reais: -18611, faturamento_atual: 4040,
+                                     faturamento_anterior: 22651, estoque_disponivel: 0 })],
+      janela: JANELA,
+    })
+    renderCard()
+    expect(await screen.findByText(/sem estoque/i)).toBeInTheDocument()
+  })
+
+  it('avisa quando o estoque está acabando', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ estoque_disponivel: 3 })], janela: JANELA,
+    })
+    renderCard()
+    expect(await screen.findByText(/restam 3 un/i)).toBeInTheDocument()
+  })
+
+  it('usa o singular quando resta uma unidade', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ estoque_disponivel: 1 })], janela: JANELA,
+    })
+    renderCard()
+    expect(await screen.findByText(/resta 1 un/i)).toBeInTheDocument()
+  })
+
+  it('não diz nada sobre estoque confortável', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ estoque_disponivel: 120 })], janela: JANELA,
+    })
+    renderCard()
+    await screen.findByText('Cabo Hdmi 20m')
+    expect(screen.queryByText(/estoque|un\./i)).not.toBeInTheDocument()
+  })
+
+  it('cala a boca quando o estoque não pôde ser apurado', async () => {
+    resumoGet.mockResolvedValue({
+      movimentacoes: [movimentacao({ estoque_disponivel: null })], janela: JANELA,
+    })
+    renderCard()
+    await screen.findByText('Cabo Hdmi 20m')
+    expect(screen.queryByText(/sem estoque/i)).not.toBeInTheDocument()
+  })
+})

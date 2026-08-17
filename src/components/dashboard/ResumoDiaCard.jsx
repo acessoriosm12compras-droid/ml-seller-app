@@ -16,10 +16,36 @@ function formatBRLCurto(v) {
   }).format(v)
 }
 
+const LIMITE_ESTOQUE_BAIXO = 5
+
 function formatDia(iso) {
   if (!iso) return null
   const [ano, mes, dia] = iso.split('-')
   return `${dia}/${mes}`
+}
+
+// A causa ao lado do efeito: uma queda grande costuma ser ruptura de estoque, e
+// antes era preciso saber isso de cabeça. `undefined`/`null` significa que o
+// estoque não pôde ser apurado — nesse caso nada é dito, porque acusar ruptura
+// por causa de uma falha de rede seria pior do que ficar calado.
+function SeloEstoque({ unidades }) {
+  if (unidades === null || unidades === undefined) return null
+
+  if (unidades === 0) {
+    return (
+      <span className="ml-2 align-middle text-[11px] text-red-600 bg-red-500/10 border border-red-500/20 rounded px-1.5 py-0.5 whitespace-nowrap">
+        sem estoque
+      </span>
+    )
+  }
+  if (unidades <= LIMITE_ESTOQUE_BAIXO) {
+    return (
+      <span className="ml-2 align-middle text-[11px] text-amber-700 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5 whitespace-nowrap">
+        {unidades === 1 ? 'resta 1 un.' : `restam ${unidades} un.`}
+      </span>
+    )
+  }
+  return null
 }
 
 // Uma linha por produto, todas na MESMA escala: a barra é proporcional à maior
@@ -33,7 +59,10 @@ function LinhaMovimentacao({ item, maior }) {
   return (
     <div className="flex items-center gap-3 py-2 border-t border-stone-200">
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-stone-800 truncate" title={item.titulo}>{item.titulo}</p>
+        <p className="text-sm text-stone-800 truncate" title={item.titulo}>
+          {item.titulo}
+          <SeloEstoque unidades={item.estoque_disponivel} />
+        </p>
         <p className="text-xs text-stone-400 truncate">
           {item.sku ? `${item.sku} · ` : ''}
           {formatBRLCurto(item.faturamento_atual)} agora · {formatBRLCurto(item.faturamento_anterior)} antes
