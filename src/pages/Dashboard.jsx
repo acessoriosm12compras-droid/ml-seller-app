@@ -70,13 +70,19 @@ function composicoes(k) {
   c.mpa = 'Lucro pós ADS ÷ faturamento'
   c.cmv = 'Soma de custo unitário × unidades vendidas'
   c.cmvPct = 'CMV ÷ faturamento'
-  if (has(k.frete_vendedor) && has(k.taxas_ml) && k.taxas_ml)
-    c.frete = `${formatPct(k.frete_vendedor / k.taxas_ml * 100)} de tudo que o ML reteve`
-  c.fretePct = 'Frete ÷ faturamento'
-  if (has(k.subsidio_ml) && has(k.frete_vendedor) && k.frete_vendedor)
-    c.subsidio = `${(k.subsidio_ml / k.frete_vendedor).toFixed(1)}× o que você pagou`
-  if (has(k.frete_cobertura) && k.frete_cobertura < 99)
-    c.cobertura = 'Os números de frete acima estão incompletos'
+  if (has(k.frete_vendedor) && k.frete_cobertura > 0) {
+    const partes = []
+    if (has(k.faturamento) && k.faturamento)
+      partes.push(`${formatPct(k.frete_vendedor / k.faturamento * 100)} do faturamento`)
+    if (has(k.subsidio_ml) && k.subsidio_ml > 0)
+      partes.push(`ML bancou outros ${formatBRL(k.subsidio_ml)}`)
+    // A cobertura só aparece quando ATRAPALHA. Enquanto o período está
+    // completo, dizer "100% apurado" é ruído; quando não está, é a diferença
+    // entre comparar meses e comparar réguas diferentes.
+    if (has(k.frete_cobertura) && k.frete_cobertura < 99)
+      partes.push(`só ${formatPct(k.frete_cobertura)} do período apurado`)
+    c.frete = partes.join(' · ')
+  }
   if (has(k.taxa_cancelamento))
     c.canceladas = `${formatPct(k.taxa_cancelamento)} das vendas do período`
   return c
@@ -468,43 +474,20 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* ── Linha 5: Frete e subsídio do ML ──
-            Medido em 19/08: o frete é ~2,5x a comissão e era o maior custo
-            variável da operação sem ter número próprio em lugar nenhum. O
-            subsídio é o que o ML absorve — não é custo dela, mas some se eles
-            mudarem a regra de frete grátis, e aí vira custo de um mês pro outro. */}
+        {/* ── Frete ──
+            Um card só, de propósito. A primeira versão trouxe quatro (frete, %,
+            subsídio, cobertura) numa tela que já tinha dezesseis — virou paredão.
+            O que era card virou linha de composição: o número grande é o que
+            saiu do caixa, e o resto explica embaixo. O detalhamento financeiro
+            fica pro Painel Financeiro, quando a migração acontecer. */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <GsKpiCard
             label="Frete Pago"
             value={k ? (k.frete_vendedor != null && k.frete_cobertura > 0 ? formatBRL(k.frete_vendedor) : '—') : '…'}
-            info="Quanto você pagou de envio no período, apurado pedido a pedido no Mercado Livre. Este valor JÁ estava descontado do seu lucro — vinha dentro de 'taxas do ML', sem nome. Não é um custo novo."
+            info="Quanto você pagou de envio no período, apurado pedido a pedido. Este valor JÁ estava descontado do seu lucro — vinha dentro de 'taxas do ML', sem nome. Não é custo novo. O Mercado Livre subsidia boa parte do envio; se essa regra apertar, a parte dele vira sua."
             composicao={comp.frete}
             icon={Truck}
             tint="amber"
-          />
-          <GsKpiCard
-            label="Frete % do Faturamento"
-            value={!k ? '…' : (k.faturamento && k.frete_cobertura > 0 ? formatPct(k.frete_vendedor / k.faturamento * 100) : '—')}
-            info="Quanto de cada real vendido foi embora em frete. Compare com a comissão do ML: no seu caso o frete costuma ser cerca de 2,5 vezes maior."
-            composicao={comp.fretePct}
-            icon={Percent}
-            tint="amber"
-          />
-          <GsKpiCard
-            label="Subsídio do ML"
-            value={k ? (k.subsidio_ml != null && k.frete_cobertura > 0 ? formatBRL(k.subsidio_ml) : '—') : '…'}
-            info="Quanto o Mercado Livre absorveu do frete no período — dinheiro que você NÃO pagou. Não entra no lucro por isso. Vale acompanhar: se o ML apertar a regra de frete grátis, essa parte vira custo seu."
-            composicao={comp.subsidio}
-            icon={Gift}
-            tint="mint"
-          />
-          <GsKpiCard
-            label="Frete Apurado"
-            value={k ? (k.frete_cobertura != null ? formatPct(k.frete_cobertura) : '—') : '…'}
-            info="Quanto do período já teve o frete apurado. Enquanto não chegar a 100%, o frete mostrado está incompleto — e comparar com um período já apurado seria comparar réguas diferentes."
-            composicao={comp.cobertura}
-            icon={Percent}
-            tint={k && k.frete_cobertura >= 99 ? 'mint' : 'amber'}
           />
         </div>
 

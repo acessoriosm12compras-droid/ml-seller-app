@@ -57,11 +57,10 @@ const COLUMNS = [
   { key: 'lucro', label: 'Lucro', align: 'right' },
   { key: 'margem', label: 'Margem', align: 'center' },
   { key: 'custo_ads', label: 'Custo ADS', align: 'right' },
-  // "Frete" é o que ela paga de envio. Cuidado com a coluna "SUBS. ML (R$)"
-  // logo adiante: aquela é subsídio de PREÇO (rebate promocional), coisa
-  // diferente de "Subs. frete", que é o quanto o ML bancou do envio.
+  // "Frete" é o que ela paga de envio — não confundir com "SUBS. ML (R$)" logo
+  // adiante, que é subsídio de PREÇO (rebate promocional). O subsídio de FRETE
+  // saiu da tabela por excesso de colunas, mas continua no CSV exportado.
   { key: 'frete', label: 'Frete', align: 'right' },
-  { key: 'subsidio_ml', label: 'Subs. frete', align: 'right' },
   { key: 'lucro_pos_ads', label: 'Lucro pós ADS', align: 'right' },
   { key: 'mpa', label: 'MPA', align: 'center' },
   { key: 'mpa_com_subsidio', label: 'MPA + Subsídio', align: 'center' },
@@ -246,12 +245,6 @@ export default function ProdutosTable({ produtos, titulo = 'top-produtos' }) {
                   {p.frete === null || p.frete === undefined
                     ? <span className="text-stone-400" title="Frete ainda não apurado neste período">—</span>
                     : formatBRL(p.frete)}
-                </td>
-                {/* Subsídio de frete do ML — não é custo dela, é o que ela não pagou */}
-                <td className="px-4 py-3 text-right text-stone-500">
-                  {p.subsidio_ml === null || p.subsidio_ml === undefined
-                    ? <span className="text-stone-400">—</span>
-                    : formatBRL(p.subsidio_ml)}
                 </td>
                 {/* Lucro pós ADS */}
                 <td className="px-4 py-3 text-right">

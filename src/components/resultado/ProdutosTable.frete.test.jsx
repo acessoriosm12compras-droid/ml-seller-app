@@ -12,12 +12,17 @@ function produto(over = {}) {
 }
 
 describe('ProdutosTable — frete por produto', () => {
-  it('mostra o frete e o subsídio de frete', () => {
+  it('mostra o frete por produto', () => {
     render(<ProdutosTable produtos={[produto({ frete: 86.4, subsidio_ml: 210.5 })]} />)
     expect(screen.getByText('Frete')).toBeInTheDocument()
-    expect(screen.getByText('Subs. frete')).toBeInTheDocument()
     expect(screen.getByText(/86,40/)).toBeInTheDocument()
-    expect(screen.getByText(/210,50/)).toBeInTheDocument()
+  })
+
+  it('deixa o subsídio de frete fora da tabela, que já tem colunas demais', () => {
+    // Continua no CSV exportado — lá não custa espaço de tela.
+    render(<ProdutosTable produtos={[produto({ frete: 86.4, subsidio_ml: 210.5 })]} />)
+    expect(screen.queryByText('Subs. frete')).not.toBeInTheDocument()
+    expect(screen.queryByText(/210,50/)).not.toBeInTheDocument()
   })
 
   it('escreve "—" quando o frete ainda não foi apurado, e não R$ 0,00', () => {
@@ -27,9 +32,8 @@ describe('ProdutosTable — frete por produto', () => {
     expect(zeros.length).toBe(0)
   })
 
-  it('não confunde subsídio de frete com o subsídio de preço, que já existia', () => {
+  it('mantém a coluna antiga de subsídio de preço, que é outra coisa', () => {
     render(<ProdutosTable produtos={[produto({ frete: 10, subsidio_ml: 20 })]} />)
-    expect(screen.getByText('Subs. frete')).toBeInTheDocument()
     expect(screen.getByText('SUBS. ML (R$)')).toBeInTheDocument()
   })
 })
