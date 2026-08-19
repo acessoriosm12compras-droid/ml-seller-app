@@ -74,8 +74,8 @@ function composicoes(k) {
     const partes = []
     if (has(k.faturamento) && k.faturamento)
       partes.push(`${formatPct(k.frete_vendedor / k.faturamento * 100)} do faturamento`)
-    if (has(k.subsidio_ml) && k.subsidio_ml > 0)
-      partes.push(`ML bancou outros ${formatBRL(k.subsidio_ml)}`)
+    if (has(k.taxas_ml) && k.taxas_ml)
+      partes.push(`${formatPct(k.frete_vendedor / k.taxas_ml * 100)} das taxas do ML`)
     // A cobertura só aparece quando ATRAPALHA. Enquanto o período está
     // completo, dizer "100% apurado" é ruído; quando não está, é a diferença
     // entre comparar meses e comparar réguas diferentes.
@@ -83,6 +83,8 @@ function composicoes(k) {
       partes.push(`só ${formatPct(k.frete_cobertura)} do período apurado`)
     c.frete = partes.join(' · ')
   }
+  if (has(k.subsidio_ml) && has(k.frete_vendedor) && k.frete_vendedor && k.frete_cobertura > 0)
+    c.subsidio = `${(k.subsidio_ml / k.frete_vendedor).toFixed(1)}× o que você pagou de frete`
   if (has(k.taxa_cancelamento))
     c.canceladas = `${formatPct(k.taxa_cancelamento)} das vendas do período`
   return c
@@ -474,12 +476,11 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* ── Frete ──
-            Um card só, de propósito. A primeira versão trouxe quatro (frete, %,
-            subsídio, cobertura) numa tela que já tinha dezesseis — virou paredão.
-            O que era card virou linha de composição: o número grande é o que
-            saiu do caixa, e o resto explica embaixo. O detalhamento financeiro
-            fica pro Painel Financeiro, quando a migração acontecer. */}
+        {/* ── Frete e subsídio ──
+            Dois cards. A primeira versão trouxe quatro e a usuária cortou; ao
+            ver o resultado ela pediu o subsídio de volta como valor próprio —
+            é o número que avisa quando o Mercado Livre começar a bancar menos,
+            e escondido numa linha de composição ele não avisa nada. */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <GsKpiCard
             label="Frete Pago"
@@ -488,6 +489,14 @@ export default function Dashboard() {
             composicao={comp.frete}
             icon={Truck}
             tint="amber"
+          />
+          <GsKpiCard
+            label="Subsídio do ML"
+            value={k ? (k.subsidio_ml != null && k.frete_cobertura > 0 ? formatBRL(k.subsidio_ml) : '—') : '…'}
+            info="Quanto o Mercado Livre absorveu do frete no período — dinheiro que você NÃO pagou, e por isso não entra no lucro. Vale acompanhar: se o ML apertar a regra de frete grátis, essa parte vira custo seu de um mês para o outro."
+            composicao={comp.subsidio}
+            icon={Gift}
+            tint="mint"
           />
         </div>
 
