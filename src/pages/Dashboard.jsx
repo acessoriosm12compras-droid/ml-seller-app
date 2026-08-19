@@ -6,7 +6,15 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import {
-  DollarSign, TrendingUp, Percent, ShoppingCart, XCircle, Package, Receipt,
+  DollarSign,
+  Gift,
+  Package,
+  Percent,
+  Receipt,
+  ShoppingCart,
+  TrendingUp,
+  Truck,
+  XCircle,
 } from 'lucide-react'
 import { api } from '../api'
 import Header from '../components/Header'
@@ -45,8 +53,13 @@ function composicoes(k) {
   const c = {}
   if (has(k.n_vendas) && has(k.unidades))
     c.faturamento = `${k.n_vendas.toLocaleString('pt-BR')} vendas · ${k.unidades.toLocaleString('pt-BR')} unidades`
-  if (has(k.taxas_ml))
-    c.liquido = `Faturamento − ${formatBRL(k.taxas_ml)} de taxas do ML`
+  if (has(k.taxas_ml)) {
+    // Com o frete apurado, a linha deixa de dizer só "taxas do ML" e mostra a
+    // maior parte pelo nome: o frete é ~2,5x a comissão e vivia escondido aqui.
+    c.liquido = has(k.frete_vendedor) && k.frete_vendedor > 0
+      ? `Faturamento − ${formatBRL(k.taxas_ml)} de taxas do ML, dos quais ${formatBRL(k.frete_vendedor)} são frete`
+      : `Faturamento − ${formatBRL(k.taxas_ml)} de taxas do ML`
+  }
   if (has(k.imposto) && has(k.cmv))
     c.lucroBruto = `Líquido − ${formatBRL(k.imposto)} de imposto − ${formatBRL(k.cmv)} de CMV`
   c.margem = 'Lucro bruto ÷ faturamento'
@@ -57,6 +70,13 @@ function composicoes(k) {
   c.mpa = 'Lucro pós ADS ÷ faturamento'
   c.cmv = 'Soma de custo unitário × unidades vendidas'
   c.cmvPct = 'CMV ÷ faturamento'
+  if (has(k.frete_vendedor) && has(k.taxas_ml) && k.taxas_ml)
+    c.frete = `${formatPct(k.frete_vendedor / k.taxas_ml * 100)} de tudo que o ML reteve`
+  c.fretePct = 'Frete ÷ faturamento'
+  if (has(k.subsidio_ml) && has(k.frete_vendedor) && k.frete_vendedor)
+    c.subsidio = `${(k.subsidio_ml / k.frete_vendedor).toFixed(1)}× o que você pagou`
+  if (has(k.frete_cobertura) && k.frete_cobertura < 99)
+    c.cobertura = 'Os números de frete acima estão incompletos'
   if (has(k.taxa_cancelamento))
     c.canceladas = `${formatPct(k.taxa_cancelamento)} das vendas do período`
   return c
@@ -445,6 +465,46 @@ export default function Dashboard() {
             composicao={comp.cmvPct}
             icon={Percent}
             tint="lilac"
+          />
+        </div>
+
+        {/* ── Linha 5: Frete e subsídio do ML ──
+            Medido em 19/08: o frete é ~2,5x a comissão e era o maior custo
+            variável da operação sem ter número próprio em lugar nenhum. O
+            subsídio é o que o ML absorve — não é custo dela, mas some se eles
+            mudarem a regra de frete grátis, e aí vira custo de um mês pro outro. */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <GsKpiCard
+            label="Frete Pago"
+            value={k ? (k.frete_vendedor != null && k.frete_cobertura > 0 ? formatBRL(k.frete_vendedor) : '—') : '…'}
+            info="Quanto você pagou de envio no período, apurado pedido a pedido no Mercado Livre. Este valor JÁ estava descontado do seu lucro — vinha dentro de 'taxas do ML', sem nome. Não é um custo novo."
+            composicao={comp.frete}
+            icon={Truck}
+            tint="amber"
+          />
+          <GsKpiCard
+            label="Frete % do Faturamento"
+            value={!k ? '…' : (k.faturamento && k.frete_cobertura > 0 ? formatPct(k.frete_vendedor / k.faturamento * 100) : '—')}
+            info="Quanto de cada real vendido foi embora em frete. Compare com a comissão do ML: no seu caso o frete costuma ser cerca de 2,5 vezes maior."
+            composicao={comp.fretePct}
+            icon={Percent}
+            tint="amber"
+          />
+          <GsKpiCard
+            label="Subsídio do ML"
+            value={k ? (k.subsidio_ml != null && k.frete_cobertura > 0 ? formatBRL(k.subsidio_ml) : '—') : '…'}
+            info="Quanto o Mercado Livre absorveu do frete no período — dinheiro que você NÃO pagou. Não entra no lucro por isso. Vale acompanhar: se o ML apertar a regra de frete grátis, essa parte vira custo seu."
+            composicao={comp.subsidio}
+            icon={Gift}
+            tint="mint"
+          />
+          <GsKpiCard
+            label="Frete Apurado"
+            value={k ? (k.frete_cobertura != null ? formatPct(k.frete_cobertura) : '—') : '…'}
+            info="Quanto do período já teve o frete apurado. Enquanto não chegar a 100%, o frete mostrado está incompleto — e comparar com um período já apurado seria comparar réguas diferentes."
+            composicao={comp.cobertura}
+            icon={Percent}
+            tint={k && k.frete_cobertura >= 99 ? 'mint' : 'amber'}
           />
         </div>
 
