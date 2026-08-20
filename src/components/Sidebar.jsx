@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
-import { ClipboardList, ExternalLink, LayoutDashboard, LogOut, Megaphone, Package, PieChart, Receipt, Settings, ShoppingCart, SlidersHorizontal, Sparkles, Users } from 'lucide-react'
+import { LayoutDashboard, LogOut, Megaphone, Package, PieChart, Settings, ShoppingCart, SlidersHorizontal, Sparkles, Users } from 'lucide-react'
 
 const NAV = [
   { to: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard },
@@ -12,8 +12,6 @@ const NAV = [
   { to: '/custos-produtos', label: 'Custos',         icon: Settings },
   { to: '/reposicao',       label: 'Reposição',      icon: ShoppingCart },
   { to: '/inventario',      label: 'Inventário',     icon: Package },
-  { to: 'https://financeiro.cravelli.com.br/fechamento', label: 'Fechamento', icon: Receipt, externo: true },
-  { to: 'https://financeiro.cravelli.com.br/lucro-real', label: 'Lucro Real', icon: ClipboardList, externo: true },
 ]
 
 const NAV_ADMIN = [
@@ -102,31 +100,19 @@ export default function Sidebar() {
 
         {/* Nav */}
         <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-3 flex flex-col gap-0.5 px-2">
-          {NAV.map(({ to, label, icon: Icon, externo }) => (
-            // Item externo vira <a> comum: o NavLink do React Router trataria
-            // "https://..." como caminho interno e levaria pra lugar nenhum.
-            externo ? (
-              <a key={to} href={to} title={!expanded ? label : undefined}>
-                <span className={itemCls(false)}>
+          {NAV.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              title={!expanded ? label : undefined}
+            >
+              {({ isActive }) => (
+                <span className={itemCls(isActive)}>
                   <Icon size={16} strokeWidth={1.75} className="shrink-0" style={{ marginLeft: expanded ? '0' : '2px' }} />
                   <Label text={label} />
-                  {expanded && <ExternalLink size={12} className="ml-auto shrink-0 opacity-50" />}
                 </span>
-              </a>
-            ) : (
-              <NavLink
-                key={to}
-                to={to}
-                title={!expanded ? label : undefined}
-              >
-                {({ isActive }) => (
-                  <span className={itemCls(isActive)}>
-                    <Icon size={16} strokeWidth={1.75} className="shrink-0" style={{ marginLeft: expanded ? '0' : '2px' }} />
-                    <Label text={label} />
-                  </span>
-                )}
-              </NavLink>
-            )
+              )}
+            </NavLink>
           ))}
 
           {isAdmin && (
