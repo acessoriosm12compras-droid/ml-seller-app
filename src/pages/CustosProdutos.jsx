@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Download, Upload, AlertTriangle, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { Download, Upload, AlertTriangle, AlertCircle, CheckCircle2, History, Loader2 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
@@ -98,6 +98,25 @@ export default function CustosProdutos() {
     },
   })
 
+  // Custo do anúncio anterior: republicar um anúncio gera um MLB novo e deixa o
+  // custo preso no antigo. A sugestão vem do backend já casada por SKU ou por
+  // título idêntico — mas quem confirma é ela, e a confirmação passa pelo mesmo
+  // fluxo de vigência do cadastro manual, senão o histórico ficaria diferente
+  // conforme a origem do número.
+  function handleUsarSugerido(produto) {
+    const sugerido = produto.custo_sugerido?.custo_unitario
+    if (sugerido == null) return
+    const hoje = new Date().toISOString().slice(0, 10)
+    setVigenteTipo('sempre')
+    setVigenteData(hoje)
+    setPendingCusto({
+      item_id: produto.item_id,
+      titulo: produto.titulo,
+      custo_unitario: sugerido,
+      conta_ml: editAccount,
+    })
+  }
+
   function handleBlur(produto) {
     const rawValue = editingCosts[produto.item_id]
     if (rawValue === undefined) return
@@ -139,7 +158,15 @@ export default function CustosProdutos() {
     const d = getDivergencia(p)
     return d.tipo === 'critico' || d.tipo === 'baixo' || d.tipo === 'sem_custo'
   }).length
-  const nSemCusto = todos.filter(p => !p.custo_unitario || p.custo_unitario === 0).length
+  const semCusto = todos.filter(p => !p.custo_unitario || p.custo_unitario === 0)
+  const nSemCusto = semCusto.length
+  // O aviso conta só os ATIVOS. Anúncio pausado ou encerrado não vende, então
+  // não infla margem nenhuma daqui pra frente — e a lista tem vários anúncios
+  // de ajuste e teste (SKUs tipo M12AJUSTE, m12teste) que nunca vão ter custo.
+  // Contá-los transformava o aviso em ruído permanente: 17 onde 2 importavam.
+  // Quem vendeu no passado sem custo continua sendo cobrado pelo aviso do
+  // Dashboard, que nasce do histórico de vendas, não desta lista.
+  const nSemCustoAtivo = semCusto.filter(p => (p.status || 'active') === 'active').length
 
   const filtered = todos
     .filter(p => p.titulo.toLowerCase().includes(search.toLowerCase()))
@@ -235,11 +262,11 @@ export default function CustosProdutos() {
                 </span>
               </div>
             )}
-            {nSemCusto > 0 && (
+            {nSemCustoAtivo > 0 && (
               <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-2.5">
                 <AlertTriangle size={14} className="text-amber-400 shrink-0" />
                 <span className="text-amber-300 text-sm">
-                  <span className="font-bold">{nSemCusto}</span> produto(s) sem custo cadastrado — margem aparece inflada
+                  <span className="font-bold">{nSemCustoAtivo}</span> produto(s) ativo(s) sem custo cadastrado — margem aparece inflada
                 </span>
               </div>
             )}
@@ -307,6 +334,22 @@ export default function CustosProdutos() {
                       <td className="px-4 py-3">
                         <p className="text-stone-200 truncate max-w-xs">{p.titulo}</p>
                         <p className="text-stone-600 text-xs">{p.sku || p.item_id}</p>
+                        {p.custo_sugerido && p.custo_unitario == null && (
+                          <p className="text-amber-400/80 text-xs mt-1 flex items-center gap-1.5">
+                            <History size={11} className="shrink-0" />
+                            <span>
+                              Custo do anúncio anterior:{' '}
+                              <span className="font-medium">{fmtBRL(p.custo_sugerido.custo_unitario)}</span>
+                            </span>
+                            <button
+                              onClick={() => handleUsarSugerido(p)}
+                              className="underline underline-offset-2 hover:text-amber-300"
+                              title={`Cadastrado em ${p.custo_sugerido.de_item_id}, casado por ${p.custo_sugerido.criterio === 'sku' ? 'SKU' : 'título idêntico'}`}
+                            >
+                              usar
+                            </button>
+                          </p>
+                        )}
                       </td>
 
                       {/* Preço atual do anúncio no ML — riscado + promocional quando há promoção ativa */}
