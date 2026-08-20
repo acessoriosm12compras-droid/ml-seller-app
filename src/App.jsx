@@ -18,8 +18,7 @@ import CurvaAbc from './pages/CurvaAbc'
 import Gerenciamento from './pages/Gerenciamento'
 import Inventario from './pages/Inventario'
 import Configuracoes from './pages/Configuracoes'
-import Fechamento from './pages/Fechamento'
-import FechamentoLucroReal from './pages/FechamentoLucroReal'
+import IrParaPainel from './components/IrParaPainel'
 import Ads from './pages/Ads'
 import EstudioIA from './pages/EstudioIA'
 import Onboarding from './pages/Onboarding'
@@ -64,8 +63,8 @@ export default function App() {
                 <Route path="gerenciamento" element={<Gerenciamento />} />
                 <Route path="inventario" element={<Inventario />} />
                 <Route path="configuracoes" element={<Configuracoes />} />
-                <Route path="fechamento" element={<Fechamento />} />
-                <Route path="fechamento-lucro-real" element={<FechamentoLucroReal />} />
+                <Route path="fechamento" element={<IrParaPainel para="/fechamento" />} />
+                <Route path="fechamento-lucro-real" element={<IrParaPainel para="/lucro-real" />} />
                 <Route path="ads" element={<Ads />} />
                 <Route path="estudio-ia" element={<EstudioIA />} />
                 <Route path="reposicao" element={<ReposicaoSemanal />} />
