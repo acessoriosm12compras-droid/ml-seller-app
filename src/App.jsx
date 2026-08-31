@@ -23,6 +23,7 @@ import Ads from './pages/Ads'
 import EstudioIA from './pages/EstudioIA'
 import Onboarding from './pages/Onboarding'
 import ReposicaoSemanal from './pages/ReposicaoSemanal'
+import Perguntas from './pages/Perguntas'
 import DefinirSenha from './pages/DefinirSenha'
 import NotFound from './pages/NotFound'
 import AvisoNovaVersao from './components/AvisoNovaVersao'
@@ -68,6 +69,7 @@ export default function App() {
                 <Route path="ads" element={<Ads />} />
                 <Route path="estudio-ia" element={<EstudioIA />} />
                 <Route path="reposicao" element={<ReposicaoSemanal />} />
+                <Route path="perguntas" element={<Perguntas />} />
                 <Route
                   path="admin/usuarios"
                   element={

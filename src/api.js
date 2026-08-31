@@ -163,6 +163,18 @@ export const api = {
     get: (params) => request(`/api/resumo-dia?${new URLSearchParams(params)}`),
   },
 
+  perguntas: (params) =>
+    request(`/api/perguntas?${new URLSearchParams(params)}`),
+  responderPergunta: (id, texto, conta_ml) =>
+    request(`/api/perguntas/${id}/responder?${new URLSearchParams({ conta_ml: conta_ml || '' })}`, {
+      method: 'POST',
+      body: JSON.stringify({ texto }),
+    }),
+  recusarPergunta: (id, conta_ml) =>
+    request(`/api/perguntas/${id}/recusar?${new URLSearchParams({ conta_ml: conta_ml || '' })}`, {
+      method: 'POST',
+    }),
+
   estudio: {
     buscar: (params) => request(`/api/estudio/buscar?${new URLSearchParams(params)}`),
     historico: (limit = 20, conta_ml) =>

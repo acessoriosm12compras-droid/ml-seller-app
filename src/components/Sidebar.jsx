@@ -2,13 +2,14 @@ import { useState, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
-import { LayoutDashboard, LogOut, Megaphone, Package, PieChart, Settings, ShoppingCart, SlidersHorizontal, Sparkles, Users } from 'lucide-react'
+import { LayoutDashboard, LogOut, Megaphone, MessageCircle, Package, PieChart, Settings, ShoppingCart, SlidersHorizontal, Sparkles, Users } from 'lucide-react'
 
 const NAV = [
   { to: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard },
   { to: '/curva-abc',       label: 'Curva ABC',      icon: PieChart },
   { to: '/ads',             label: 'Mercado Ads',    icon: Megaphone },
   { to: '/estudio-ia',      label: 'Estúdio IA',     icon: Sparkles },
+  { to: '/perguntas',       label: 'Perguntas',      icon: MessageCircle },
   { to: '/custos-produtos', label: 'Custos',         icon: Settings },
   { to: '/reposicao',       label: 'Reposição',      icon: ShoppingCart },
   { to: '/inventario',      label: 'Inventário',     icon: Package },
