@@ -147,12 +147,13 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* ── Mobile bottom tab bar — inalterado ── */}
+      {/* ── Mobile bottom tab bar — primeiros 6 itens do NAV (era 5; "Perguntas"
+          entrou como 5º e empurrava "Custos" pra fora do celular) ── */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch bg-app-sidebar"
         style={{ borderTop: '1px solid var(--border)', height: '56px' }}
       >
-        {NAV.slice(0, 5).map(({ to, label, icon: Icon }) => (
+        {NAV.slice(0, 6).map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}

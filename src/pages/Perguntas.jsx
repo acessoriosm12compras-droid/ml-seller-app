@@ -1,16 +1,31 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle } from 'lucide-react'
 import { api } from '../api'
 import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
 import EditAccountBanner from '../components/EditAccountBanner'
 
 function Card({ pergunta, onResponder, onRecusar, enviando, recusando }) {
-  const [texto, setTexto] = useState(pergunta.resposta_sugerida || '')
+  const falhou = pergunta.status === 'erro'
+  // Depois de um envio rejeitado pelo ML, o texto que ela digitou fica em
+  // resposta_final (não some) — é isso que tem que voltar pro textarea, não
+  // a sugestão original da IA.
+  const [texto, setTexto] = useState(pergunta.resposta_final || pergunta.resposta_sugerida || '')
   const ocupado = enviando || recusando
 
   return (
-    <div className="rounded-xl border border-stone-800 bg-stone-900 p-4">
+    <div
+      className={`rounded-xl border p-4 ${
+        falhou ? 'border-amber-500/30 bg-amber-500/[0.04]' : 'border-stone-800 bg-stone-900'
+      }`}
+    >
+      {falhou && (
+        <div className="flex items-center gap-1.5 text-amber-400 text-xs font-medium mb-2">
+          <AlertTriangle size={13} className="shrink-0" />
+          Falha ao enviar ao Mercado Livre — revise e tente de novo
+        </div>
+      )}
       <div className="text-xs text-stone-500 mb-1">
         {pergunta.conta_ml} · {pergunta.item_titulo}
       </div>
@@ -28,7 +43,7 @@ function Card({ pergunta, onResponder, onRecusar, enviando, recusando }) {
           disabled={ocupado || !texto.trim()}
           onClick={() => onResponder(pergunta.question_id, texto)}
         >
-          {enviando ? 'Enviando...' : 'Responder'}
+          {enviando ? 'Enviando...' : falhou ? 'Tentar novamente' : 'Responder'}
         </button>
         <button
           className="px-4 py-2 rounded-lg border border-stone-700 text-stone-300 hover:text-stone-100 hover:border-stone-600 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -48,11 +63,35 @@ export default function Perguntas() {
   const [erro, setErro] = useState(null)
   const [idEmAcao, setIdEmAcao] = useState(null)
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const {
+    data: pendentesData,
+    isLoading: carregandoPendentes,
+    error: erroPendentes,
+    refetch: refetchPendentes,
+  } = useQuery({
     queryKey: ['perguntas', editAccount, 'pendente'],
     queryFn: () => api.perguntas({ conta_ml: editAccount, status: 'pendente' }),
     enabled: !!editAccount,
   })
+
+  // Quando um envio falha o card vira 'erro' — sem esta segunda query ele
+  // some da única tela que ela usa no próximo refetch (inclusive um reload
+  // de página), e o texto que ela digitou não aparece em lugar nenhum pra
+  // ela tentar de novo.
+  const {
+    data: comFalhaData,
+    isLoading: carregandoComFalha,
+    error: erroComFalha,
+    refetch: refetchComFalha,
+  } = useQuery({
+    queryKey: ['perguntas', editAccount, 'erro'],
+    queryFn: () => api.perguntas({ conta_ml: editAccount, status: 'erro' }),
+    enabled: !!editAccount,
+  })
+
+  const isLoading = carregandoPendentes || carregandoComFalha
+  const queryError = erroPendentes || erroComFalha
+  const refetch = () => { refetchPendentes(); refetchComFalha() }
 
   const invalidar = () => qc.invalidateQueries({ queryKey: ['perguntas', editAccount] })
 
@@ -84,7 +123,10 @@ export default function Perguntas() {
     },
   })
 
-  const perguntas = data?.perguntas || []
+  const pendentes = pendentesData?.perguntas || []
+  const comFalha = comFalhaData?.perguntas || []
+  // Com falha primeiro: são as que precisam de atenção dela agora.
+  const perguntas = [...comFalha, ...pendentes]
 
   return (
     <div className="flex flex-col flex-1">
@@ -94,7 +136,10 @@ export default function Perguntas() {
         <EditAccountBanner />
 
         <p className="text-sm text-stone-500">
-          {perguntas.length} pendente{perguntas.length === 1 ? '' : 's'}
+          {pendentes.length} pendente{pendentes.length === 1 ? '' : 's'}
+          {comFalha.length > 0 && (
+            <span className="text-amber-400"> · {comFalha.length} com falha</span>
+          )}
         </p>
 
         {erro && (
@@ -105,8 +150,8 @@ export default function Perguntas() {
 
         {isLoading ? (
           <div className="text-center py-16 text-stone-500">Carregando perguntas...</div>
-        ) : error ? (
-          <div className="text-center py-16 text-red-400">{error.message}</div>
+        ) : queryError ? (
+          <div className="text-center py-16 text-red-400">{queryError.message}</div>
         ) : perguntas.length === 0 ? (
           <div className="text-center py-16 text-stone-500">
             Nenhuma pergunta pendente por aqui. Quando um cliente perguntar, ela aparece nesta lista.
