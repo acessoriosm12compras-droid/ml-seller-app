@@ -1,14 +1,17 @@
 import { useState, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useQueries } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
+import { api } from '../api'
 import Logo from './Logo'
-import { LayoutDashboard, LogOut, Megaphone, Package, PieChart, Settings, ShoppingCart, SlidersHorizontal, Sparkles, Users } from 'lucide-react'
+import { LayoutDashboard, LogOut, Megaphone, MessageCircle, Package, PieChart, Settings, ShoppingCart, SlidersHorizontal, Sparkles, Users } from 'lucide-react'
 
 const NAV = [
   { to: '/dashboard',       label: 'Dashboard',      icon: LayoutDashboard },
   { to: '/curva-abc',       label: 'Curva ABC',      icon: PieChart },
   { to: '/ads',             label: 'Mercado Ads',    icon: Megaphone },
   { to: '/estudio-ia',      label: 'Estúdio IA',     icon: Sparkles },
+  { to: '/perguntas',       label: 'Perguntas',      icon: MessageCircle },
   { to: '/custos-produtos', label: 'Custos',         icon: Settings },
   { to: '/reposicao',       label: 'Reposição',      icon: ShoppingCart },
   { to: '/inventario',      label: 'Inventário',     icon: Package },
@@ -23,10 +26,44 @@ const COLLAPSED_W = 60
 const EXPANDED_W  = 200
 
 export default function Sidebar() {
-  const { logout, role } = useAuth()
+  const { logout, role, editAccount, activeAccounts } = useAuth()
   const isAdmin = role === 'admin'
   const [expanded, setExpanded] = useState(false)
   const timer = useRef(null)
+
+  // Contador de perguntas pendentes — a única sinalização que ela vai ter
+  // agora que o Telegram está desligado. Passivo por decisão dela: nada de
+  // som, favicon piscando ou notificação do navegador, só um número visível
+  // quando ela já abriu o painel. refetchInterval de 3min fica dentro da
+  // faixa de 2–5min pedida; refetchIntervalInBackground continua no default
+  // (false), então a aba aberta o dia todo em segundo plano não gera polling.
+  //
+  // Soma entre TODAS as lojas ativas (activeAccounts), não só editAccount —
+  // senão o backlog da YUSO fica invisível enquanto a LOCITECH está
+  // selecionada. Uma query por conta, no mesmo endpoint que já existia
+  // (nada de contrato novo no backend). Sem conta ativa nenhuma (ainda
+  // carregando o login), cai numa lista vazia — nenhuma query dispara.
+  const contasParaContagem = activeAccounts?.length ? activeAccounts : (editAccount ? [editAccount] : [])
+  const contagemQueries = useQueries({
+    queries: contasParaContagem.map((conta) => ({
+      queryKey: ['perguntas-contagem', conta],
+      queryFn: () => api.perguntasContagem(conta),
+      enabled: !!conta,
+      refetchInterval: 3 * 60_000,
+    })),
+  })
+  // Erro não pode virar "0 pendentes" — um 403 de token expirado ou o
+  // backend reiniciando não pode ficar visualmente idêntico a "nenhuma
+  // pergunta esperando". Qualquer conta que falhou em checar joga o badge
+  // pro estado de incerteza (marcador neutro), em vez de somar as que deram
+  // certo e fingir que o total está completo.
+  const contagemComErro = contagemQueries.some((q) => q.isError)
+  const perguntasPendentes = contagemQueries.reduce((soma, q) => soma + (q.data?.pendentes || 0), 0)
+  const perguntasTitle = contagemComErro
+    ? 'Não consegui checar as perguntas pendentes de todas as lojas agora — atualize a página'
+    : contasParaContagem
+        .map((conta, i) => `${conta}: ${contagemQueries[i]?.data?.pendentes ?? 0}`)
+        .join(' · ') || undefined
 
   const onEnter = () => {
     clearTimeout(timer.current)
@@ -60,6 +97,30 @@ export default function Sidebar() {
     >
       {text}
     </span>
+  )
+
+  /* ── badge de pendentes — pílula com número quando expandido, ponto
+      discreto sobre o ícone quando recolhido/mobile (não empurra layout).
+      `erro` troca o número por um marcador neutro (cinza, "?") — nunca
+      idêntico ao vermelho de "tem pergunta esperando", nem some como um 0
+      faria. ── */
+  const CountPill = ({ count, erro, title }) => (
+    <span
+      title={title}
+      className={`ml-auto shrink-0 flex items-center justify-center rounded-full text-white text-[10px] font-semibold leading-none px-1.5 ${
+        erro ? 'bg-stone-500' : 'bg-red-500'
+      }`}
+      style={{ minWidth: '16px', height: '16px' }}
+    >
+      {erro ? '?' : (count > 99 ? '99+' : count)}
+    </span>
+  )
+  const CountDot = ({ erro, title }) => (
+    <span
+      title={title}
+      className={`absolute -top-0.5 -right-0.5 rounded-full ${erro ? 'bg-stone-400' : 'bg-red-500'}`}
+      style={{ width: '7px', height: '7px', border: '1.5px solid var(--sidebar, transparent)' }}
+    />
   )
 
   return (
@@ -100,20 +161,29 @@ export default function Sidebar() {
 
         {/* Nav */}
         <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-3 flex flex-col gap-0.5 px-2">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              title={!expanded ? label : undefined}
-            >
-              {({ isActive }) => (
-                <span className={itemCls(isActive)}>
-                  <Icon size={16} strokeWidth={1.75} className="shrink-0" style={{ marginLeft: expanded ? '0' : '2px' }} />
-                  <Label text={label} />
-                </span>
-              )}
-            </NavLink>
-          ))}
+          {NAV.map(({ to, label, icon: Icon }) => {
+            const badge = to === '/perguntas' ? perguntasPendentes : 0
+            const badgeErro = to === '/perguntas' && contagemComErro
+            const mostrarBadge = badge > 0 || badgeErro
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                title={!expanded ? label : undefined}
+              >
+                {({ isActive }) => (
+                  <span className={itemCls(isActive)}>
+                    <span className="relative shrink-0 flex items-center" style={{ marginLeft: expanded ? '0' : '2px' }}>
+                      <Icon size={16} strokeWidth={1.75} />
+                      {mostrarBadge && !expanded && <CountDot erro={badgeErro} title={perguntasTitle} />}
+                    </span>
+                    <Label text={label} />
+                    {mostrarBadge && expanded && <CountPill count={badge} erro={badgeErro} title={perguntasTitle} />}
+                  </span>
+                )}
+              </NavLink>
+            )
+          })}
 
           {isAdmin && (
             <>
@@ -146,25 +216,33 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* ── Mobile bottom tab bar — inalterado ── */}
+      {/* ── Mobile bottom tab bar — primeiros 6 itens do NAV (era 5; "Perguntas"
+          entrou como 5º e empurrava "Custos" pra fora do celular) ── */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch bg-app-sidebar"
         style={{ borderTop: '1px solid var(--border)', height: '56px' }}
       >
-        {NAV.slice(0, 5).map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 ${
-                isActive ? 'text-accent-text' : 'text-ink-muted hover:text-ink'
-              }`
-            }
-          >
-            <Icon size={19} strokeWidth={1.75} />
-            <span className="text-[9px] font-medium">{label}</span>
-          </NavLink>
-        ))}
+        {NAV.slice(0, 6).map(({ to, label, icon: Icon }) => {
+          const badge = to === '/perguntas' ? perguntasPendentes : 0
+          const badgeErro = to === '/perguntas' && contagemComErro
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 ${
+                  isActive ? 'text-accent-text' : 'text-ink-muted hover:text-ink'
+                }`
+              }
+            >
+              <span className="relative flex items-center justify-center">
+                <Icon size={19} strokeWidth={1.75} />
+                {(badge > 0 || badgeErro) && <CountDot erro={badgeErro} title={perguntasTitle} />}
+              </span>
+              <span className="text-[9px] font-medium">{label}</span>
+            </NavLink>
+          )
+        })}
       </nav>
     </>
   )
