@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
+import { api } from '../api'
 import Logo from './Logo'
 import { LayoutDashboard, LogOut, Megaphone, MessageCircle, Package, PieChart, Settings, ShoppingCart, SlidersHorizontal, Sparkles, Users } from 'lucide-react'
 
@@ -24,10 +26,24 @@ const COLLAPSED_W = 60
 const EXPANDED_W  = 200
 
 export default function Sidebar() {
-  const { logout, role } = useAuth()
+  const { logout, role, editAccount } = useAuth()
   const isAdmin = role === 'admin'
   const [expanded, setExpanded] = useState(false)
   const timer = useRef(null)
+
+  // Contador de perguntas pendentes — a única sinalização que ela vai ter
+  // agora que o Telegram está desligado. Passivo por decisão dela: nada de
+  // som, favicon piscando ou notificação do navegador, só um número visível
+  // quando ela já abriu o painel. refetchInterval de 3min fica dentro da
+  // faixa de 2–5min pedida; refetchIntervalInBackground continua no default
+  // (false), então a aba aberta o dia todo em segundo plano não gera polling.
+  const { data: contagemData } = useQuery({
+    queryKey: ['perguntas-contagem', editAccount],
+    queryFn: () => api.perguntasContagem(editAccount),
+    enabled: !!editAccount,
+    refetchInterval: 3 * 60_000,
+  })
+  const perguntasPendentes = contagemData?.pendentes || 0
 
   const onEnter = () => {
     clearTimeout(timer.current)
@@ -61,6 +77,23 @@ export default function Sidebar() {
     >
       {text}
     </span>
+  )
+
+  /* ── badge de pendentes — pílula com número quando expandido, ponto
+      discreto sobre o ícone quando recolhido/mobile (não empurra layout) ── */
+  const CountPill = ({ count }) => (
+    <span
+      className="ml-auto shrink-0 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-semibold leading-none px-1.5"
+      style={{ minWidth: '16px', height: '16px' }}
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  )
+  const CountDot = () => (
+    <span
+      className="absolute -top-0.5 -right-0.5 rounded-full bg-red-500"
+      style={{ width: '7px', height: '7px', border: '1.5px solid var(--sidebar, transparent)' }}
+    />
   )
 
   return (
@@ -101,20 +134,27 @@ export default function Sidebar() {
 
         {/* Nav */}
         <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-3 flex flex-col gap-0.5 px-2">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              title={!expanded ? label : undefined}
-            >
-              {({ isActive }) => (
-                <span className={itemCls(isActive)}>
-                  <Icon size={16} strokeWidth={1.75} className="shrink-0" style={{ marginLeft: expanded ? '0' : '2px' }} />
-                  <Label text={label} />
-                </span>
-              )}
-            </NavLink>
-          ))}
+          {NAV.map(({ to, label, icon: Icon }) => {
+            const badge = to === '/perguntas' ? perguntasPendentes : 0
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                title={!expanded ? label : undefined}
+              >
+                {({ isActive }) => (
+                  <span className={itemCls(isActive)}>
+                    <span className="relative shrink-0 flex items-center" style={{ marginLeft: expanded ? '0' : '2px' }}>
+                      <Icon size={16} strokeWidth={1.75} />
+                      {badge > 0 && !expanded && <CountDot />}
+                    </span>
+                    <Label text={label} />
+                    {badge > 0 && expanded && <CountPill count={badge} />}
+                  </span>
+                )}
+              </NavLink>
+            )
+          })}
 
           {isAdmin && (
             <>
@@ -153,20 +193,26 @@ export default function Sidebar() {
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-stretch bg-app-sidebar"
         style={{ borderTop: '1px solid var(--border)', height: '56px' }}
       >
-        {NAV.slice(0, 6).map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 ${
-                isActive ? 'text-accent-text' : 'text-ink-muted hover:text-ink'
-              }`
-            }
-          >
-            <Icon size={19} strokeWidth={1.75} />
-            <span className="text-[9px] font-medium">{label}</span>
-          </NavLink>
-        ))}
+        {NAV.slice(0, 6).map(({ to, label, icon: Icon }) => {
+          const badge = to === '/perguntas' ? perguntasPendentes : 0
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors duration-150 ${
+                  isActive ? 'text-accent-text' : 'text-ink-muted hover:text-ink'
+                }`
+              }
+            >
+              <span className="relative flex items-center justify-center">
+                <Icon size={19} strokeWidth={1.75} />
+                {badge > 0 && <CountDot />}
+              </span>
+              <span className="text-[9px] font-medium">{label}</span>
+            </NavLink>
+          )
+        })}
       </nav>
     </>
   )

@@ -174,6 +174,12 @@ export const api = {
     request(`/api/perguntas/${id}/recusar?${new URLSearchParams({ conta_ml: conta_ml || '' })}`, {
       method: 'POST',
     }),
+  excluirPergunta: (id, conta_ml) =>
+    request(`/api/perguntas/${id}/excluir?${new URLSearchParams({ conta_ml: conta_ml || '' })}`, {
+      method: 'POST',
+    }),
+  perguntasContagem: (conta_ml) =>
+    request(`/api/perguntas/contagem?${new URLSearchParams({ conta_ml: conta_ml || '' })}`),
 
   estudio: {
     buscar: (params) => request(`/api/estudio/buscar?${new URLSearchParams(params)}`),

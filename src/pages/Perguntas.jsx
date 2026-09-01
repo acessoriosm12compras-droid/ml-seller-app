@@ -6,13 +6,13 @@ import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
 import EditAccountBanner from '../components/EditAccountBanner'
 
-function Card({ pergunta, onResponder, onRecusar, enviando, recusando }) {
+function Card({ pergunta, onResponder, onExcluir, enviando, excluindo }) {
   const falhou = pergunta.status === 'erro'
   // Depois de um envio rejeitado pelo ML, o texto que ela digitou fica em
   // resposta_final (não some) — é isso que tem que voltar pro textarea, não
   // a sugestão original da IA.
   const [texto, setTexto] = useState(pergunta.resposta_final || pergunta.resposta_sugerida || '')
-  const ocupado = enviando || recusando
+  const ocupado = enviando || excluindo
 
   return (
     <div
@@ -46,11 +46,11 @@ function Card({ pergunta, onResponder, onRecusar, enviando, recusando }) {
           {enviando ? 'Enviando...' : falhou ? 'Tentar novamente' : 'Responder'}
         </button>
         <button
-          className="px-4 py-2 rounded-lg border border-stone-700 text-stone-300 hover:text-stone-100 hover:border-stone-600 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 rounded-lg border border-red-900/40 text-red-400 hover:text-red-300 hover:border-red-800/60 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           disabled={ocupado}
-          onClick={() => onRecusar(pergunta.question_id)}
+          onClick={() => onExcluir(pergunta.question_id)}
         >
-          {recusando ? 'Recusando...' : 'Recusar'}
+          {excluindo ? 'Excluindo...' : 'Excluir no ML'}
         </button>
       </div>
     </div>
@@ -109,8 +109,11 @@ export default function Perguntas() {
     },
   })
 
-  const recusar = useMutation({
-    mutationFn: (id) => api.recusarPergunta(id, editAccount),
+  // Excluir é irreversível no Mercado Livre — a confirmação vive aqui, antes
+  // de a mutation disparar, não só no botão. Um clique não some com a
+  // pergunta sem ela confirmar de novo.
+  const excluir = useMutation({
+    mutationFn: (id) => api.excluirPergunta(id, editAccount),
     onMutate: (id) => setIdEmAcao(id),
     onSuccess: () => {
       setErro(null)
@@ -119,9 +122,17 @@ export default function Perguntas() {
     },
     onError: (e) => {
       setIdEmAcao(null)
-      setErro(e.message || 'Não foi possível recusar a pergunta. Tente de novo.')
+      setErro(e.message || 'Não foi possível excluir a pergunta no Mercado Livre. Tente de novo.')
     },
   })
+
+  const confirmarExclusao = (id) => {
+    // Guarda contra clique duplo: enquanto uma exclusão está em voo, ignora
+    // novos pedidos de confirmação para essa ação.
+    if (excluir.isPending) return
+    if (!window.confirm('Excluir esta pergunta no Mercado Livre? Não dá para desfazer.')) return
+    excluir.mutate(id)
+  }
 
   const pendentes = pendentesData?.perguntas || []
   const comFalha = comFalhaData?.perguntas || []
@@ -163,9 +174,9 @@ export default function Perguntas() {
                 key={p.question_id}
                 pergunta={p}
                 enviando={responder.isPending && idEmAcao === p.question_id}
-                recusando={recusar.isPending && idEmAcao === p.question_id}
+                excluindo={excluir.isPending && idEmAcao === p.question_id}
                 onResponder={(id, texto) => responder.mutate({ id, texto })}
-                onRecusar={(id) => recusar.mutate(id)}
+                onExcluir={confirmarExclusao}
               />
             ))}
           </div>
