@@ -6,6 +6,17 @@ import Header from '../components/Header'
 import { useAuth } from '../context/AuthContext'
 import EditAccountBanner from '../components/EditAccountBanner'
 
+// Contas com linha em ml_conta_briefing — as únicas em que o botão "Excluir
+// no ML" pode aparecer. M12 e J12 são explicitamente fora de escopo deste
+// trabalho (ver plano da fase B/C): as perguntas delas continuam sendo
+// coletadas e mostradas aqui, mas antes desta rota existir a única ação
+// possível era arquivar localmente — apagar de verdade no Mercado Livre pra
+// essas duas contas é um efeito colateral novo que ninguém pediu. Não existe
+// flag "tem briefing" vinda do backend para esta tela; espelhar a lista aqui
+// é a forma mais simples e honesta de não inventar um endpoint novo só para
+// isso. Se um dia mais contas ganharem briefing, atualizar esta lista junto.
+const CONTAS_COM_EXCLUSAO_HABILITADA = ['YUSO', 'LOCITECH']
+
 function Card({ pergunta, onResponder, onExcluir, enviando, excluindo }) {
   const falhou = pergunta.status === 'erro'
   // Depois de um envio rejeitado pelo ML, o texto que ela digitou fica em
@@ -45,13 +56,15 @@ function Card({ pergunta, onResponder, onExcluir, enviando, excluindo }) {
         >
           {enviando ? 'Enviando...' : falhou ? 'Tentar novamente' : 'Responder'}
         </button>
-        <button
-          className="px-4 py-2 rounded-lg border border-red-900/40 text-red-400 hover:text-red-300 hover:border-red-800/60 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          disabled={ocupado}
-          onClick={() => onExcluir(pergunta.question_id)}
-        >
-          {excluindo ? 'Excluindo...' : 'Excluir no ML'}
-        </button>
+        {CONTAS_COM_EXCLUSAO_HABILITADA.includes(pergunta.conta_ml) && (
+          <button
+            className="px-4 py-2 rounded-lg border border-red-900/40 text-red-400 hover:text-red-300 hover:border-red-800/60 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={ocupado}
+            onClick={() => onExcluir(pergunta.question_id)}
+          >
+            {excluindo ? 'Excluindo...' : 'Excluir no ML'}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -61,7 +74,6 @@ export default function Perguntas() {
   const { editAccount } = useAuth()
   const qc = useQueryClient()
   const [erro, setErro] = useState(null)
-  const [idEmAcao, setIdEmAcao] = useState(null)
 
   const {
     data: pendentesData,
@@ -95,16 +107,20 @@ export default function Perguntas() {
 
   const invalidar = () => qc.invalidateQueries({ queryKey: ['perguntas', editAccount] })
 
+  // FIX 7: o disabled de cada card é derivado de `mutation.variables` (React
+  // Query v5), não de um `idEmAcao` compartilhado entre as duas mutations.
+  // Com estado compartilhado, começar a excluir o card B reabilitava os
+  // botões do card A ainda com a exclusão dele em voo — um segundo clique no
+  // card A caía no guard global `excluir.isPending` e não fazia nada,
+  // silenciosamente, no único controle irreversível da tela. `variables`
+  // aponta pro card certo mesmo com as duas mutations coexistindo.
   const responder = useMutation({
     mutationFn: ({ id, texto }) => api.responderPergunta(id, texto, editAccount),
-    onMutate: ({ id }) => setIdEmAcao(id),
     onSuccess: () => {
       setErro(null)
-      setIdEmAcao(null)
       invalidar()
     },
     onError: (e) => {
-      setIdEmAcao(null)
       setErro(e.message || 'Não foi possível enviar a resposta. Tente de novo.')
     },
   })
@@ -114,22 +130,24 @@ export default function Perguntas() {
   // pergunta sem ela confirmar de novo.
   const excluir = useMutation({
     mutationFn: (id) => api.excluirPergunta(id, editAccount),
-    onMutate: (id) => setIdEmAcao(id),
     onSuccess: () => {
       setErro(null)
-      setIdEmAcao(null)
       invalidar()
     },
     onError: (e) => {
-      setIdEmAcao(null)
       setErro(e.message || 'Não foi possível excluir a pergunta no Mercado Livre. Tente de novo.')
     },
   })
 
   const confirmarExclusao = (id) => {
-    // Guarda contra clique duplo: enquanto uma exclusão está em voo, ignora
-    // novos pedidos de confirmação para essa ação.
-    if (excluir.isPending) return
+    // Guarda contra clique duplo NESTE card: enquanto a exclusão DELE está em
+    // voo, ignora um novo pedido de confirmação para o mesmo id. Checar só
+    // `excluir.isPending` (sem comparar o id) bloquearia silenciosamente a
+    // exclusão de outro card enquanto qualquer exclusão estivesse em voo — o
+    // próprio bug do FIX 7, só que reaparecendo aqui: o botão do outro card
+    // apareceria habilitado (ver `excluindo` derivado de `excluir.variables`
+    // abaixo) e o clique não faria nada mesmo assim.
+    if (excluir.isPending && excluir.variables === id) return
     if (!window.confirm('Excluir esta pergunta no Mercado Livre? Não dá para desfazer.')) return
     excluir.mutate(id)
   }
@@ -173,8 +191,8 @@ export default function Perguntas() {
               <Card
                 key={p.question_id}
                 pergunta={p}
-                enviando={responder.isPending && idEmAcao === p.question_id}
-                excluindo={excluir.isPending && idEmAcao === p.question_id}
+                enviando={responder.isPending && responder.variables?.id === p.question_id}
+                excluindo={excluir.isPending && excluir.variables === p.question_id}
                 onResponder={(id, texto) => responder.mutate({ id, texto })}
                 onExcluir={confirmarExclusao}
               />
